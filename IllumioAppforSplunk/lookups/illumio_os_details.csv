@@ -1,0 +1,8 @@
+"os_name","os_category"
+"ubuntu","linux"
+"unix","linux"
+"rhel","linux"
+"ubuntu-x86_64-precise","linux"
+"ubuntu-x86_64-xenial","linux"
+"centos-x86_64-7.0","linux"
+"CentOS","linux"

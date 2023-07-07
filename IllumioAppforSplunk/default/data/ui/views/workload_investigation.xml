@@ -1,0 +1,549 @@
+<form version="1.1" script="multiselect_input.js">
+  <label>Workload Investigations</label>
+  <fieldset submitButton="false">
+    <input type="time">
+      <label>Time Range</label>
+      <default>
+        <earliest>-60m@m</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input depends="$supercluster$" type="dropdown" token="is_supercluster" searchWhenChanged="true">
+      <label>Supercluster Leader</label>
+      <fieldForLabel>leader_fqdn</fieldForLabel>
+      <fieldForValue>leader_fqdn</fieldForValue>
+      <search>
+        <query>| inputlookup illumio_host_details_lookup | dedup leader_fqdn | table leader_fqdn</query>
+        <earliest>1</earliest>
+        <latest>now</latest>
+      </search>
+      <choice value="*">Not Configured</choice>
+      <prefix>( leader_fqdn="</prefix>
+      <suffix>" )</suffix>
+      <change>
+        <condition label="Not Configured">
+          <set token="leader_fqdn"></set>
+          <set token="form.fqdn">*</set>
+          <set token="leader_values"></set>
+        </condition>
+        <condition>
+          <set token="leader_fqdn">$is_supercluster$</set>
+          <set token="form.fqdn">*</set>
+          <set token="leader_values">values(Illumio.leader_fqdn) as leader_fqdn,</set>
+        </condition>
+      </change>
+      <default>*</default>
+      <initialValue>*</initialValue>
+    </input>
+    <input type="multiselect" token="fqdn" searchWhenChanged="true">
+      <label>PCE</label>
+      <search>
+        <query>| inputlookup illumio_host_details_lookup 
+| fillnull value="-" leader_fqdn 
+| search $leader_fqdn$
+| dedup fqdn 
+| table fqdn</query>
+        <earliest>1</earliest>
+        <latest>now</latest>
+      </search>
+      <fieldForLabel>fqdn</fieldForLabel>
+      <fieldForValue>fqdn</fieldForValue>
+      <choice value="*">All</choice>
+      <default>*</default>
+      <initialValue>*</initialValue>
+      <valuePrefix>pce_fqdn="</valuePrefix>
+      <valueSuffix>"</valueSuffix>
+      <delimiter> OR </delimiter>
+      <prefix>( </prefix>
+      <suffix> )</suffix>
+      <change>
+        <set token="form.event_type_include">*</set>
+        <set token="form.event_type_exclude">none</set>
+        <set token="form.audit_status">*</set>
+        <set token="form.audit_severity">*</set>
+        <set token="form.audit_notification_type">*</set>
+      </change>
+    </input>
+    <input type="text" token="host_ip">
+      <label>Hostname/IP</label>
+      <default>*</default>
+      <initialValue>*</initialValue>
+      <change>
+        <set token="form.event_type_include">*</set>
+        <set token="form.event_type_exclude">none</set>
+        <set token="form.audit_status">*</set>
+        <set token="form.audit_severity">*</set>
+        <set token="form.audit_notification_type">*</set>
+      </change>
+    </input>
+    <input type="dropdown" token="app_label" searchWhenChanged="true">
+      <label>App Label</label>
+      <choice value="()">All</choice>
+      <fieldForLabel>label</fieldForLabel>
+      <fieldForValue>label</fieldForValue>
+      <search>
+        <query>| inputlookup illumio_workload_mapping_lookup | search type="app" | dedup label | table label</query>
+        <earliest>1</earliest>
+        <latest>now</latest>
+      </search>
+      <change>
+        <condition label="All">
+          <set token="app_label_metadata"></set>
+          <set token="app_label_pce"></set>
+          <set token="form.event_type_include">*</set>
+          <set token="form.event_type_exclude">none</set>
+          <set token="form.audit_status">*</set>
+          <set token="form.audit_severity">*</set>
+          <set token="form.audit_notification_type">*</set>
+        </condition>
+        <condition>
+          <set token="app_label_metadata">(app_label="$value$")</set>
+          <set token="app_label_pce">(combined_key_value="app:$value$")</set>
+          <set token="form.event_type_include">*</set>
+          <set token="form.event_type_exclude">none</set>
+          <set token="form.audit_status">*</set>
+          <set token="form.audit_severity">*</set>
+          <set token="form.audit_notification_type">*</set>
+        </condition>
+      </change>
+      <default>()</default>
+      <initialValue>()</initialValue>
+    </input>
+    <input type="dropdown" token="env_label" searchWhenChanged="true">
+      <label>Env Label</label>
+      <choice value="()">All</choice>
+      <fieldForLabel>label</fieldForLabel>
+      <fieldForValue>label</fieldForValue>
+      <search>
+        <query>| inputlookup illumio_workload_mapping_lookup | search type="env" | dedup label | table label</query>
+        <earliest>1</earliest>
+        <latest>now</latest>
+      </search>
+      <change>
+        <condition label="All">
+          <set token="env_label_metadata"></set>
+          <set token="env_label_pce"></set>
+          <set token="form.event_type_include">*</set>
+          <set token="form.event_type_exclude">none</set>
+          <set token="form.audit_status">*</set>
+          <set token="form.audit_severity">*</set>
+          <set token="form.audit_notification_type">*</set>
+        </condition>
+        <condition>
+          <set token="env_label_metadata">(env_label="$value$")</set>
+          <set token="env_label_pce">(combined_key_value="env:$value$")</set>
+          <set token="form.event_type_include">*</set>
+          <set token="form.event_type_exclude">none</set>
+          <set token="form.audit_status">*</set>
+          <set token="form.audit_severity">*</set>
+          <set token="form.audit_notification_type">*</set>
+        </condition>
+      </change>
+      <default>()</default>
+      <initialValue>()</initialValue>
+    </input>
+    <input type="dropdown" token="loc_label" searchWhenChanged="true">
+      <label>Loc Label</label>
+      <choice value="()">All</choice>
+      <default>()</default>
+      <change>
+        <condition label="All">
+          <set token="loc_label_metadata"></set>
+          <set token="loc_label_pce"></set>
+          <set token="form.event_type_include">*</set>
+          <set token="form.event_type_exclude">none</set>
+          <set token="form.audit_status">*</set>
+          <set token="form.audit_severity">*</set>
+          <set token="form.audit_notification_type">*</set>
+        </condition>
+        <condition>
+          <set token="loc_label_metadata">(loc_label="$value$")</set>
+          <set token="loc_label_pce">(combined_key_value="loc:$value$")</set>
+          <set token="form.event_type_include">*</set>
+          <set token="form.event_type_exclude">none</set>
+          <set token="form.audit_status">*</set>
+          <set token="form.audit_severity">*</set>
+          <set token="form.audit_notification_type">*</set>
+        </condition>
+      </change>
+      <initialValue>()</initialValue>
+      <fieldForLabel>label</fieldForLabel>
+      <fieldForValue>label</fieldForValue>
+      <search>
+        <query>| inputlookup illumio_workload_mapping_lookup | search type="loc" | dedup label | table label</query>
+        <earliest>1</earliest>
+        <latest>now</latest>
+      </search>
+    </input>
+  </fieldset>
+  <row depends="$hidden$">
+    <panel>
+      <table>
+        <search>
+          <done>
+            <condition match="$result.count$&gt;0">
+              <set token="supercluster"></set>
+              <set token="leader_fqdn"></set>
+              <set token="leader_values"></set>
+            </condition>
+            <condition>
+              <unset token="supercluster"></unset>
+              <set token="leader_fqdn"></set>
+              <set token="leader_values"></set>
+            </condition>
+          </done>
+          <query>| inputlookup illumio_host_details_lookup | stats count by leader_fqdn</query>
+          <earliest>1</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <html>
+        <div style="font-size:13px; font-style:italic">Please specify either hostname(s) or scope labels. If both hostname and scope labels are specified, then the filter uses AND condition.</div>
+      </html>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Active VEN</title>
+      <single>
+        <search>
+          <query>`illumio_get_index` sourcetype="illumio:pce:metadata" illumio_type="illumio:pce:workload" ( hostname=$host_ip|s$ OR public_ip=$host_ip|s$ ) "agent.status.status"=active 
+| dedup hostname 
+| search $leader_fqdn$ $fqdn$ 
+| rex field=href "orgs\/\d+\/workloads\/(?&lt;workload_uuid&gt;\S+)" 
+| fillnull value="-" labels{}.href 
+| mvexpand labels{}.href 
+| rename labels{}.href as href 
+| lookup illumio_workload_mapping_lookup href workload_uuid OUTPUTNEW type label 
+| eval {type}_label=label 
+| search $app_label_metadata$ $env_label_metadata$ $loc_label_metadata$ 
+| dedup workload_uuid 
+| stats count as "Active VEN"
+          </query>
+          <earliest>$earliest$</earliest>
+          <latest>$latest$</latest>
+        </search>
+        <option name="colorMode">block</option>
+        <option name="drilldown">all</option>
+        <option name="rangeColors">["0x53a051","0xdc4e41"]</option>
+        <option name="rangeValues">[100000]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="useColors">0</option>
+        <drilldown>
+          <link target="_blank">search?q=%60illumio_get_index%60%20sourcetype%3D%22illumio%3Apce%3Ametadata%22%20illumio_type%3D%22illumio%3Apce%3Aworkload%22%20(%20hostname%3D$host_ip|s$%20OR%20public_ip%3D$host_ip|s$%20)%20%22agent.status.status%22%3Dactive%20%0D%0A%7C%20dedup%20hostname%20%0D%0A%7C%20search%20$leader_fqdn$%20$fqdn$%20%0D%0A%7C%20rex%20field%3Dhref%20%22orgs%5C%2F%5Cd%2B%5C%2Fworkloads%5C%2F(%3F%3Cworkload_uuid%3E%5CS%2B)%22%20%0D%0A%7C%20fillnull%20value%3D%22-%22%20labels%7B%7D.href%20%0D%0A%7C%20mvexpand%20labels%7B%7D.href%20%0D%0A%7C%20rename%20labels%7B%7D.href%20as%20href%20%0D%0A%7C%20lookup%20illumio_workload_mapping_lookup%20href%20workload_uuid%20OUTPUTNEW%20type%20label%20%0D%0A%7C%20eval%20%7Btype%7D_label%3Dlabel%20%0D%0A%7C%20search%20$app_label_metadata$%20$env_label_metadata$%20$loc_label_metadata$%20%0D%0A%7C%20dedup%20workload_uuid%20%20%0D%0A%7C%20table%20hostname%20%0D%0A%7C%20rename%20hostname%20as%20%22Active%20VENs%22&amp;earliest=$earliest$&amp;latest=$latest$</link>
+        </drilldown>
+      </single>
+    </panel>
+    <panel>
+      <title>Suspended VEN</title>
+      <single>
+        <search>
+          <query>`illumio_get_index` sourcetype="illumio:pce:metadata" illumio_type="illumio:pce:workload" ( hostname=$host_ip|s$ OR public_ip=$host_ip|s$ ) "agent.status.status"=suspended 
+| dedup hostname 
+| search $leader_fqdn$ $fqdn$ 
+| rex field=href "orgs\/\d+\/workloads\/(?&lt;workload_uuid&gt;\S+)" 
+| fillnull value="-" labels{}.href 
+| mvexpand labels{}.href 
+| rename labels{}.href as href 
+| lookup illumio_workload_mapping_lookup href workload_uuid OUTPUTNEW type label 
+| eval {type}_label=label 
+| search $app_label_metadata$ $env_label_metadata$ $loc_label_metadata$ 
+| dedup workload_uuid 
+| stats count as "Suspended VEN"
+          </query>
+          <earliest>$earliest$</earliest>
+          <latest>$latest$</latest>
+        </search>
+        <option name="colorMode">block</option>
+        <option name="drilldown">all</option>
+        <option name="rangeColors">["0xf1813f","0xdc4e41"]</option>
+        <option name="rangeValues">[100000]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="useColors">0</option>
+        <drilldown>
+          <link target="_blank">search?q=%60illumio_get_index%60%20sourcetype%3D%22illumio%3Apce%3Ametadata%22%20illumio_type%3D%22illumio%3Apce%3Aworkload%22%20(%20hostname%3D$host_ip|s$%20OR%20public_ip%3D$host_ip|s$%20)%20%22agent.status.status%22%3Dsuspended%20%0D%0A%7C%20dedup%20hostname%20%0D%0A%7C%20search%20$leader_fqdn$%20$fqdn$%20%0D%0A%7C%20rex%20field%3Dhref%20%22orgs%5C%2F%5Cd%2B%5C%2Fworkloads%5C%2F(%3F%3Cworkload_uuid%3E%5CS%2B)%22%20%0D%0A%7C%20fillnull%20value%3D%22-%22%20labels%7B%7D.href%20%0D%0A%7C%20mvexpand%20labels%7B%7D.href%20%0D%0A%7C%20rename%20labels%7B%7D.href%20as%20href%20%0D%0A%7C%20lookup%20illumio_workload_mapping_lookup%20href%20workload_uuid%20OUTPUTNEW%20type%20label%20%0D%0A%7C%20eval%20%7Btype%7D_label%3Dlabel%20%0D%0A%7C%20search%20$app_label_metadata$%20$env_label_metadata$%20$loc_label_metadata$%20%0D%0A%7C%20dedup%20workload_uuid%20%20%0D%0A%7C%20table%20hostname%20%0D%0A%7C%20rename%20hostname%20as%20%22Suspended%20VEN%22&amp;earliest=$earliest$&amp;latest=$latest$</link>
+        </drilldown>
+      </single>
+    </panel>
+    <panel>
+      <title>Stopped VEN</title>
+      <single>
+        <search>
+          <query>`illumio_get_index` sourcetype="illumio:pce:metadata" illumio_type="illumio:pce:workload" ( hostname=$host_ip|s$ OR public_ip=$host_ip|s$ ) "agent.status.status"=stopped 
+| dedup hostname 
+| search $leader_fqdn$ $fqdn$ 
+| rex field=href "orgs\/\d+\/workloads\/(?&lt;workload_uuid&gt;\S+)" 
+| fillnull value="-" labels{}.href 
+| mvexpand labels{}.href 
+| rename labels{}.href as href 
+| lookup illumio_workload_mapping_lookup href workload_uuid OUTPUTNEW type label 
+| eval {type}_label=label 
+| search $app_label_metadata$ $env_label_metadata$ $loc_label_metadata$ 
+| dedup workload_uuid 
+| stats count as "Stopped VEN"
+          </query>
+          <earliest>$earliest$</earliest>
+          <latest>$latest$</latest>
+        </search>
+        <option name="colorMode">block</option>
+        <option name="drilldown">all</option>
+        <option name="rangeColors">["0xdc4e41","0xdc4e41"]</option>
+        <option name="rangeValues">[100000]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="useColors">0</option>
+        <drilldown>
+          <link target="_blank">search?q=%60illumio_get_index%60%20sourcetype%3D%22illumio%3Apce%3Ametadata%22%20illumio_type%3D%22illumio%3Apce%3Aworkload%22%20(%20hostname%3D$host_ip|s$%20OR%20public_ip%3D$host_ip|s$%20)%20%22agent.status.status%22%3Dstopped%20%0D%0A%7C%20dedup%20hostname%20%0D%0A%7C%20search%20$leader_fqdn$%20$fqdn$%20%0D%0A%7C%20rex%20field%3Dhref%20%22orgs%5C%2F%5Cd%2B%5C%2Fworkloads%5C%2F(%3F%3Cworkload_uuid%3E%5CS%2B)%22%20%0D%0A%7C%20fillnull%20value%3D%22-%22%20labels%7B%7D.href%20%0D%0A%7C%20mvexpand%20labels%7B%7D.href%20%0D%0A%7C%20rename%20labels%7B%7D.href%20as%20href%20%0D%0A%7C%20lookup%20illumio_workload_mapping_lookup%20href%20workload_uuid%20OUTPUTNEW%20type%20label%20%0D%0A%7C%20eval%20%7Btype%7D_label%3Dlabel%20%0D%0A%7C%20search%20$app_label_metadata$%20$env_label_metadata$%20$loc_label_metadata$%20%0D%0A%7C%20dedup%20workload_uuid%0D%0A%7C%20table%20hostname%20%0D%0A%7C%20rename%20hostname%20as%20%22Stopped%20VEN%22&amp;earliest=$earliest$&amp;latest=$latest$</link>
+        </drilldown>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Policy Enforcement State</title>
+      <chart>
+        <search>
+          <query>`illumio_get_index` sourcetype="illumio:pce:metadata" illumio_type="illumio:pce:workload" ( hostname=$host_ip|s$ OR public_ip=$host_ip|s$ ) 
+| dedup hostname 
+| search $leader_fqdn$ $fqdn$ 
+| rex field=href "orgs\/\d+\/workloads\/(?&lt;workload_uuid&gt;\S+)" 
+| fillnull value="-" labels{}.href 
+| mvexpand labels{}.href 
+| rename labels{}.href as href 
+| lookup illumio_workload_mapping_lookup href workload_uuid OUTPUTNEW type label 
+| eval {type}_label=label 
+| search $app_label_metadata$ $env_label_metadata$ $loc_label_metadata$ 
+| dedup workload_uuid 
+| rename agent.config.mode as "Policy State" 
+| stats count by "Policy State"
+          </query>
+          <earliest>$earliest$</earliest>
+          <latest>$latest$</latest>
+        </search>
+        <option name="charting.chart">pie</option>
+        <option name="charting.drilldown">all</option>
+        <option name="charting.legend.placement">none</option>
+        <option name="refresh.display">progressbar</option>
+        <drilldown>
+          <link target="_blank">search?q=%60illumio_get_index%60%20sourcetype%3D%22illumio%3Apce%3Ametadata%22%20illumio_type%3D%22illumio%3Apce%3Aworkload%22%20(%20hostname%3D$host_ip|s$%20OR%20public_ip%3D$host_ip|s$%20)%0A%7C%20dedup%20hostname%20%0A%7C%20search%20$leader_fqdn$%20$fqdn$%20(agent.config.mode%3D%22$click.value$%22)%20%0A%7C%20rex%20field%3Dhref%20%22orgs%5C%2F%5Cd%2B%5C%2Fworkloads%5C%2F(%3F%3Cworkload_uuid%3E%5CS%2B)%22%20%0A%7C%20fillnull%20value%3D%22-%22%20labels%7B%7D.href%20%0A%7C%20mvexpand%20labels%7B%7D.href%20%0A%7C%20rename%20labels%7B%7D.href%20as%20href%20%0A%7C%20lookup%20illumio_workload_mapping_lookup%20href%20workload_uuid%20OUTPUTNEW%20type%20label%20%0A%7C%20eval%20%7Btype%7D_label%3Dlabel%20%0A%7C%20search%20$app_label_metadata$%20$env_label_metadata$%20$loc_label_metadata$%20%0D%0A%7C%20dedup%20workload_uuid&amp;earliest=$earliest$&amp;latest=$latest$</link>
+        </drilldown>
+      </chart>
+    </panel>
+    <panel>
+      <title>Policy Synchronization Status</title>
+      <chart>
+        <search>
+          <query>`illumio_get_index` sourcetype="illumio:pce:metadata" illumio_type="illumio:pce:workload" ( hostname=$host_ip|s$ OR public_ip=$host_ip|s$ ) 
+| dedup hostname 
+| search $leader_fqdn$ $fqdn$ 
+| rex field=href "orgs\/\d+\/workloads\/(?&lt;workload_uuid&gt;\S+)" 
+| fillnull value="-" labels{}.href 
+| mvexpand labels{}.href 
+| rename labels{}.href as href 
+| lookup illumio_workload_mapping_lookup href workload_uuid OUTPUTNEW type label 
+| eval {type}_label=label 
+| search $app_label_metadata$ $env_label_metadata$ $loc_label_metadata$ 
+| dedup workload_uuid 
+| stats count by agent.status.security_policy_sync_state 
+| eval agent.status.security_policy_sync_state=if('agent.status.security_policy_sync_state'="-","unknown",'agent.status.security_policy_sync_state') 
+| rename agent.status.security_policy_sync_state as "Policy Sync"
+          </query>
+          <earliest>$earliest$</earliest>
+          <latest>$latest$</latest>
+        </search>
+        <option name="charting.chart">pie</option>
+        <option name="charting.drilldown">all</option>
+        <option name="charting.legend.placement">none</option>
+        <option name="refresh.display">progressbar</option>
+        <drilldown>
+          <link target="_blank">search?q=%60illumio_get_index%60%20sourcetype%3D%22illumio%3Apce%3Ametadata%22%20illumio_type%3D%22illumio%3Apce%3Aworkload%22%20(%20hostname%3D$host_ip|s$%20OR%20public_ip%3D$host_ip|s$%20)%20%0A%7C%20dedup%20hostname%20%0A%7C%20search%20$leader_fqdn$%20$fqdn$%20%0A%7C%20rex%20field%3Dhref%20%22orgs%5C%2F%5Cd%2B%5C%2Fworkloads%5C%2F(%3F%3Cworkload_uuid%3E%5CS%2B)%22%20%0A%7C%20fillnull%20value%3D%22-%22%20labels%7B%7D.href%20%0A%7C%20mvexpand%20labels%7B%7D.href%20%0A%7C%20rename%20labels%7B%7D.href%20as%20href%20%0A%7C%20lookup%20illumio_workload_mapping_lookup%20href%20workload_uuid%20OUTPUTNEW%20type%20label%20%0A%7C%20eval%20%7Btype%7D_label%3Dlabel%20%0A%7C%20search%20$app_label_metadata$%20$env_label_metadata$%20$loc_label_metadata$%20%0D%0A%7C%20dedup%20workload_uuid%0A%7C%20eval%20agent.status.security_policy_sync_state%3Dif('agent.status.security_policy_sync_state'%3D%22-%22%2C%22unknown%22%2C'agent.status.security_policy_sync_state')%20%0A%7C%20search%20agent.status.security_policy_sync_state%3D%22$click.value$%22&amp;earliest=$earliest$&amp;latest=$latest$</link>
+        </drilldown>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Workload Details</title>
+      <table>
+        <search>
+          <query>`illumio_get_index` sourcetype="illumio:pce:metadata" illumio_type="illumio:pce:workload" ( hostname=$host_ip|s$ OR public_ip=$host_ip|s$ ) 
+| dedup hostname 
+| search $leader_fqdn$ $fqdn$ 
+| eval Workload=if(name="null",hostname,name) 
+| rex field=href "orgs\/\d+\/workloads\/(?&lt;workload_uuid&gt;\S+)" 
+| fillnull value="-" labels{}.href 
+| mvexpand labels{}.href 
+| rename labels{}.href as href 
+| lookup illumio_workload_mapping_lookup href workload_uuid OUTPUTNEW type label 
+| eval {type}_label=label 
+| stats values as * by workload_uuid 
+| fillnull value="-" hostname, public_ip, interfaces{}.name, interfaces{}.address, os_id, online, agent.status.status, agent.status.security_policy_applied_at, agent.status.security_policy_sync_state, agent.config.mode, agent.config.log_traffic, app_label, role_label, env_label, loc_label, pce_fqdn 
+| eval "Updated at"=strptime(updated_at,"%Y-%m-%dT%H:%M:%S.%6NZ"),"Policy applied at"=case('agent.status.security_policy_applied_at'="null","null",'agent.status.security_policy_applied_at'="-","-",1=1,strptime('agent.status.security_policy_applied_at',"%Y-%m-%dT%H:%M:%S.%6NZ")) 
+| fieldformat "Updated at"=strftime('Updated at',"%+") 
+| fieldformat "Policy applied at"=case('Policy applied at'="null","null",'Policy applied at'="-","-",1=1,strftime('Policy applied at',"%+"))
+| eval "Workload labels - RAEL" = 'role_label'." 
+".'app_label'." 
+".'env_label'." 
+".'loc_label' 
+| search $app_label_metadata$ $env_label_metadata$ $loc_label_metadata$ 
+| table Workload, hostname, interfaces{}.name, interfaces{}.address, os_id, "Workload labels - RAEL", "Updated at", online, agent.config.mode, agent.status.status, agent.status.security_policy_sync_state, "Policy applied at", agent.config.log_traffic, pce_fqdn 
+| rename hostname as "Host Name", interfaces{}.name as Interfaces, interfaces{}.address as IPs, os_id as "OS Name", online as Online, agent.status.status as "Status", agent.status.security_policy_sync_state as "Policy Sync", agent.config.mode as "Policy State", agent.config.log_traffic as "Log Traffic", app_label as "App Label", role_label as "Role Label", env_label as "Env Label", loc_label as "Loc Label", pce_fqdn as PCE 
+| sort - "Updated at"
+          </query>
+          <earliest>$earliest$</earliest>
+          <latest>$latest$</latest>
+        </search>
+        <option name="count">5</option>
+        <option name="drilldown">row</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="wrap">true</option>
+        <drilldown>
+          <link target="_blank">search?q=%60illumio_get_index%60%20sourcetype%3D%22illumio%3Apce%3Ametadata%22%20illumio_type%3D%22illumio%3Apce%3Aworkload%22%20%0D%0A%7C%20eval%20Workload%3Dif(name%3D%22null%22%2Chostname%2Cname)%2C%20updated_at%3Dstrptime('updated_at'%2C%22%25Y-%25m-%25dT%25H%3A%25M%3A%25S%22)%2Ctime%3Dstrptime(%22$row.Updated at$%22%2C%22%25a%20%25B%20%25d%20%25H%3A%25M%3A%25S%20%25Z%20%25Y%22)%20%0D%0A%7C%20fillnull%20value%3D%22-%22%20hostname%2C%20public_ip%2C%20interfaces%7B%7D.name%2C%20interfaces%7B%7D.address%2C%20os_id%2C%20online%2C%20agent.status.status%2C%20agent.status.security_policy_sync_state%2C%20agent.status.security_policy_applied_at%2C%20agent.config.mode%2C%20agent.config.log_traffic%2C%20pce_fqdn%20%0D%0A%7C%20eval%20policy_time%3Dcase('agent.status.security_policy_applied_at'%3D%22null%22%2C%22null%22%2C'agent.status.security_policy_applied_at'%3D%22-%22%2C%22-%22%2C1%3D1%2Cstrptime('agent.status.security_policy_applied_at'%2C%22%25Y-%25m-%25dT%25H%3A%25M%3A%25S%22))%2C%20policy_applied_at%20%3D%20case(%22$row.Policy applied at$%22%3D%22null%22%2C%22null%22%2C%22$row.Policy applied at$%22%3D%22-%22%2C%22-%22%2C1%3D1%2Cstrptime(%22$row.Policy applied at$%22%2C%22%25a%20%25B%20%25d%20%25H%3A%25M%3A%25S%20%25Z%20%25Y%22))%20%0D%0A%7C%20search%20Workload%3D%22$row.Workload$%22%20hostname%3D%22$row.Host Name$%22%20os_id%3D%22$row.OS Name$%22%20online%3D%22$row.Online$%22%20agent.config.mode%3D%22$row.Policy State$%22%20agent.status.status%3D%22$row.Status$%22%20agent.status.security_policy_sync_state%3D%22$row.Policy Sync$%22%20agent.config.log_traffic%3D%22$row.Log Traffic$%22%20pce_fqdn%3D%22$row.PCE$%22%20%0D%0A%7C%20where%20updated_at%3Dtime%20AND%20policy_time%3Dpolicy_applied_at&amp;earliest=$earliest$&amp;latest=$latest$</link>
+        </drilldown>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Audit Events</title>
+      <input type="multiselect" token="event_type_include" searchWhenChanged="true">
+        <label>Include Event Type</label>
+        <choice value="*">All</choice>
+        <search>
+          <query>| tstats `summariesonly` values(Illumio.category) as category, values(Illumio.combined_key_value) as combined_key_value, values(Illumio.event_type) as event_type, $leader_values$ values(Illumio.pce_fqdn) as pce_fqdn, values(Illumio.src_ip) as src_ip, values(Illumio.created_hostname) as created_hostname from datamodel=Illumio where nodename=Illumio.Illumio_PCE by Illumio.timestamp 
+| rename Illumio.timestamp as timestamp 
+| search timestamp!="none" $app_label_pce$ $env_label_pce$ $loc_label_pce$ (category="auditable" OR category="system_events") $leader_fqdn$ $fqdn$ (event_type!=user.*)
+    [| makeresults 
+    | eval result=if($host_ip|s$=="*","( )","( src_ip=\""+$host_ip|s$+"\" OR created_hostname=\""+$host_ip|s$+"\" )") 
+    | return $result ] 
+| stats count by event_type
+          </query>
+          <earliest>$earliest$</earliest>
+          <latest>$latest$</latest>
+        </search>
+        <delimiter> OR </delimiter>
+        <fieldForLabel>event_type</fieldForLabel>
+        <fieldForValue>event_type</fieldForValue>
+        <prefix>(</prefix>
+        <suffix>)</suffix>
+        <valuePrefix>event_type=</valuePrefix>
+        <default>*</default>
+        <initialValue>*</initialValue>
+      </input>
+      <input type="multiselect" token="event_type_exclude">
+        <label>Exclude Event Type</label>
+        <prefix>(</prefix>
+        <suffix>)</suffix>
+        <valuePrefix>event_type!=</valuePrefix>
+        <delimiter> AND </delimiter>
+        <fieldForLabel>event_type</fieldForLabel>
+        <fieldForValue>event_type</fieldForValue>
+        <search>
+          <query>| tstats `summariesonly` values(Illumio.category) as category, values(Illumio.combined_key_value) as combined_key_value, values(Illumio.event_type) as event_type, $leader_values$ values(Illumio.pce_fqdn) as pce_fqdn, values(Illumio.src_ip) as src_ip, values(Illumio.created_hostname) as created_hostname from datamodel=Illumio where nodename=Illumio.Illumio_PCE by Illumio.timestamp 
+| rename Illumio.timestamp as timestamp 
+| search timestamp!="none" $app_label_pce$ $env_label_pce$ $loc_label_pce$ (category="auditable" OR category="system_events") $leader_fqdn$ $fqdn$ (event_type!=user.*)
+    [| makeresults 
+    | eval result=if($host_ip|s$=="*","( )","( src_ip=\""+$host_ip|s$+"\" OR created_hostname=\""+$host_ip|s$+"\" )") 
+    | return $result ] 
+| stats count by event_type
+          </query>
+          <earliest>$earliest$</earliest>
+          <latest>$latest$</latest>
+        </search>
+        <choice value="none">None</choice>
+        <default>none</default>
+        <initialValue>none</initialValue>
+      </input>
+      <input type="multiselect" token="audit_status" searchWhenChanged="true">
+        <label>Status</label>
+        <fieldForLabel>status</fieldForLabel>
+        <fieldForValue>status</fieldForValue>
+        <prefix>(</prefix>
+        <suffix>)</suffix>
+        <valuePrefix>status=</valuePrefix>
+        <default>*</default>
+        <initialValue>*</initialValue>
+        <choice value="*">All</choice>
+        <search>
+          <query>| tstats `summariesonly` values(Illumio.event_type) as event_type, $leader_values$ values(Illumio.pce_fqdn) as pce_fqdn, values(Illumio.notification_type) as notification_type, values(Illumio.severity) as severity, values(Illumio.status) as status from datamodel=Illumio where nodename=Illumio.Illumio_PCE by Illumio.timestamp 
+| search $event_type_include$ $event_type_exclude$ $audit_severity$ $audit_notification_type$ (notification_type!=user.*) (event_type!=user.*) $leader_fqdn$ $fqdn$
+| stats count by status
+          </query>
+          <earliest>$earliest$</earliest>
+          <latest>$latest$</latest>
+        </search>
+        <delimiter> OR </delimiter>
+      </input>
+      <input type="multiselect" token="audit_severity" searchWhenChanged="true">
+        <label>Severity</label>
+        <fieldForLabel>severity</fieldForLabel>
+        <fieldForValue>severity</fieldForValue>
+        <prefix>(</prefix>
+        <suffix>)</suffix>
+        <valuePrefix>severity=</valuePrefix>
+        <default>*</default>
+        <initialValue>*</initialValue>
+        <choice value="*">All</choice>
+        <search>
+          <query>| tstats `summariesonly` values(Illumio.event_type) as event_type, $leader_values$ values(Illumio.pce_fqdn) as pce_fqdn, values(Illumio.notification_type) as notification_type, values(Illumio.severity) as severity, values(Illumio.status) as status from datamodel=Illumio where nodename=Illumio.Illumio_PCE by Illumio.timestamp 
+| search $event_type_include$ $event_type_exclude$ $audit_status$ $audit_notification_type$ (notification_type!=user.*) (event_type!=user.*) $leader_fqdn$ $fqdn$
+| stats count by severity
+          </query>
+          <earliest>$earliest$</earliest>
+          <latest>$latest$</latest>
+        </search>
+        <delimiter> OR </delimiter>
+      </input>
+      <input type="multiselect" token="audit_notification_type" searchWhenChanged="true">
+        <label>Notification Type</label>
+        <fieldForLabel>notification_type</fieldForLabel>
+        <fieldForValue>notification_type</fieldForValue>
+        <prefix>(</prefix>
+        <suffix>)</suffix>
+        <valuePrefix>notification_type=</valuePrefix>
+        <default>*</default>
+        <initialValue>*</initialValue>
+        <choice value="*">All</choice>
+        <search>
+          <query>| tstats `summariesonly` values(Illumio.event_type) as event_type, $leader_values$ values(Illumio.pce_fqdn) as pce_fqdn, values(Illumio.notification_type) as notification_type, values(Illumio.severity) as severity, values(Illumio.status) as status from datamodel=Illumio where nodename=Illumio.Illumio_PCE by Illumio.timestamp 
+| search $event_type_include$ $event_type_exclude$ $audit_status$ $audit_severity$ (notification_type!=user.*) (event_type!=user.*) $leader_fqdn$ $fqdn$
+| stats count by notification_type
+          </query>
+          <earliest>$earliest$</earliest>
+          <latest>$latest$</latest>
+        </search>
+        <delimiter> OR </delimiter>
+      </input>
+      <table>
+        <search>
+          <query>| tstats `summariesonly` values(Illumio.category) as category, values(Illumio.combined_key_value) as combined_key_value, values(Illumio.event_type) as event_type, $leader_values$ values(Illumio.pce_fqdn) as pce_fqdn, values(Illumio.src_ip) as src_ip, values(Illumio.hostname) as created_hostname, values(Illumio.notification_type) as notification_type, values(Illumio.severity) as severity, values(Illumio.status) as status from datamodel=Illumio where nodename=Illumio.Illumio_PCE by Illumio.timestamp 
+| rename Illumio.timestamp as timestamp 
+| search timestamp!="none" $app_label_pce$ $env_label_pce$ $loc_label_pce$ (category="auditable" OR category="system_events") $event_type_include$ $event_type_exclude$ $audit_status$ $audit_severity$ $audit_notification_type$ $leader_fqdn$ $fqdn$ (notification_type!=user.*) (event_type!=user.*)  
+    [| makeresults 
+    | eval result=if($host_ip|s$=="*","( )","( src_ip=\""+$host_ip|s$+"\" OR created_hostname=\""+$host_ip|s$+"\" )") 
+    | return $result ] 
+| table timestamp, event_type, created_hostname, src_ip, notification_type, severity, status, pce_fqdn 
+| rename timestamp AS "Timestamp" event_type AS "Event Type" created_hostname AS "Host Name" src_ip AS "Source IP" notification_type as "Notification Type" severity AS "Severity" status AS "Status" pce_fqdn AS "PCE" 
+| fillnull value="-" "Host Name" "Source IP" "Notification Type" 
+| eval Timestamp=strptime('Timestamp',"%Y-%m-%dT%H:%M:%S.%3N") 
+| fieldformat "Timestamp"=strftime('Timestamp',"%+") 
+| sort 0 -Timestamp
+          </query>
+          <earliest>$earliest$</earliest>
+          <latest>$latest$</latest>
+        </search>
+        <option name="count">10</option>
+        <option name="drilldown">row</option>
+        <option name="refresh.display">progressbar</option>
+        <drilldown>
+          <link target="_blank">search?q=%60illumio_get_index%60%20sourcetype%3D%22illumio%3Apce%22%20timestamp!%3D%22none%22%20(category%3D%22auditable%22%20OR%20category%3D%22system_events%22)%20%7C%20eval%20timestamp%3Dstrptime('timestamp'%2C%22%25Y-%25m-%25dT%25H%3A%25M%3A%25S%22)%20%0A%7C%20eval%20time%3Dstrptime(%22$row.Timestamp$%22%2C%22%25a%20%25B%20%25d%20%25H%3A%25M%3A%25S%20%25Z%20%25Y%22)%20%7C%20fillnull%20value%3D%22-%22%20hostname%20src_ip%20notification_type%20%7C%20search%20event_type%3D%22$row.Event Type$%22%20hostname%3D%22$row.Host Name$%22%20src_ip%3D%22$row.Source IP$%22%20notification_type%3D%22$row.Notification Type$%22%20severity%3D%22$row.Severity$%22%20status%3D%22$row.Status$%22%20pce_fqdn%3D%22$row.PCE$%22%20%7C%20where%20timestamp%3Dtime&amp;earliest=$earliest$&amp;latest=$latest$</link>
+        </drilldown>
+      </table>
+    </panel>
+  </row>
+</form>

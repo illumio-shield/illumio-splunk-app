@@ -1,0 +1,16 @@
+<dashboard version="1.1" script="invoke_ar_action.js" stylesheet="custom_ar_button.css">
+  <label>Port Scan</label>
+  <row>
+    <panel>
+      <table id="quarantineHost">
+        <search id="quarantineSearch">
+          <query>`illumio_portscan_index` search_name="Illumio_PortScan" | rename orig_host as host, fqdn as pce_fqdn   | search $fqdn$ $leader_fqdn$ | eval src_workload_uuid=REPLACE('Illumio.src_href',"/orgs/\d+/workloads/",""), dst_workload_uuid=REPLACE('Illumio.dst_href',"/orgs/\d+/workloads/","") | eval workload_uuid=if(src_workload_uuid="-", dst_workload_uuid, src_workload_uuid) | eval Quarantine=workload_uuid + ","+ pce_fqdn,data_file=1 | lookup illumio_workload_mapping_lookup workload_uuid as src_workload_uuid OUTPUT type_label as "Source Label" | lookup illumio_workload_mapping_lookup workload_uuid as dst_workload_uuid OUTPUT type_label as "Destination Label" | lookup illumio_hostname_ip_mapping_lookup fqdn as pce_fqdn ip as Illumio.src_ip OUTPUT hostname as src_hostname | lookup illumio_hostname_ip_mapping_lookup fqdn as pce_fqdn ip as Illumio.dst_ip OUTPUT hostname as dst_hostname | rename src_hostname as Source, Illumio.src_ip as "Source IP", dst_hostname as Destination, Illumio.dst_ip as "Destination IP" | join [ | rest splunk_server=local /services/authentication/current-context | eval show_quarantine=if(roles="illumio_quarantine_workload",1,0),data_file=1 | table show_quarantine, data_file ] | eval show_quarantine = if(show_quarantine = 1 AND 'Illumio.src_href'!="-", 1,0) | eval Quarantine=Quarantine +","+ show_quarantine, Investigate='Source IP', Time= strftime(time, "%Y-%m-%d %H:%M:%S %Z") | fillnull value="-" | table Time, "Source IP", Source, "Destination IP", Destination, "Source Label", "Destination Label", Quarantine, Investigate</query>
+          <earliest>$earliest$</earliest>
+          <latest>$latest$</latest>
+        </search>
+        <option name="count">10</option>
+        <option name="drilldown">none</option>
+      </table>
+    </panel>
+  </row>
+</dashboard>

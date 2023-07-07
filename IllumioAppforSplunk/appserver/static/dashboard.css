@@ -1,0 +1,107 @@
+input{
+    width:99.90% !important;
+    display: block;
+    background: #fff;
+    border: 1px solid #ccc;
+    overflow: hidden;
+    cursor: text;
+    line-height: 21px;
+    color: #555;
+    border-radius: 4px;
+}
+.ui-autocomplete-multiselect{
+    border-radius: 4px !important;
+    background: none !important;
+    margin-right: 15px;
+}
+.ui-autocomplete-multiselect.ui-state-active{
+    border: 1px solid #ccc;       
+}
+.ui-autocomplete-multiselect-item{
+    display: inline-block;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 1px 3px;
+    margin: 3px;
+    color: #333;
+    background-color: #f6f6f6;
+    font-weight: normal;
+}
+div[id^='daterange_view'],
+div[id^='advanced_view'],
+div[id^='relative_view'],
+div[id^='realtime_view'],
+div[id^='dateandtimerange_view'] {
+    display: none;
+}
+.presets-divider-wrap{
+    display: none;
+}
+.shared-timerangepicker-dialog {
+    width: 150px ;
+}
+.ui-icon {
+    display: inline-block !important;
+}
+.screen_loader {
+    display:none;
+    position: fixed;
+    left: 0px;
+    top: 0px;
+    width: 100%;
+    height: 100%;
+    z-index: 9999;
+    background: url("/static/app/IllumioAppforSplunk/loading.gif") center no-repeat;
+    background-color: #33485b;
+    opacity: 0.4;
+    background-size: 100px 100px;
+}
+
+.multiselectInput > div {
+	width:202px !important
+}
+
+.multiselectInput > div > input{
+	width:202px !important
+}
+
+.multiselectInput{
+    margin-left: 2px;
+}
+.splunk-choice-input{
+    padding-bottom: 0px !important;
+}
+#panel_top_services_with_id #panel_top_services_with_id-fieldset,
+#panel_top_workloads_with_id #panel_top_workloads_with_id-fieldset {
+	float: left !important;
+	clear: right !important;
+	width: 65% !important;
+}
+#panel_top_services_with_id > div.dashboard-panel :not(.panel-element-row) + .panel-element-row,
+#panel_top_workloads_with_id > div.dashboard-panel :not(.panel-element-row) + .panel-element-row{
+	width: 30% !important;
+	clear: right !important;
+	float: left !important;
+}
+#panel_top_services_with_id > div.dashboard-panel :not(.panel-element-row) + .panel-element-row div[data-view="views/dashboard/element/Html"],
+#panel_top_workloads_with_id > div.dashboard-panel :not(.panel-element-row) + .panel-element-row div[data-view="views/dashboard/element/Html"] {
+	padding-top: 10%;
+}
+#panel_top_services_with_id > div.dashboard-panel :not(.panel-element-row) + .panel-element-row > div[data-view="views/dashboard/element/Html"] .ui-autocomplete-multiselect,
+#panel_top_workloads_with_id > div.dashboard-panel :not(.panel-element-row) + .panel-element-row > div[data-view="views/dashboard/element/Html"] .ui-autocomplete-multiselect {
+	clear: right !important;
+}
+#panel_top_services_with_id > div.dashboard-panel :not(.panel-element-row) + .panel-element-row > div[data-view="views/dashboard/element/Html"] .ui-autocomplete-multiselect .ui-autocomplete-multiselect-item,
+#panel_top_workloads_with_id > div.dashboard-panel :not(.panel-element-row) + .panel-element-row > div[data-view="views/dashboard/element/Html"] .ui-autocomplete-multiselect .ui-autocomplete-multiselect-item
+{
+	word-break: break-all;
+}
+#panel_top_services_with_id div[data-view="views/dashboard/form/Input"],
+#panel_top_workloads_with_id div[data-view="views/dashboard/form/Input"] {
+	width: auto !important;
+}
+#panel_top_services_with_id div[data-view="views/dashboard/form/Input"] .select2-container,
+#panel_top_workloads_with_id div[data-view="views/dashboard/form/Input"] .select2-container {
+	width: auto !important;
+}
+

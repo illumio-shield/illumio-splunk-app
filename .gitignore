@@ -1,0 +1,23 @@
+# Python cache
+**/*.pyc
+**/__pycache__/
+
+# Test coverage
+.coverage
+.pytest_cache
+
+# Local configs
+local
+**/metadata/local.meta
+
+# Vscode settings
+.vscode/
+
+# Logs
+logs/
+
+# Dynamically generated pickle files
+*.pickle
+
+# Dynamically generated lookups
+**/lookups/illumio_portscan_details.csv

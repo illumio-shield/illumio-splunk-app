@@ -1,0 +1,16 @@
+<nav search_view="search" color="#000000" >
+  <view name="illumio" default='true'/>
+  <collection label="PCE">
+    <view name="pce_operations" />
+    <view name="pce_user_authentication" />
+  </collection>
+  <collection label="Workloads">
+    <view name="workload_operations" />
+    <view name="workload_investigation" />
+  </collection>
+  <view name="traffic_explorer" />
+  <view name="illumio_alerts_configuration" />
+  <view name="change_monitoring" />
+  <view name="alerts" />
+  <view name="search" />
+</nav>

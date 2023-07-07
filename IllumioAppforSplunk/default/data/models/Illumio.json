@@ -1,0 +1,651 @@
+{
+    "modelName": "Illumio",
+    "displayName": "Illumio",
+    "description": "",
+    "objectSummary": {
+        "Event-Based": 6,
+        "Transaction-Based": 0,
+        "Search-Based": 0
+    },
+    "objects": [
+        {
+            "objectName": "Illumio",
+            "displayName": "Illumio",
+            "parentName": "BaseEvent",
+            "comment": "",
+            "fields": [
+                {
+                    "fieldName": "action",
+                    "owner": "Illumio",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "action",
+                    "comment": ""
+                },
+                {
+                    "fieldName": "count",
+                    "owner": "Illumio",
+                    "type": "number",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "count",
+                    "comment": ""
+                },
+                {
+                    "fieldName": "dir",
+                    "owner": "Illumio",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "dir",
+                    "comment": ""
+                },
+                {
+                    "fieldName": "dst_href",
+                    "owner": "Illumio",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "dst_href",
+                    "comment": ""
+                },
+                {
+                    "fieldName": "dst_ip",
+                    "owner": "Illumio",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "dst_ip",
+                    "comment": ""
+                },
+                {
+                    "fieldName": "dst_port",
+                    "owner": "Illumio",
+                    "type": "number",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "dst_port",
+                    "comment": ""
+                },
+                {
+                    "fieldName": "hostname",
+                    "owner": "Illumio",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "hostname",
+                    "comment": ""
+                },
+                {
+                    "fieldName": "label",
+                    "owner": "Illumio",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "label",
+                    "comment": ""
+                },
+                {
+                    "fieldName": "os_name",
+                    "owner": "Illumio",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "os_name",
+                    "comment": ""
+                },
+                {
+                    "fieldName": "pce_fqdn",
+                    "owner": "Illumio",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "pce_fqdn",
+                    "comment": ""
+                },
+                {
+                    "fieldName": "leader_fqdn",
+                    "owner": "Illumio",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "leader_fqdn",
+                    "comment": ""
+                },
+                {
+                    "fieldName": "protocol",
+                    "owner": "Illumio",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "protocol",
+                    "comment": ""
+                },
+                {
+                    "fieldName": "src_href",
+                    "owner": "Illumio",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "src_href",
+                    "comment": ""
+                },
+                {
+                    "fieldName": "src_ip",
+                    "owner": "Illumio",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "src_ip",
+                    "comment": ""
+                },
+                {
+                    "fieldName": "type_label",
+                    "owner": "Illumio",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "type_label",
+                    "comment": ""
+                },
+                {
+                    "fieldName": "workload_uuid",
+                    "owner": "Illumio",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "workload_uuid",
+                    "comment": ""
+                },
+                {
+                    "fieldName": "category",
+                    "owner": "Illumio",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "category",
+                    "comment": ""
+                },
+                {
+                    "fieldName": "event_type",
+                    "owner": "Illumio",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "event_type",
+                    "comment": ""
+                },
+                {
+                    "fieldName": "created_hostname",
+                    "owner": "Illumio",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "created_hostname",
+                    "comment": ""
+                },
+                {
+                    "fieldName": "notification_type",
+                    "owner": "Illumio",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "notification_type",
+                    "comment": ""
+                },
+                {
+                    "fieldName": "severity",
+                    "owner": "Illumio",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "severity",
+                    "comment": ""
+                },
+                {
+                    "fieldName": "status",
+                    "owner": "Illumio",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "status",
+                    "comment": ""
+                },
+                {
+                    "fieldName": "src_app_label",
+                    "owner": "Illumio",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "src_app_label",
+                    "comment": ""
+                },
+                {
+                    "fieldName": "src_role_label",
+                    "owner": "Illumio",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "src_role_label",
+                    "comment": ""
+                },
+                {
+                    "fieldName": "src_env_label",
+                    "owner": "Illumio",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "src_env_label",
+                    "comment": ""
+                },
+                {
+                    "fieldName": "src_loc_label",
+                    "owner": "Illumio",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "src_loc_label",
+                    "comment": ""
+                },
+                {
+                    "fieldName": "dest_app_label",
+                    "owner": "Illumio",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "dest_app_label",
+                    "comment": ""
+                },
+                {
+                    "fieldName": "dest_role_label",
+                    "owner": "Illumio",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "dest_role_label",
+                    "comment": ""
+                },
+                {
+                    "fieldName": "dest_env_label",
+                    "owner": "Illumio",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "dest_env_label",
+                    "comment": ""
+                },
+                {
+                    "fieldName": "dest_loc_label",
+                    "owner": "Illumio",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "dest_loc_label",
+                    "comment": ""
+                },
+                {
+                    "fieldName": "href",
+                    "owner": "Illumio",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "href",
+                    "comment": ""
+                },
+                {
+                    "fieldName": "workload_href",
+                    "owner": "Illumio",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "workload_href",
+                    "comment": ""
+                },
+                {
+                    "fieldName": "agent_href",
+                    "owner": "Illumio",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "agent_href",
+                    "comment": ""
+                },
+                {
+                    "fieldName": "timestamp",
+                    "owner": "Illumio",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "timestamp",
+                    "comment": ""
+                },
+                {
+                    "fieldName": "combined_key_value",
+                    "owner": "Illumio",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "combined_key_value",
+                    "comment": ""
+                },
+                {
+                    "fieldName": "event_source",
+                    "owner": "Illumio",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "event_source",
+                    "comment": ""
+                },
+                {
+                    "fieldName": "pce_hostname",
+                    "owner": "Illumio",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "pce_hostname",
+                    "comment": ""
+                },
+                {
+                    "fieldName": "ven_policy_average_latency_seconds",
+                    "owner": "Illumio",
+                    "type": "number",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "ven_policy_average_latency_seconds",
+                    "comment": ""
+                },
+                {
+                    "fieldName": "ven_heartbeat_average_latency_seconds",
+                    "owner": "Illumio",
+                    "type": "number",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "ven_heartbeat_average_latency_seconds",
+                    "comment": ""
+                },
+                {
+                    "fieldName": "collector_summaries_per_second",
+                    "owner": "Illumio",
+                    "type": "number",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "collector_summaries_per_second",
+                    "comment": ""
+                },
+                {
+                    "fieldName": "traffic_summaries_per_second",
+                    "owner": "Illumio",
+                    "type": "number",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "traffic_summaries_per_second",
+                    "comment": ""
+                },
+                {
+                    "fieldName": "_time",
+                    "owner": "BaseEvent",
+                    "type": "timestamp",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "_time",
+                    "comment": ""
+                },
+                {
+                    "fieldName": "host",
+                    "owner": "BaseEvent",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "host",
+                    "comment": ""
+                },
+                {
+                    "fieldName": "source",
+                    "owner": "BaseEvent",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "source",
+                    "comment": ""
+                },
+                {
+                    "fieldName": "sourcetype",
+                    "owner": "BaseEvent",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "sourcetype",
+                    "comment": ""
+                }
+            ],
+            "calculations": [],
+            "constraints": [
+                {
+                    "search": "`illumio_get_index` sourcetype=\"illumio:pce*\"",
+                    "owner": "Illumio"
+                }
+            ],
+            "lineage": "Illumio"
+        },
+        {
+            "objectName": "Illumio_PCE",
+            "displayName": "Illumio PCE",
+            "parentName": "Illumio",
+            "comment": "",
+            "fields": [],
+            "calculations": [],
+            "constraints": [
+                {
+                    "search": "sourcetype=\"illumio:pce\"",
+                    "owner": "Illumio.Illumio_PCE"
+                }
+            ],
+            "lineage": "Illumio.Illumio_PCE"
+        },
+        {
+            "objectName": "Illumio_PCE_Collector",
+            "displayName": "Illumio PCE Collector",
+            "parentName": "Illumio",
+            "comment": "",
+            "fields": [],
+            "calculations": [],
+            "constraints": [
+                {
+                    "search": "sourcetype=\"illumio:pce:collector\" action=\"*\"",
+                    "owner": "Illumio.Illumio_PCE_Collector"
+                }
+            ],
+            "lineage": "Illumio.Illumio_PCE_Collector"
+        },
+        {
+            "objectName": "Illumio_PCE_Policy",
+            "displayName": "Illumio PCE Policy",
+            "parentName": "Illumio_PCE",
+            "comment": "",
+            "fields": [],
+            "calculations": [],
+            "constraints": [
+                {
+                    "search": "event_source=\"policy\" (ven_policy_average_latency_seconds=* OR \nven_heartbeat_average_latency_seconds=*)",
+                    "owner": "Illumio.Illumio_PCE.Illumio_PCE_Policy"
+                }
+            ],
+            "lineage": "Illumio.Illumio_PCE.Illumio_PCE_Policy"
+        },
+        {
+            "objectName": "Illumio_PCE_Syslog_Collector",
+            "displayName": "Illumio PCE Syslog Collector",
+            "parentName": "Illumio_PCE",
+            "comment": "",
+            "fields": [],
+            "calculations": [],
+            "constraints": [
+                {
+                    "search": "event_source=\"collector\" collector_summaries_per_second=*",
+                    "owner": "Illumio.Illumio_PCE.Illumio_PCE_Syslog_Collector"
+                }
+            ],
+            "lineage": "Illumio.Illumio_PCE.Illumio_PCE_Syslog_Collector"
+        },
+        {
+            "objectName": "Illumio_PCE_Traffic",
+            "displayName": "Illumio PCE Traffic",
+            "parentName": "Illumio_PCE",
+            "comment": "",
+            "fields": [],
+            "calculations": [],
+            "constraints": [
+                {
+                    "search": "event_source = \"flow_analytics\"  traffic_summaries_per_second=*",
+                    "owner": "Illumio.Illumio_PCE.Illumio_PCE_Traffic"
+                }
+            ],
+            "lineage": "Illumio.Illumio_PCE.Illumio_PCE_Traffic"
+        }
+    ],
+    "objectNameList": [
+        "Illumio",
+        "Illumio_PCE",
+        "Illumio_PCE_Collector",
+        "Illumio_PCE_Policy",
+        "Illumio_PCE_Syslog_Collector",
+        "Illumio_PCE_Traffic"
+    ]
+}

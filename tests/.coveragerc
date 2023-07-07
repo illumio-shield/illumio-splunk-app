@@ -1,0 +1,7 @@
+[run]
+omit =
+	*/tests/*
+	*/site-packages/*
+
+[report]
+fail_under = 70

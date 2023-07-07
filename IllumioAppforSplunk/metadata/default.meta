@@ -1,0 +1,25 @@
+[]
+access = read : [ * ], write : [ admin ] 
+
+[tags]
+export = system
+
+[props]
+export = system
+
+[transforms]
+export = system
+
+[lookups]
+export = system
+
+[viewstates]
+access = read : [ * ], write : [ * ]
+export = system
+
+[views/illumio_alerts_configuration]
+access = read : [ admin ], write: [ admin ]
+
+[macros/illumio_get_index]
+access = read : [ * ], write : [ admin, power ]
+export = system

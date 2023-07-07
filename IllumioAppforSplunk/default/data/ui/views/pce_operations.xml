@@ -1,0 +1,400 @@
+<form version="1.1" script="pce_operations.js,multiselect_input.js" stylesheet="pce_operations.css">
+  <label>PCE Operations (On-Prem Only)</label>
+
+  <search id="base_search">
+    <query>
+      | search `illumio_get_index` sourcetype="illumio:pce:metadata" illumio_type="illumio:pce:health" $leader_fqdn$ fqdn="$fqdn$" | table *
+    </query>
+    <earliest>$earliest$</earliest>
+    <latest>$latest$</latest>
+  </search>
+
+  <search id="base_one_cluster_details" base="base_search">
+    <query>
+      head 1 | spath path="nodes{}" output=nodes | mvexpand nodes | table nodes _time | spath input=nodes | table *
+    </query>
+  </search>
+
+  <search id="base_cluster_details" base="base_search">
+    <query>
+      spath path="nodes{}" output=nodes | mvexpand nodes | table nodes _time | spath input=nodes | table *
+    </query>
+  </search>
+
+  <!-- Do not use base search for cluster_details to avoid chart flashing issue due to base search chain. -->
+  <search id="cluster_details">
+    <query>`illumio_get_index` sourcetype="illumio:pce:metadata" illumio_type="illumio:pce:health" $leader_fqdn$ fqdn="$fqdn$" | head 1 | spath path="nodes{}" output=nodes | mvexpand nodes | table nodes | spath input=nodes | table hostname, disk{}.location</query>
+  </search>
+
+  <search id="policy_database_details">
+    <query>`illumio_get_index`  illumio_type="illumio:pce:health" $leader_fqdn$ fqdn="$fqdn$" |  spath path="groups{}.components{4}.contents{}.entries{}.values{}.value" output="val" | sort -_time | head 1 | table val | mvexpand val | eval val=if('val'="",NULL,'val') | transpose | head 1 | fields - column | eval "row 1"= 'row 1'." GB" ,"row 2"='row 2'." %","row 4"='row 4'." %" | fillnull value="N/A" "row 1" , "row 2" , "row 3" "row 4"</query>
+  </search>
+
+  <search id="pce_service_details">
+    <query>`illumio_get_index` sourcetype="illumio:pce:metadata" illumio_type="illumio:pce:health" $leader_fqdn$ fqdn="$fqdn$" | head 1 | spath path="nodes{}.services" output="services" | mvexpand services | table services | spath input=services | stats dc("not_running{}") as NotRunning, dc("partial{}") as Partial, dc("optional{}") as Optional, dc("running{}") as Running, dc("unknown{}") as Unknown </query>
+  </search>
+
+  <search id="ven_search">
+    <query>
+      | tstats `summariesonly` avg(Illumio.ven_policy_average_latency_seconds) as ven_policy_average_latency_seconds, avg(Illumio.ven_heartbeat_average_latency_seconds) as ven_heartbeat_average_latency_seconds from datamodel=Illumio where nodename=Illumio.Illumio_PCE.Illumio_PCE_Policy Illumio.pce_fqdn="$fqdn$" $tstats_leader_fqdn$ by _time, Illumio.pce_hostname span=1ms
+      | rename Illumio.pce_hostname as pce_hostname
+    </query>
+    <earliest>$earliest$</earliest>
+    <latest>$latest$</latest>
+  </search>
+
+  <search id="collector_summaries_search">
+    <query>
+      | tstats `summariesonly` avg(Illumio.collector_summaries_per_second) as collector_summaries_per_second from datamodel=Illumio where nodename=Illumio.Illumio_PCE.Illumio_PCE_Syslog_Collector Illumio.pce_fqdn="$fqdn$" $tstats_leader_fqdn$ by _time, Illumio.pce_hostname span=1ms
+      | rename Illumio.pce_hostname as pce_hostname
+    </query>
+    <earliest>$earliest$</earliest>
+    <latest>$latest$</latest>
+  </search>
+
+  <search id="traffic_summaries_search">
+    <query>
+      | tstats `summariesonly` avg(Illumio.traffic_summaries_per_second) as traffic_summaries_per_second from datamodel=Illumio where nodename=Illumio.Illumio_PCE.Illumio_PCE_Traffic Illumio.pce_fqdn="$fqdn$" $tstats_leader_fqdn$ by _time, Illumio.pce_hostname span=1ms
+      | rename Illumio.pce_hostname as pce_hostname
+    </query>
+    <earliest>$earliest$</earliest>
+    <latest>$latest$</latest>
+  </search>
+
+  <fieldset submitButton="false">
+    <input type="time" id="time_id" searchWhenChanged="true">
+      <label>Time Range</label>
+      <default>
+        <earliest>-60m@m</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input depends="$supercluster$" type="dropdown" token="is_supercluster" searchWhenChanged="true">
+      <label>Supercluster Leader</label>
+      <fieldForLabel>leader_fqdn</fieldForLabel>
+      <fieldForValue>leader_fqdn</fieldForValue>
+      <search>
+        <query>| inputlookup illumio_host_details_lookup | dedup leader_fqdn | table leader_fqdn</query>
+        <earliest>1</earliest>
+        <latest>now</latest>
+      </search>
+      <choice value="*">Not Configured</choice>
+      <change>
+        <condition label="Not Configured">
+          <set token="leader_fqdn"></set>
+          <set token="tstats_leader_fqdn"></set>
+        </condition>
+        <condition>
+          <set token="leader_fqdn">( leader_fqdn="$is_supercluster$" )</set>
+          <set token="tstats_leader_fqdn">( Illumio.leader_fqdn="$is_supercluster$" )</set>
+        </condition>
+      </change>
+      <default>*</default>
+      <initialValue>*</initialValue>
+    </input>
+    <input type="dropdown" token="fqdn" searchWhenChanged="true">
+      <label>PCE</label>
+      <selectFirstChoice>true</selectFirstChoice>
+      <search>
+        <query>| inputlookup illumio_host_details_lookup 
+| fillnull value="-" leader_fqdn 
+| search $leader_fqdn$
+| dedup fqdn 
+| table fqdn</query>
+      </search>
+      <fieldForLabel>fqdn</fieldForLabel>
+      <fieldForValue>fqdn</fieldForValue>
+      <change>
+        <set token="form.selected_pce_hostname">*</set>
+        <set token="form.selected_pce_syslog_hostname">*</set>
+      </change>
+    </input>
+  </fieldset>
+  <row depends="$hidden$">
+    <panel>
+      <table>
+        <search>
+          <done>
+            <condition match="$result.count$&gt;0">
+              <set token="supercluster"></set>
+              <set token="leader_fqdn"></set>
+              <set token="tstats_leader_fqdn"></set>
+            </condition>
+            <condition>
+              <unset token="supercluster"></unset>
+              <set token="leader_fqdn"></set>
+              <set token="tstats_leader_fqdn"></set>
+            </condition>
+          </done>
+          <query>| inputlookup illumio_host_details_lookup | stats count by leader_fqdn</query>
+          <earliest>1</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Cluster Status</title>
+      <single>
+        <search>
+          <query>`illumio_get_index` sourcetype="illumio:pce:metadata" illumio_type="illumio:pce:health" $leader_fqdn$ fqdn="$fqdn$" | head 1  | eval "Cluster Status" = upper(substr(status,0,1)) + lower(substr(status,2)) | table "Cluster Status" | eval severity=case('Cluster Status'="Normal", 0, 'Cluster Status'="Warning", 5, 'Cluster Status'="Critical", 8) | rangemap field=severity low=0-4 elevated=4-6 default=severe</query>
+        </search>
+        <option name="drilldown">none</option>
+      </single>
+    </panel>
+    <panel>
+      <title>PCE Run Level</title>
+      <single>
+        <search>
+          <query>`illumio_get_index` sourcetype="illumio:pce:metadata" illumio_type="illumio:pce:health" $leader_fqdn$ fqdn="$fqdn$" | head 1 | spath path="nodes{}" output=nodes | mvexpand nodes | table nodes | spath input=nodes | head 1 | table runlevel</query>
+        </search>
+        <option name="drilldown">none</option>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>PCE Service Status</title>
+      <html>
+          <div id="pce_service_status"/>
+      </html>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Policy Database Summary</title>
+      <html>
+          <div id="policy_database_summary"/>
+      </html>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$pce_details$">
+      <title>Cluster Cores</title>
+      <html>
+          <table id="pce" class="pce_details"/>
+      </html>
+    </panel>
+  </row>
+  <row id="info_text">
+    <panel>
+      <title>Panels below are available for on-premise Illumio PCE 19.3.2 and 20.2.0 or higher versions.</title>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <input type="dropdown" token="selected_panel_name" searchWhenChanged="true">
+        <showClearButton>false</showClearButton>
+        <label>VEN Panel</label>
+        <choice value="ven_heartbeat_latency">VEN Heartbeat Latency</choice>
+        <choice value="ven_policy_latency">VEN Policy Latency</choice>
+        <default>ven_heartbeat_latency</default>
+        <initialValue>ven_heartbeat_latency</initialValue>
+        <change>
+          <condition value="ven_policy_latency">
+            <set token="form.selected_pce_hostname">*</set>
+            <set token="ven_policy_latency"></set>
+            <unset token="ven_heartbeat_latency"></unset>
+          </condition>
+          <condition>
+            <set token="form.selected_pce_hostname">*</set>
+            <set token="ven_heartbeat_latency"></set>
+            <unset token="ven_policy_latency"></unset>
+          </condition>
+        </change>
+      </input>
+      <input type="multiselect" id="multiselect_pce_hostname" token="selected_pce_hostname" searchWhenChanged="true">
+        <label>Nodes</label>
+        <choice value="*">All</choice>
+        <default>*</default>
+        <prefix>(</prefix>
+        <suffix>)</suffix>
+        <initialValue>*</initialValue>
+        <valuePrefix>pce_hostname="</valuePrefix>
+        <valueSuffix>"</valueSuffix>
+        <delimiter> OR </delimiter>
+        <fieldForLabel>pce_hostname</fieldForLabel>
+        <fieldForValue>pce_hostname</fieldForValue>
+        <search base="ven_search">
+          <query>
+            | dedup pce_hostname
+            | table pce_hostname
+          </query>
+        </search>
+      </input>
+    </panel>
+    <panel>
+      <input type="dropdown" token="selected_type" searchWhenChanged="true">
+        <label>Type</label>
+        <showClearButton>false</showClearButton>
+        <choice value="collector">Collector</choice>
+        <choice value="flow_analytics">Traffic</choice>
+        <change>
+          <condition value="flow_analytics">
+            <set token="form.selected_pce_syslog_hostname">*</set>
+            <set token="traffic"></set>
+            <set token="filter_type">Illumio.traffic_summaries_per_second=*</set>
+            <unset token="collector"></unset>
+          </condition>
+          <condition>
+            <set token="form.selected_pce_syslog_hostname">*</set>
+            <set token="collector"></set>
+            <set token="filter_type">Illumio.collector_summaries_per_second=*</set>
+            <unset token="traffic"></unset>
+          </condition>
+        </change>
+        <default>collector</default>
+        <initialValue>collector</initialValue>
+      </input>
+      <input type="multiselect" id="multiselect_pce_syslog_hostname" token="selected_pce_syslog_hostname" searchWhenChanged="true">
+        <label>Nodes</label>
+        <choice value="*">All</choice>
+        <default>*</default>
+        <prefix>(</prefix>
+        <suffix>)</suffix>
+        <initialValue>*</initialValue>
+        <valuePrefix>pce_hostname="</valuePrefix>
+        <valueSuffix>"</valueSuffix>
+        <delimiter> OR </delimiter>
+        <fieldForLabel>pce_hostname</fieldForLabel>
+        <fieldForValue>pce_hostname</fieldForValue>
+        <search>
+          <query>
+            | tstats `summariesonly` count from datamodel=Illumio where nodename=Illumio.Illumio_PCE $filter_type$ Illumio.pce_fqdn="$fqdn$" $tstats_leader_fqdn$ Illumio.event_source=$selected_type$ by Illumio.pce_hostname
+            | rename Illumio.pce_hostname as pce_hostname
+            | dedup pce_hostname
+            | table pce_hostname
+          </query>
+          <earliest>$earliest$</earliest>
+          <latest>$latest$</latest>
+        </search>
+      </input>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$ven_heartbeat_latency$">
+      <chart>
+        <title>VEN Heartbeat Latency (Average)</title>
+        <search base="ven_search">
+          <query>
+            | $ven_heartbeat_latency$ search $selected_pce_hostname$
+            | timechart limit=0 eval(round(avg(ven_heartbeat_average_latency_seconds),4)) by pce_hostname useother=f usenull=f</query>
+        </search>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="charting.axisTitleX.text">Time</option>
+        <option name="charting.axisTitleY.text">Seconds</option>
+        <option name="charting.chart">line</option>
+        <option name="charting.chart.nullValueMode">connect</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="charting.drilldown">all</option>
+        <drilldown>
+          <link target="_blank">search?earliest=$earliest$&amp;latest=$latest$&amp;q=| tstats `summariesonly` avg(Illumio.ven_heartbeat_average_latency_seconds) as ven_heartbeat_average_latency_seconds from datamodel=Illumio where nodename=Illumio.Illumio_PCE.Illumio_PCE_Policy Illumio.pce_fqdn="$fqdn$" $tstats_leader_fqdn$ Illumio.pce_hostname=$click.name2$ by _time, Illumio.pce_hostname  span=1ms | table _time, Illumio.pce_hostname, ven_heartbeat_average_latency_seconds | rename  Illumio.pce_hostname as "PCE Hostname", ven_heartbeat_average_latency_seconds as "VEN Average Heartbeat Latency (in seconds)"</link>
+        </drilldown>
+      </chart>
+    </panel>
+    <panel depends="$ven_policy_latency$">
+      <chart>
+        <title>VEN Policy Latency (Average)</title>
+        <search base="ven_search">
+          <query>
+            | $ven_policy_latency$ search $selected_pce_hostname$
+            | timechart limit=0 eval(round(avg(ven_policy_average_latency_seconds),4)) by pce_hostname useother=f usenull=f</query>
+        </search>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="charting.axisTitleX.text">Time</option>
+        <option name="charting.axisTitleY.text">Seconds</option>
+        <option name="charting.chart">line</option>
+        <option name="charting.chart.nullValueMode">connect</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="charting.drilldown">all</option>
+        <drilldown>
+          <link target="_blank">search?earliest=$earliest$&amp;latest=$latest$&amp;q=| tstats `summariesonly` avg(Illumio.ven_policy_average_latency_seconds) as ven_policy_average_latency_seconds from datamodel=Illumio where nodename=Illumio.Illumio_PCE.Illumio_PCE_Policy Illumio.pce_fqdn="$fqdn$" $tstats_leader_fqdn$ Illumio.pce_hostname=$click.name2$ by _time, Illumio.pce_hostname  span=1ms | table _time, Illumio.pce_hostname, ven_policy_average_latency_seconds | rename  Illumio.pce_hostname as "PCE Hostname", ven_policy_average_latency_seconds as "VEN Average Policy Latency (in seconds)"</link>
+        </drilldown>
+      </chart>
+    </panel>
+    <panel depends="$collector$">
+      <chart>
+        <title>Collector Flow Rate (Average)</title>
+        <search base="collector_summaries_search">
+          <query>
+            | $collector$ search $selected_pce_syslog_hostname$
+            | timechart limit=0 eval(round(avg(collector_summaries_per_second),4)) by pce_hostname useother=f usenull=f
+          </query>
+        </search>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="charting.axisTitleX.text">Time</option>
+        <option name="charting.axisTitleY.text">flows/second</option>
+        <option name="charting.chart">line</option>
+        <option name="charting.chart.nullValueMode">connect</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="charting.drilldown">all</option>
+        <drilldown>
+          <link target="_blank">search?earliest=$earliest$&amp;latest=$latest$&amp;q=| tstats `summariesonly` avg(Illumio.collector_summaries_per_second) as collector_summaries_per_second from datamodel=Illumio where nodename=Illumio.Illumio_PCE.Illumio_PCE_Syslog_Collector Illumio.pce_fqdn=$fqdn$ $tstats_leader_fqdn$ Illumio.pce_hostname=$click.name2$ by _time, Illumio.pce_hostname span=1ms | table _time, Illumio.pce_hostname, collector_summaries_per_second | rename  Illumio.pce_hostname as "PCE Hostname", collector_summaries_per_second as "Collector Average Flow Rate (per second)"</link>
+        </drilldown>
+      </chart>
+    </panel>
+    <panel depends="$traffic$">
+      <chart>
+        <title>Traffic Ingest Rate (Average)</title>
+        <search base="traffic_summaries_search">
+          <query>
+            | $traffic$ search $selected_pce_syslog_hostname$
+            | timechart limit=0 eval(round(avg(traffic_summaries_per_second),4)) by pce_hostname useother=f usenull=f</query>
+        </search>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="charting.axisTitleX.text">Time</option>
+        <option name="charting.axisTitleY.text">flows/second</option>
+        <option name="charting.chart">line</option>
+        <option name="charting.chart.nullValueMode">connect</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="charting.drilldown">all</option>
+        <drilldown>
+          <link target="_blank">search?earliest=$earliest$&amp;latest=$latest$&amp;q=| tstats `summariesonly` avg(Illumio.traffic_summaries_per_second) as traffic_summaries_per_second from datamodel=Illumio where nodename=Illumio.Illumio_PCE.Illumio_PCE_Traffic Illumio.pce_fqdn=$fqdn$ $tstats_leader_fqdn$ Illumio.pce_hostname=$click.name2$ by _time, Illumio.pce_hostname  span=1ms | table _time, Illumio.pce_hostname, traffic_summaries_per_second | rename  Illumio.pce_hostname as "PCE Hostname", traffic_summaries_per_second as "Traffic Average Ingest Rate (per second)"</link>
+        </drilldown>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <table>
+        <title>Data Ingestion Volume In The Last Day</title>
+        <search>
+          <query>index=_internal source=*license_usage.log type="Usage" st=illumio*
+| eval Index = if(len(idx)=0 OR isnull(idx),"(UNKNOWN)",idx)
+| bin _time span=1d 
+| stats sum(b) as b by _time, pool, Index, st
+| eval GB=round(b/1024/1024/1024, 3)
+| fields _time, Index, st, GB
+| rename _time as Time st as "Source Type"
+| fieldformat Time = strftime(Time, "%Y-%m-%d")
+| addcoltotals GB</query>
+          <earliest>-d@d</earliest>
+          <latest>@d</latest>
+        </search>
+        <option name="drilldown">none</option>
+      </table>
+    </panel>
+    <panel>
+      <table>
+        <title>Data Ingestion Volume In The Last 30 Days</title>
+        <search>
+          <query>index=_internal source=*license_usage.log type="Usage" st=illumio*
+| eval Index = if(len(idx)=0 OR isnull(idx),"(UNKNOWN)",idx)
+| bin _time span=30d 
+| stats sum(b) as b by _time, pool, Index, st
+| eval GB=round(b/1024/1024/1024, 3)
+| fields _time, Index, st, GB
+| rename _time as Time st as "Source Type"
+| fieldformat Time = strftime(Time, "%Y-%m-%d")
+| addcoltotals GB</query>
+          <earliest>-30d@d</earliest>
+          <latest>@d</latest>
+        </search>
+        <option name="drilldown">none</option>
+      </table>
+    </panel>
+  </row>
+</form>
