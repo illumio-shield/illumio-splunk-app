@@ -1,7 +1,7 @@
 {
     "modelName": "Illumio",
     "displayName": "Illumio",
-    "description": "",
+    "description": "Illumio PCE Syslog Data Model",
     "objectSummary": {
         "Event-Based": 6,
         "Transaction-Based": 0,
@@ -9,14 +9,14 @@
     },
     "objects": [
         {
-            "objectName": "Illumio",
-            "displayName": "Illumio",
+            "objectName": "Audit",
+            "displayName": "PCE Audit Events",
             "parentName": "BaseEvent",
-            "comment": "",
+            "comment": "Illumio PCE syslog audit events",
             "fields": [
                 {
                     "fieldName": "action",
-                    "owner": "Illumio",
+                    "owner": "Audit",
                     "type": "string",
                     "fieldSearch": "",
                     "required": false,
@@ -24,107 +24,11 @@
                     "hidden": false,
                     "editable": true,
                     "displayName": "action",
-                    "comment": ""
-                },
-                {
-                    "fieldName": "count",
-                    "owner": "Illumio",
-                    "type": "number",
-                    "fieldSearch": "",
-                    "required": false,
-                    "multivalue": false,
-                    "hidden": false,
-                    "editable": true,
-                    "displayName": "count",
-                    "comment": ""
-                },
-                {
-                    "fieldName": "dir",
-                    "owner": "Illumio",
-                    "type": "string",
-                    "fieldSearch": "",
-                    "required": false,
-                    "multivalue": false,
-                    "hidden": false,
-                    "editable": true,
-                    "displayName": "dir",
-                    "comment": ""
-                },
-                {
-                    "fieldName": "dst_href",
-                    "owner": "Illumio",
-                    "type": "string",
-                    "fieldSearch": "",
-                    "required": false,
-                    "multivalue": false,
-                    "hidden": false,
-                    "editable": true,
-                    "displayName": "dst_href",
-                    "comment": ""
-                },
-                {
-                    "fieldName": "dst_ip",
-                    "owner": "Illumio",
-                    "type": "string",
-                    "fieldSearch": "",
-                    "required": false,
-                    "multivalue": false,
-                    "hidden": false,
-                    "editable": true,
-                    "displayName": "dst_ip",
-                    "comment": ""
-                },
-                {
-                    "fieldName": "dst_port",
-                    "owner": "Illumio",
-                    "type": "number",
-                    "fieldSearch": "",
-                    "required": false,
-                    "multivalue": false,
-                    "hidden": false,
-                    "editable": true,
-                    "displayName": "dst_port",
-                    "comment": ""
-                },
-                {
-                    "fieldName": "hostname",
-                    "owner": "Illumio",
-                    "type": "string",
-                    "fieldSearch": "",
-                    "required": false,
-                    "multivalue": false,
-                    "hidden": false,
-                    "editable": true,
-                    "displayName": "hostname",
-                    "comment": ""
-                },
-                {
-                    "fieldName": "label",
-                    "owner": "Illumio",
-                    "type": "string",
-                    "fieldSearch": "",
-                    "required": false,
-                    "multivalue": false,
-                    "hidden": false,
-                    "editable": true,
-                    "displayName": "label",
-                    "comment": ""
-                },
-                {
-                    "fieldName": "os_name",
-                    "owner": "Illumio",
-                    "type": "string",
-                    "fieldSearch": "",
-                    "required": false,
-                    "multivalue": false,
-                    "hidden": false,
-                    "editable": true,
-                    "displayName": "os_name",
-                    "comment": ""
+                    "comment": "CIM action field"
                 },
                 {
                     "fieldName": "pce_fqdn",
-                    "owner": "Illumio",
+                    "owner": "Audit",
                     "type": "string",
                     "fieldSearch": "",
                     "required": false,
@@ -132,83 +36,23 @@
                     "hidden": false,
                     "editable": true,
                     "displayName": "pce_fqdn",
-                    "comment": ""
+                    "comment": "PCE fully-qualified domain name"
                 },
                 {
-                    "fieldName": "leader_fqdn",
-                    "owner": "Illumio",
+                    "fieldName": "href",
+                    "owner": "Audit",
                     "type": "string",
                     "fieldSearch": "",
                     "required": false,
                     "multivalue": false,
                     "hidden": false,
                     "editable": true,
-                    "displayName": "leader_fqdn",
-                    "comment": ""
-                },
-                {
-                    "fieldName": "protocol",
-                    "owner": "Illumio",
-                    "type": "string",
-                    "fieldSearch": "",
-                    "required": false,
-                    "multivalue": false,
-                    "hidden": false,
-                    "editable": true,
-                    "displayName": "protocol",
-                    "comment": ""
-                },
-                {
-                    "fieldName": "src_href",
-                    "owner": "Illumio",
-                    "type": "string",
-                    "fieldSearch": "",
-                    "required": false,
-                    "multivalue": false,
-                    "hidden": false,
-                    "editable": true,
-                    "displayName": "src_href",
-                    "comment": ""
-                },
-                {
-                    "fieldName": "src_ip",
-                    "owner": "Illumio",
-                    "type": "string",
-                    "fieldSearch": "",
-                    "required": false,
-                    "multivalue": false,
-                    "hidden": false,
-                    "editable": true,
-                    "displayName": "src_ip",
-                    "comment": ""
-                },
-                {
-                    "fieldName": "type_label",
-                    "owner": "Illumio",
-                    "type": "string",
-                    "fieldSearch": "",
-                    "required": false,
-                    "multivalue": false,
-                    "hidden": false,
-                    "editable": true,
-                    "displayName": "type_label",
-                    "comment": ""
-                },
-                {
-                    "fieldName": "workload_uuid",
-                    "owner": "Illumio",
-                    "type": "string",
-                    "fieldSearch": "",
-                    "required": false,
-                    "multivalue": false,
-                    "hidden": false,
-                    "editable": true,
-                    "displayName": "workload_uuid",
-                    "comment": ""
+                    "displayName": "href",
+                    "comment": "Event HREF"
                 },
                 {
                     "fieldName": "category",
-                    "owner": "Illumio",
+                    "owner": "Audit",
                     "type": "string",
                     "fieldSearch": "",
                     "required": false,
@@ -220,7 +64,7 @@
                 },
                 {
                     "fieldName": "event_type",
-                    "owner": "Illumio",
+                    "owner": "Audit",
                     "type": "string",
                     "fieldSearch": "",
                     "required": false,
@@ -231,20 +75,8 @@
                     "comment": ""
                 },
                 {
-                    "fieldName": "created_hostname",
-                    "owner": "Illumio",
-                    "type": "string",
-                    "fieldSearch": "",
-                    "required": false,
-                    "multivalue": false,
-                    "hidden": false,
-                    "editable": true,
-                    "displayName": "created_hostname",
-                    "comment": ""
-                },
-                {
                     "fieldName": "notification_type",
-                    "owner": "Illumio",
+                    "owner": "Audit",
                     "type": "string",
                     "fieldSearch": "",
                     "required": false,
@@ -256,7 +88,7 @@
                 },
                 {
                     "fieldName": "severity",
-                    "owner": "Illumio",
+                    "owner": "Audit",
                     "type": "string",
                     "fieldSearch": "",
                     "required": false,
@@ -264,11 +96,95 @@
                     "hidden": false,
                     "editable": true,
                     "displayName": "severity",
-                    "comment": ""
+                    "comment": "Event severity"
+                },
+                {
+                    "fieldName": "object_category",
+                    "owner": "Audit",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "object_category",
+                    "comment": "Affected resource type"
+                },
+                {
+                    "fieldName": "object_id",
+                    "owner": "Audit",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "object_id",
+                    "comment": "Affected resource HREF"
+                },
+                {
+                    "fieldName": "src_user",
+                    "owner": "Audit",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "src_user",
+                    "comment": "User initiating the event"
+                },
+                {
+                    "fieldName": "user",
+                    "owner": "Audit",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "user",
+                    "comment": "User affected by the event"
+                },
+                {
+                    "fieldName": "src",
+                    "owner": "Audit",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "src",
+                    "comment": "Event source"
+                },
+                {
+                    "fieldName": "src_ip",
+                    "owner": "Audit",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "src_ip",
+                    "comment": "Source device IP address"
+                },
+                {
+                    "fieldName": "sev",
+                    "owner": "Audit",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "sev",
+                    "comment": "Syslog severity"
                 },
                 {
                     "fieldName": "status",
-                    "owner": "Illumio",
+                    "owner": "Audit",
                     "type": "string",
                     "fieldSearch": "",
                     "required": false,
@@ -279,140 +195,8 @@
                     "comment": ""
                 },
                 {
-                    "fieldName": "src_app_label",
-                    "owner": "Illumio",
-                    "type": "string",
-                    "fieldSearch": "",
-                    "required": false,
-                    "multivalue": false,
-                    "hidden": false,
-                    "editable": true,
-                    "displayName": "src_app_label",
-                    "comment": ""
-                },
-                {
-                    "fieldName": "src_role_label",
-                    "owner": "Illumio",
-                    "type": "string",
-                    "fieldSearch": "",
-                    "required": false,
-                    "multivalue": false,
-                    "hidden": false,
-                    "editable": true,
-                    "displayName": "src_role_label",
-                    "comment": ""
-                },
-                {
-                    "fieldName": "src_env_label",
-                    "owner": "Illumio",
-                    "type": "string",
-                    "fieldSearch": "",
-                    "required": false,
-                    "multivalue": false,
-                    "hidden": false,
-                    "editable": true,
-                    "displayName": "src_env_label",
-                    "comment": ""
-                },
-                {
-                    "fieldName": "src_loc_label",
-                    "owner": "Illumio",
-                    "type": "string",
-                    "fieldSearch": "",
-                    "required": false,
-                    "multivalue": false,
-                    "hidden": false,
-                    "editable": true,
-                    "displayName": "src_loc_label",
-                    "comment": ""
-                },
-                {
-                    "fieldName": "dest_app_label",
-                    "owner": "Illumio",
-                    "type": "string",
-                    "fieldSearch": "",
-                    "required": false,
-                    "multivalue": false,
-                    "hidden": false,
-                    "editable": true,
-                    "displayName": "dest_app_label",
-                    "comment": ""
-                },
-                {
-                    "fieldName": "dest_role_label",
-                    "owner": "Illumio",
-                    "type": "string",
-                    "fieldSearch": "",
-                    "required": false,
-                    "multivalue": false,
-                    "hidden": false,
-                    "editable": true,
-                    "displayName": "dest_role_label",
-                    "comment": ""
-                },
-                {
-                    "fieldName": "dest_env_label",
-                    "owner": "Illumio",
-                    "type": "string",
-                    "fieldSearch": "",
-                    "required": false,
-                    "multivalue": false,
-                    "hidden": false,
-                    "editable": true,
-                    "displayName": "dest_env_label",
-                    "comment": ""
-                },
-                {
-                    "fieldName": "dest_loc_label",
-                    "owner": "Illumio",
-                    "type": "string",
-                    "fieldSearch": "",
-                    "required": false,
-                    "multivalue": false,
-                    "hidden": false,
-                    "editable": true,
-                    "displayName": "dest_loc_label",
-                    "comment": ""
-                },
-                {
-                    "fieldName": "href",
-                    "owner": "Illumio",
-                    "type": "string",
-                    "fieldSearch": "",
-                    "required": false,
-                    "multivalue": false,
-                    "hidden": false,
-                    "editable": true,
-                    "displayName": "href",
-                    "comment": ""
-                },
-                {
-                    "fieldName": "workload_href",
-                    "owner": "Illumio",
-                    "type": "string",
-                    "fieldSearch": "",
-                    "required": false,
-                    "multivalue": false,
-                    "hidden": false,
-                    "editable": true,
-                    "displayName": "workload_href",
-                    "comment": ""
-                },
-                {
-                    "fieldName": "agent_href",
-                    "owner": "Illumio",
-                    "type": "string",
-                    "fieldSearch": "",
-                    "required": false,
-                    "multivalue": false,
-                    "hidden": false,
-                    "editable": true,
-                    "displayName": "agent_href",
-                    "comment": ""
-                },
-                {
                     "fieldName": "timestamp",
-                    "owner": "Illumio",
+                    "owner": "Audit",
                     "type": "string",
                     "fieldSearch": "",
                     "required": false,
@@ -421,22 +205,246 @@
                     "editable": true,
                     "displayName": "timestamp",
                     "comment": ""
-                },
+                }
+            ],
+            "calculations": [],
+            "constraints": [
                 {
-                    "fieldName": "combined_key_value",
-                    "owner": "Illumio",
+                    "search": "`illumio_get_index` sourcetype=\"illumio:pce\"",
+                    "owner": "Audit"
+                }
+            ],
+            "lineage": "Audit"
+        },
+        {
+            "objectName": "Traffic",
+            "displayName": "PCE Traffic Flow Events",
+            "parentName": "BaseEvent",
+            "comment": "Illumio PCE network traffic flows",
+            "fields": [
+                {
+                    "fieldName": "action",
+                    "owner": "Traffic",
                     "type": "string",
                     "fieldSearch": "",
                     "required": false,
                     "multivalue": false,
                     "hidden": false,
                     "editable": true,
-                    "displayName": "combined_key_value",
+                    "displayName": "action",
+                    "comment": "CIM action field"
+                },
+                {
+                    "fieldName": "pce_fqdn",
+                    "owner": "Traffic",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "pce_fqdn",
+                    "comment": "PCE fully-qualified domain name"
+                },
+                {
+                    "fieldName": "count",
+                    "owner": "Traffic",
+                    "type": "number",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "count",
+                    "comment": "Traffic flow count"
+                },
+                {
+                    "fieldName": "direction",
+                    "owner": "Traffic",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "direction",
+                    "comment": "Traffic direction - inbound or outbound"
+                },
+                {
+                    "fieldName": "transport",
+                    "owner": "Traffic",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "transport",
+                    "comment": "OSI L4 transport - e.g. tcp, udp, icmp"
+                },
+                {
+                    "fieldName": "dest_href",
+                    "owner": "Traffic",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "dest_href",
+                    "comment": "HREF of the destination workload, IP list, or other Illumio object"
+                },
+                {
+                    "fieldName": "dest_ip",
+                    "owner": "Traffic",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "dest_ip",
+                    "comment": "Destination device IP address"
+                },
+                {
+                    "fieldName": "dest_host",
+                    "owner": "Traffic",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "dest_host",
+                    "comment": "Destination device hostname"
+                },
+                {
+                    "fieldName": "dest_port",
+                    "owner": "Traffic",
+                    "type": "number",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "dest_port",
+                    "comment": "Destination port number"
+                },
+                {
+                    "fieldName": "src_ip",
+                    "owner": "Traffic",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "src_ip",
+                    "comment": "Source device IP address"
+                },
+                {
+                    "fieldName": "src_href",
+                    "owner": "Traffic",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "src_href",
+                    "comment": "HREF of the source workload, IP list, or other Illumio object"
+                },
+                {
+                    "fieldName": "src_host",
+                    "owner": "Traffic",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "src_host",
+                    "comment": "Source device hostname"
+                },
+                {
+                    "fieldName": "src_label_pairs",
+                    "owner": "Traffic",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": true,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "src_label_pairs",
+                    "comment": "Multivalue field containing source workload label pairs in key:value format"
+                },
+                {
+                    "fieldName": "dest_label_pairs",
+                    "owner": "Traffic",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": true,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "dest_label_pairs",
+                    "comment": "Multivalue field containing destination workload label pairs in key:value format"
+                },
+                {
+                    "fieldName": "sev",
+                    "owner": "Traffic",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "sev",
+                    "comment": "Syslog severity"
+                },
+                {
+                    "fieldName": "status",
+                    "owner": "Traffic",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "status",
                     "comment": ""
                 },
                 {
+                    "fieldName": "timestamp",
+                    "owner": "Traffic",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "timestamp",
+                    "comment": ""
+                }
+            ],
+            "calculations": [],
+            "constraints": [
+                {
+                    "search": "`illumio_get_index` sourcetype=\"illumio:pce:collector\"",
+                    "owner": "Traffic"
+                }
+            ],
+            "lineage": "Traffic"
+        },
+        {
+            "objectName": "Status",
+            "displayName": "PCE Status Events",
+            "parentName": "BaseEvent",
+            "comment": "PCE status and health metrics",
+            "fields": [
+                {
                     "fieldName": "event_source",
-                    "owner": "Illumio",
+                    "owner": "Status",
                     "type": "string",
                     "fieldSearch": "",
                     "required": false,
@@ -444,23 +452,71 @@
                     "hidden": false,
                     "editable": true,
                     "displayName": "event_source",
-                    "comment": ""
+                    "comment": "PCE service emitting the event"
                 },
                 {
-                    "fieldName": "pce_hostname",
-                    "owner": "Illumio",
+                    "fieldName": "pce_fqdn",
+                    "owner": "Traffic",
                     "type": "string",
                     "fieldSearch": "",
                     "required": false,
                     "multivalue": false,
                     "hidden": false,
                     "editable": true,
-                    "displayName": "pce_hostname",
+                    "displayName": "pce_fqdn",
+                    "comment": "PCE fully-qualified domain name"
+                },
+                {
+                    "fieldName": "hostname",
+                    "owner": "Status",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "hostname",
+                    "comment": "Cluster node hostname"
+                },
+                {
+                    "fieldName": "cpu",
+                    "owner": "Status",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "cpu",
+                    "comment": ""
+                },
+                {
+                    "fieldName": "disk",
+                    "owner": "Status",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "disk",
+                    "comment": ""
+                },
+                {
+                    "fieldName": "memory",
+                    "owner": "Status",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "memory",
                     "comment": ""
                 },
                 {
                     "fieldName": "ven_policy_average_latency_seconds",
-                    "owner": "Illumio",
+                    "owner": "Status",
                     "type": "number",
                     "fieldSearch": "",
                     "required": false,
@@ -472,7 +528,7 @@
                 },
                 {
                     "fieldName": "ven_heartbeat_average_latency_seconds",
-                    "owner": "Illumio",
+                    "owner": "Status",
                     "type": "number",
                     "fieldSearch": "",
                     "required": false,
@@ -484,7 +540,7 @@
                 },
                 {
                     "fieldName": "collector_summaries_per_second",
-                    "owner": "Illumio",
+                    "owner": "Status",
                     "type": "number",
                     "fieldSearch": "",
                     "required": false,
@@ -495,8 +551,20 @@
                     "comment": ""
                 },
                 {
+                    "fieldName": "policy_disk_latency_milliseconds",
+                    "owner": "Status",
+                    "type": "number",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "policy_disk_latency_milliseconds",
+                    "comment": ""
+                },
+                {
                     "fieldName": "traffic_summaries_per_second",
-                    "owner": "Illumio",
+                    "owner": "Status",
                     "type": "number",
                     "fieldSearch": "",
                     "required": false,
@@ -507,145 +575,103 @@
                     "comment": ""
                 },
                 {
-                    "fieldName": "_time",
-                    "owner": "BaseEvent",
-                    "type": "timestamp",
+                    "fieldName": "traffic_disk_latency_milliseconds",
+                    "owner": "Status",
+                    "type": "number",
                     "fieldSearch": "",
                     "required": false,
                     "multivalue": false,
                     "hidden": false,
                     "editable": true,
-                    "displayName": "_time",
+                    "displayName": "traffic_disk_latency_milliseconds",
                     "comment": ""
                 },
                 {
-                    "fieldName": "host",
-                    "owner": "BaseEvent",
+                    "fieldName": "sev",
+                    "owner": "Status",
                     "type": "string",
                     "fieldSearch": "",
                     "required": false,
                     "multivalue": false,
                     "hidden": false,
                     "editable": true,
-                    "displayName": "host",
-                    "comment": ""
+                    "displayName": "sev",
+                    "comment": "Syslog severity"
                 },
                 {
-                    "fieldName": "source",
-                    "owner": "BaseEvent",
+                    "fieldName": "status",
+                    "owner": "Status",
                     "type": "string",
                     "fieldSearch": "",
                     "required": false,
                     "multivalue": false,
                     "hidden": false,
                     "editable": true,
-                    "displayName": "source",
-                    "comment": ""
-                },
-                {
-                    "fieldName": "sourcetype",
-                    "owner": "BaseEvent",
-                    "type": "string",
-                    "fieldSearch": "",
-                    "required": false,
-                    "multivalue": false,
-                    "hidden": false,
-                    "editable": true,
-                    "displayName": "sourcetype",
+                    "displayName": "status",
                     "comment": ""
                 }
             ],
             "calculations": [],
             "constraints": [
                 {
-                    "search": "`illumio_get_index` sourcetype=\"illumio:pce*\"",
-                    "owner": "Illumio"
+                    "search": "`illumio_get_index` sourcetype=\"illumio:pce:health\"",
+                    "owner": "Status"
                 }
             ],
-            "lineage": "Illumio"
+            "lineage": "Status"
         },
         {
-            "objectName": "Illumio_PCE",
-            "displayName": "Illumio PCE",
-            "parentName": "Illumio",
+            "objectName": "Policy",
+            "displayName": "Policy Status Events",
+            "parentName": "Status",
             "comment": "",
             "fields": [],
             "calculations": [],
             "constraints": [
                 {
-                    "search": "sourcetype=\"illumio:pce\"",
-                    "owner": "Illumio.Illumio_PCE"
+                    "search": "event_source=\"policy\"",
+                    "owner": "Policy"
                 }
             ],
-            "lineage": "Illumio.Illumio_PCE"
+            "lineage": "Status.Policy"
         },
         {
-            "objectName": "Illumio_PCE_Collector",
-            "displayName": "Illumio PCE Collector",
-            "parentName": "Illumio",
+            "objectName": "Collector",
+            "displayName": "Collector Status Events",
+            "parentName": "Status",
             "comment": "",
             "fields": [],
             "calculations": [],
             "constraints": [
                 {
-                    "search": "sourcetype=\"illumio:pce:collector\" action=\"*\"",
-                    "owner": "Illumio.Illumio_PCE_Collector"
+                    "search": "event_source=\"collector\"",
+                    "owner": "Collector"
                 }
             ],
-            "lineage": "Illumio.Illumio_PCE_Collector"
+            "lineage": "Status.Collector"
         },
         {
-            "objectName": "Illumio_PCE_Policy",
-            "displayName": "Illumio PCE Policy",
-            "parentName": "Illumio_PCE",
+            "objectName": "FlowAnalytics",
+            "displayName": "Flow Analytics Status Events",
+            "parentName": "Status",
             "comment": "",
             "fields": [],
             "calculations": [],
             "constraints": [
                 {
-                    "search": "event_source=\"policy\" (ven_policy_average_latency_seconds=* OR \nven_heartbeat_average_latency_seconds=*)",
-                    "owner": "Illumio.Illumio_PCE.Illumio_PCE_Policy"
+                    "search": "event_source=\"flow_analytics\"",
+                    "owner": "FlowAnalytics"
                 }
             ],
-            "lineage": "Illumio.Illumio_PCE.Illumio_PCE_Policy"
-        },
-        {
-            "objectName": "Illumio_PCE_Syslog_Collector",
-            "displayName": "Illumio PCE Syslog Collector",
-            "parentName": "Illumio_PCE",
-            "comment": "",
-            "fields": [],
-            "calculations": [],
-            "constraints": [
-                {
-                    "search": "event_source=\"collector\" collector_summaries_per_second=*",
-                    "owner": "Illumio.Illumio_PCE.Illumio_PCE_Syslog_Collector"
-                }
-            ],
-            "lineage": "Illumio.Illumio_PCE.Illumio_PCE_Syslog_Collector"
-        },
-        {
-            "objectName": "Illumio_PCE_Traffic",
-            "displayName": "Illumio PCE Traffic",
-            "parentName": "Illumio_PCE",
-            "comment": "",
-            "fields": [],
-            "calculations": [],
-            "constraints": [
-                {
-                    "search": "event_source = \"flow_analytics\"  traffic_summaries_per_second=*",
-                    "owner": "Illumio.Illumio_PCE.Illumio_PCE_Traffic"
-                }
-            ],
-            "lineage": "Illumio.Illumio_PCE.Illumio_PCE_Traffic"
+            "lineage": "Status.FlowAnalytics"
         }
     ],
     "objectNameList": [
-        "Illumio",
-        "Illumio_PCE",
-        "Illumio_PCE_Collector",
-        "Illumio_PCE_Policy",
-        "Illumio_PCE_Syslog_Collector",
-        "Illumio_PCE_Traffic"
+        "Audit",
+        "Traffic",
+        "Status",
+        "Policy",
+        "Collector",
+        "FlowAnalytics"
     ]
 }
