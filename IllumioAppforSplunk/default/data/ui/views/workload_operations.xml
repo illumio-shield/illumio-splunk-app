@@ -1,54 +1,31 @@
-<form version="1.1" script="multiselect_input.js">
+<form version="1.1">
   <label>Workload Operations</label>
-  <fieldset submitButton="false">
-    <input depends="$supercluster$" type="dropdown" token="is_supercluster" searchWhenChanged="true">
-      <label>Supercluster Leader</label>
-      <fieldForLabel>leader_fqdn</fieldForLabel>
-      <fieldForValue>leader_fqdn</fieldForValue>
-      <search>
-        <query>| inputlookup illumio_host_details_lookup | dedup leader_fqdn | table leader_fqdn</query>
-        <earliest>1</earliest>
-        <latest>now</latest>
-      </search>
-      <choice value="*">Not Configured</choice>
-      <prefix>( leader_fqdn="</prefix>
-      <suffix>" )</suffix>
-      <change>
-        <condition label="Not Configured">
-          <set token="leader_fqdn"></set>
-          <set token="form.fqdn">*</set>
-          <set token="leader_values"></set>
-        </condition>
-        <condition>
-          <set token="leader_fqdn">$is_supercluster$</set>
-          <set token="form.fqdn">*</set>
-          <set token="leader_values">values(Illumio.leader_fqdn) as leader_fqdn,</set>
-        </condition>
-      </change>
-      <default>*</default>
-      <initialValue>*</initialValue>
+  <search id="audit_base_search">
+    <query>
+      | tstats values(Audit.src_user) AS src_user, values(Audit.user) AS user, values(Audit.src_ip) AS src_ip, values(Audit.notification_type) AS notification_type, values(Audit.severity) AS severity, values(Audit.status) AS status, values(Audit.pce_fqdn) AS pce_fqdn, values(Audit.event_type) AS event_type, values(Audit.object_id) AS object_id FROM datamodel=Illumio.Audit WHERE Audit.pce_fqdn=$pce_tok|s$ BY _time Audit.href
+    </query>
+    <earliest>$time_range.earliest$</earliest>
+    <latest>$time_range.latest$</latest>
+  </search>
+  <fieldset submitButton="true" autoRun="true">
+    <input type="time" token="time_range">
+    <label>Time Range</label>
+    <default>
+      <earliest>-60m@m</earliest>
+      <latest>now</latest>
+    </default>
     </input>
-    <input type="multiselect" token="fqdn" searchWhenChanged="true">
+    <input type="dropdown" token="pce_tok">
       <label>PCE</label>
       <search>
-        <query>| inputlookup illumio_host_details_lookup 
-| fillnull value="-" leader_fqdn 
-| search $leader_fqdn$
-| dedup fqdn 
-| table fqdn</query>
+        <query>| inputlookup illumio_workloads_lookup | stats count BY pce_fqdn
+        </query>
         <earliest>1</earliest>
         <latest>now</latest>
       </search>
-      <fieldForLabel>fqdn</fieldForLabel>
-      <fieldForValue>fqdn</fieldForValue>
-      <choice value="*">All</choice>
-      <default>*</default>
-      <initialValue>*</initialValue>
-      <valuePrefix>pce_fqdn="</valuePrefix>
-      <valueSuffix>"</valueSuffix>
-      <delimiter> OR </delimiter>
-      <prefix>( </prefix>
-      <suffix> )</suffix>
+      <selectFirstChoice>true</selectFirstChoice>
+      <fieldForLabel>pce_fqdn</fieldForLabel>
+      <fieldForValue>pce_fqdn</fieldForValue>
       <change>
         <unset token="form.os_id"></unset>
         <unset token="form.agent_event_type"></unset>
@@ -56,212 +33,138 @@
       </change>
     </input>
   </fieldset>
-  <row depends="$hidden$">
+  <row>
     <panel>
-      <table>
+      <title>Managed Workloads</title>
+      <single>
         <search>
-          <done>
-            <condition match="$result.count$&gt;0">
-              <set token="supercluster"></set>
-              <set token="leader_fqdn"></set>
-              <set token="leader_values"></set>
-            </condition>
-            <condition>
-              <unset token="supercluster"></unset>
-              <set token="leader_fqdn"></set>
-              <set token="leader_values"></set>
-            </condition>
-          </done>
-          <query>| inputlookup illumio_host_details_lookup | stats count by leader_fqdn</query>
+          <query>
+            | inputlookup illumio_workloads_lookup WHERE managed=1 AND pce_fqdn=$pce_tok|s$
+            | stats dc(href) AS "Managed Workloads"
+          </query>
           <earliest>1</earliest>
           <latest>now</latest>
         </search>
-        <option name="drilldown">none</option>
-        <option name="refresh.display">progressbar</option>
-      </table>
+        <option name="drilldown">all</option>
+        <drilldown>
+          <link target="_blank">search?q=%7C%20inputlookup%20illumio_workloads_lookup%20WHERE%20managed%3D1%20AND%20pce_fqdn=$pce_tok|s$</link>
+        </drilldown>
+      </single>
+    </panel>
+    <panel>
+      <title>Unmanaged Workloads</title>
+      <single>
+        <search>
+          <query>
+            | inputlookup illumio_workloads_lookup WHERE managed=0 AND pce_fqdn=$pce_tok|s$
+            | stats dc(href) AS "Unmanaged Workloads"
+          </query>
+          <earliest>1</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">all</option>
+        <drilldown>
+          <link target="_blank">search?q=%7C%20inputlookup%20illumio_workloads_lookup%20WHERE%20managed%3D0%20AND%20pce_fqdn=$pce_tok|s$</link>
+        </drilldown>
+      </single>
     </panel>
   </row>
   <row>
     <panel>
-      <title>Managed VEN in last 60 Minutes</title>
-      <single>
+      <title>Managed Workloads by Version</title>
+      <chart>
         <search>
-          <query>`illumio_get_index` sourcetype="illumio:pce:metadata" illumio_type="illumio:pce:workload" "agent.href"="*" $leader_fqdn$ $fqdn$ | stats dc(href) as "Managed VEN"</query>
-          <earliest>-60m@m</earliest>
+          <query>
+            | inputlookup illumio_workloads_lookup WHERE managed=1 AND pce_fqdn=$pce_tok|s$
+            | chart dc(href) AS "VEN Count" BY ven.version
+            | rename ven.version AS "Version"
+          </query>
+          <earliest>1</earliest>
           <latest>now</latest>
         </search>
-        <option name="drilldown">none</option>
-      </single>
+        <option name="charting.chart">pie</option>
+        <option name="charting.drilldown">all</option>
+        <option name="refresh.display">progressbar</option>
+        <drilldown>
+          <link target="_blank">search?q=%7C%20inputlookup%20illumio_workloads_lookup%20WHERE%20managed%3D1%20AND%20ven.version%3D$click.value$%20AND%20pce_fqdn=$pce_tok|s$</link>
+        </drilldown>
+      </chart>
     </panel>
     <panel>
-      <title>Unmanaged VEN in last 60 Minutes</title>
-      <single>
+      <title>Managed Workloads by Enforcement Mode</title>
+      <chart>
         <search>
-          <query>`illumio_get_index` sourcetype="illumio:pce:metadata" illumio_type="illumio:pce:workload" NOT("agent.href"="*") $leader_fqdn$ $fqdn$ | stats dc(href) as "Unmanaged VEN"</query>
-          <earliest>-60m@m</earliest>
+          <query>
+            | inputlookup illumio_workloads_lookup WHERE managed=1 AND pce_fqdn=$pce_tok|s$
+            | chart dc(href) AS "VEN Count" BY enforcement_mode
+            | rename enforcement_mode AS "Enforcement Mode"
+          </query>
+          <earliest>1</earliest>
           <latest>now</latest>
         </search>
-        <option name="drilldown">none</option>
-      </single>
+        <option name="charting.chart">pie</option>
+        <option name="charting.drilldown">all</option>
+        <option name="charting.fieldColors">{Count:0x70c580}</option>
+        <option name="refresh.display">progressbar</option>
+        <drilldown>
+          <link target="_blank">search?q=%7C%20inputlookup%20illumio_workloads_lookup%20WHERE%20managed%3D1%20AND%20enforcement_mode%3D$click.value$%20AND%20pce_fqdn=$pce_tok|s$</link>
+        </drilldown>
+      </chart>
     </panel>
     <panel>
-      <title>Offline VEN due to 60 minutes timeout in last 60 Minutes</title>
-      <single>
+      <title>Managed Workloads by Operating System</title>
+      <chart>
         <search>
-          <query>| tstats values(Illumio.event_type) as event_type, $leader_values$ values(Illumio.pce_fqdn) as pce_fqdn, values(Illumio.href) as href, values(Illumio.workload_href) as workload_href from datamodel=Illumio where nodename=Illumio.Illumio_PCE by Illumio.timestamp | search event_type="system_task.agent_offline_check" $leader_fqdn$ $fqdn$ | dedup href | stats dc(workload_href) as "Offline VEN due to 60 minute timeout"</query>
-          <earliest>-60m@m</earliest>
+          <query>
+            | inputlookup illumio_workloads_lookup WHERE managed=1 AND pce_fqdn=$pce_tok|s$
+            | fillnull value="Unknown" os_id
+            | chart dc(href) AS "VEN Count" BY os_id
+            | rename os_id AS "OS"
+          </query>
+          <earliest>1</earliest>
           <latest>now</latest>
+        </search>
+        <option name="charting.chart">pie</option>
+        <option name="charting.drilldown">all</option>
+        <option name="refresh.display">progressbar</option>
+        <drilldown>
+          <link target="_blank">search?q=%7C%20inputlookup%20illumio_workloads_lookup%20WHERE%20managed%3D1%20AND%20os_id%3D$click.value$%20AND%20pce_fqdn=$pce_tok|s$</link>
+        </drilldown>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>VEN Timeouts</title>
+      <single>
+        <search base="audit_base_search">
+          <query>
+            | search event_type="system_task.agent_offline_check"
+            | stats dc(object_id) AS "Timed Out"
+          </query>
         </search>
         <option name="drilldown">all</option>
         <option name="rangeColors">["0x333","0xd93f3c"]</option>
         <option name="rangeValues">[0]</option>
         <option name="useColors">1</option>
         <drilldown>
-          <link target="_blank">search?q=| tstats values(Illumio.event_type) as event_type, $leader_values$ values(Illumio.pce_fqdn) as pce_fqdn, values(Illumio.href) as href, values(Illumio.workload_href) as workload_href from datamodel=Illumio where nodename=Illumio.Illumio_PCE by Illumio.timestamp | search event_type="system_task.agent_offline_check" $leader_fqdn$ $fqdn$ | rename Illumio.timestamp as Time, href as HREF, hostname as "Host Name" | table Time HREF "Host Name"&amp;earliest=-60m@m&amp;latest=now&amp;auto_pause=$auto_pause$</link>
+          <link target="_blank">search?q=| tstats values(Audit.event_type) as event_type, values(Audit.pce_fqdn) as pce_fqdn, values(Audit.href) as href from datamodel=Illumio.Audit WHERE Audit.pce_fqdn=$pce_tok|s$ BY Audit.timestamp Audit.event_type | search event_type="system_task.agent_offline_check" | rename Audit.timestamp as Time, href as HREF, hostname as "Host Name" | table Time HREF "Host Name"&amp;earliest=$time_range.earliest$&amp;latest=$time_range.latest$&amp;auto_pause=$auto_pause$</link>
         </drilldown>
       </single>
-    </panel>
-    <panel>
-      <title>Suspended VEN in last 60 Minutes</title>
-      <single>
-        <search>
-          <query>`illumio_get_index` sourcetype="illumio:pce:metadata" illumio_type="illumio:pce:workload" "agent.status.status"="suspended" $leader_fqdn$ $fqdn$ | stats dc(href) as "Suspended"</query>
-          <earliest>-60m@m</earliest>
-          <latest>now</latest>
-        </search>
-        <option name="drilldown">all</option>
-        <drilldown>
-          <link target="_blank">search?q=`illumio_get_index` sourcetype="illumio:pce:metadata" illumio_type="illumio:pce:workload" "agent.status.status"="suspended" $leader_fqdn$ $fqdn$ | rename  hostname as "Host Name", public_ip as "Public IP", href as HREF,service_provider as "Service Provider" | dedup HREF | table HREF, "Host Name", "Public IP", "Service Provider"&amp;earliest=-60m@m&amp;latest=now&amp;auto_pause=$auto_pause$</link>
-        </drilldown>
-      </single>
-    </panel>
-  </row>
-  <row>
-    <panel id="filters_panel">
-      <input type="time" id="time_id">
-        <label>Time Range</label>
-        <default>
-          <earliest>-72h@h</earliest>
-          <latest>now</latest>
-        </default>
-        <change>
-          <set token="selected_earliest">$earliest$</set>
-          <set token="selected_latest">$latest$</set>
-        </change>
-      </input>
-      <html>
-        <style>
-          #filters_panel .dashboard-panel { background-color : #F2F4F5 !important; }
-        </style>
-      </html>
-    </panel>
-  </row>
-  <row>
-    <panel>
-      <title>Managed VEN by Version</title>
-      <chart>
-        <search>
-          <query>`illumio_get_index` sourcetype="illumio:pce:metadata" illumio_type="illumio:pce:workload" "agent.href"="*" $leader_fqdn$ $fqdn$ | timechart limit=0 dc(href) as Count by "agent.status.agent_version" | rename "agent.status.agent_version" as "Version"</query>
-          <earliest>$earliest$</earliest>
-          <latest>$latest$</latest>
-        </search>
-        <option name="charting.axisTitleX.text">Time</option>
-        <option name="charting.axisTitleY.text">VEN Count</option>
-        <option name="charting.chart">line</option>
-        <option name="charting.legend.placement">bottom</option>
-        <option name="charting.drilldown">all</option>
-        <option name="charting.chart.stackMode">stacked</option>
-        <option name="charting.legend.mode">standard</option>
-        <option name="refresh.display">progressbar</option>
-        <drilldown>
-          <link target="_blank">search?q=`illumio_get_index` sourcetype="illumio:pce:metadata" illumio_type="illumio:pce:workload" "agent.href"="*" $leader_fqdn$ $fqdn$ "agent.status.agent_version"=$click.name2$ | dedup href | table pce_fqdn hostname href agent.href agent.status.status agent.status.agent_version | fillnull value="-" hostname href agent.status.status | rename pce_fqdn as PCE hostname as "Host Name" href as Href agent.href as "Agent Href" agent.status.status as Status agent.status.agent_version as "Version"&amp;earliest=$earliest$&amp;latest=$latest$</link>
-        </drilldown>
-      </chart>
-    </panel>
-  </row>
-  <row>
-    <panel>
-      <title>Managed VEN by Mode</title>
-      <chart>
-        <search>
-          <query>`illumio_get_index` sourcetype="illumio:pce:metadata" illumio_type="illumio:pce:workload" "agent.href"="*" $leader_fqdn$ $fqdn$ | replace illuminated with "illuminated (Build or Test)" in agent.config.mode | timechart limit=0 dc(href) as Count by agent.config.mode</query>
-          <earliest>$earliest$</earliest>
-          <latest>$latest$</latest>
-        </search>
-        <option name="charting.axisTitleX.text">Time</option>
-        <option name="charting.axisTitleY.text">VEN Count</option>
-        <option name="charting.chart">line</option>
-        <option name="charting.legend.placement">bottom</option>
-        <option name="charting.drilldown">all</option>
-        <option name="charting.chart.stackMode">stacked</option>
-        <option name="charting.fieldColors">{Count:0x70c580}</option>
-        <option name="refresh.display">progressbar</option>
-        <drilldown>
-          <link target="_blank">search?q=`illumio_get_index` sourcetype="illumio:pce:metadata" illumio_type="illumio:pce:workload" "agent.href"="*" $leader_fqdn$ $fqdn$ | eval mode=if("$click.name2$"=="illuminated (Build or Test)","illuminated","$click.name2$") | where 'agent.config.mode'=mode | dedup href | table pce_fqdn hostname href agent.href agent.status.status Status agent.config.mode | fillnull value="-" hostname href agent.status.status | rename pce_fqdn as PCE hostname as "Host Name" href as Href agent.href as "Agent Href" agent.status.status as Status agent.config.mode as Mode&amp;earliest=$earliest$&amp;latest=$latest$</link>
-        </drilldown>
-      </chart>
-    </panel>
-    <panel>
-      <title>Managed VEN by Operating System</title>
-      <input type="dropdown" token="os_id">
-        <label>OS Name</label>
-        <choice value="*">All</choice>
-        <default>*</default>
-        <fieldForLabel>os_id</fieldForLabel>
-        <fieldForValue>os_id</fieldForValue>
-        <search>
-          <query>`illumio_get_index` sourcetype="illumio:pce:metadata" illumio_type="illumio:pce:workload" "agent.href"="*" $leader_fqdn$ $fqdn$ | eval os_id=if(isnull(os_id) OR os_id="null","No OS",os_id) | stats dc(href) by os_id</query>
-          <earliest>$earliest$</earliest>
-          <latest>$latest$</latest>
-        </search>
-        <initialValue>*</initialValue>
-      </input>
-      <chart>
-        <search>
-          <query>`illumio_get_index` sourcetype="illumio:pce:metadata" illumio_type="illumio:pce:workload" "agent.href"="*" $leader_fqdn$ $fqdn$ | eval os_id=if(isnull(os_id) OR os_id="null","No OS",os_id) | search os_id="$os_id$"| timechart limit=0 dc(href) by os_id</query>
-          <earliest>$earliest$</earliest>
-          <latest>$latest$</latest>
-        </search>
-        <option name="charting.axisTitleX.text">Time</option>
-        <option name="charting.axisTitleY.text">VEN Count</option>
-        <option name="charting.chart">line</option>
-        <option name="charting.legend.placement">bottom</option>
-        <option name="charting.drilldown">all</option>
-        <option name="charting.chart.stackMode">stacked</option>
-        <option name="refresh.display">progressbar</option>
-        <drilldown>
-          <link target="_blank">search?q=`illumio_get_index` sourcetype="illumio:pce:metadata" illumio_type="illumio:pce:workload" "agent.href"="*" $leader_fqdn$ $fqdn$ | where 'os_id'=[ | makeresults | eval result=if("$click.name2$"=="No OS","\"null\" OR isnull('os_id')","\"$click.name2$\"") | return $result ] | dedup href | table pce_fqdn hostname href agent.href agent.status.status os_id | fillnull value="-" hostname href agent.status.status | rename pce_fqdn as PCE hostname as "Host Name" href as Href agent.href as "Agent Href" agent.status.status as "Status" os_id as "OS Name"&amp;earliest=$earliest$&amp;latest=$latest$</link>
-        </drilldown>
-      </chart>
-    </panel>
-  </row>
-  <row>
-    <panel>
-      <title>VEN Count</title>
-      <chart>
-        <search>
-          <query>`illumio_get_index` sourcetype="illumio:pce:metadata" illumio_type="illumio:pce:workload" agent.status.status="active" $leader_fqdn$ $fqdn$ | timechart dc(href) as "Active VEN" | append [ search `illumio_get_index` sourcetype="illumio:pce:metadata" illumio_type="illumio:pce:workload" NOT("agent.href"="*") $leader_fqdn$ $fqdn$ | timechart dc(href) as "Unmanaged VEN" ]</query>
-          <earliest>$earliest$</earliest>
-          <latest>$latest$</latest>
-        </search>
-        <option name="charting.axisTitleX.text">Time</option>
-        <option name="charting.axisTitleY.text">VEN Count</option>
-        <option name="charting.chart">line</option>
-        <option name="charting.drilldown">all</option>
-        <option name="charting.legend.placement">bottom</option>
-        <option name="refresh.display">progressbar</option>
-        <drilldown>
-          <link target="_blank">search?q=`illumio_get_index` sourcetype="illumio:pce:metadata" illumio_type="illumio:pce:workload" $leader_fqdn$ $fqdn$ [| makeresults | eval result=if("$click.name2$"=="Active VEN","agent.status.status=active", "NOT (agent.href=*)") | return $result ] | dedup href | table pce_fqdn hostname href agent.href agent.status.status | fillnull value="-" hostname href agent.href agent.status.status | rename pce_fqdn as PCE hostname as "Host Name" href as Href agent.href as "Agent Href" agent.status.status as "Status"&amp;earliest=$earliest$&amp;latest=$latest$</link>
-        </drilldown>
-      </chart>
     </panel>
     <panel>
       <title>VEN Event Count By Status</title>
       <chart>
-        <search>
-          <query>| tstats `summariesonly` latest(_time) as _time, values(Illumio.event_type) as event_type, $leader_values$ values(Illumio.pce_fqdn) as pce_fqdn, values(Illumio.href) as href, values(Illumio.workload_href) as workload_href from datamodel=Illumio where nodename=Illumio.Illumio_PCE by Illumio.timestamp | search event_type="system_task.agent_offline_check" OR event_type="workload.online" | search $leader_fqdn$ $fqdn$ | dedup href | eval event_type=if(event_type="workload.online","Online","Offline") | timechart dc(workload_href) by event_type | append [| tstats `summariesonly` latest(_time) as _time, values(Illumio.event_type) as event_type, $leader_values$ values(Illumio.pce_fqdn) as pce_fqdn, values(Illumio.href) as href, values(Illumio.agent_href) as agent_href from datamodel=Illumio where nodename=Illumio.Illumio_PCE by Illumio.timestamp | search event_type="system_task.agent_missed_heartbeats_check" $leader_fqdn$ $fqdn$ | dedup href | timechart  dc(agent_href) as "Missed Heartbeat"]</query>
-          <earliest>$earliest$</earliest>
-          <latest>$latest$</latest>
+        <search base="audit_base_search">
+          <query>
+            | search event_type="system_task.agent_offline_check" OR event_type="workload.online"
+            | eval workload_state = if(event_type="workload.online", "Online", "Offline")
+            | timechart dc(object_id) BY workload_state
+            | append
+                [| search `illumio_get_index` sourcetype="illumio:pce" pce_fqdn=$pce_tok|s$ event_type="system_task.agent_missed_heartbeats_check"
+                | eval ven_href='notifications{}.info.ven.href'
+                | timechart dc(ven_href) AS "Missed Heartbeat"]
+          </query>
         </search>
         <option name="charting.axisTitleX.text">Time</option>
         <option name="charting.axisTitleY.text">Count</option>
@@ -270,33 +173,36 @@
         <option name="charting.legend.placement">bottom</option>
         <option name="refresh.display">progressbar</option>
         <drilldown>
-          <link target="_blank">search?q=| tstats `summariesonly` latest(_time) as _time, values(Illumio.event_type) as event_type, $leader_values$ values(Illumio.pce_fqdn) as pce_fqdn, values(Illumio.href) as href, values(Illumio.workload_href) as workload_href, values(Illumio.created_hostname) as created_hostname, values(Illumio.severity) as severity, values(Illumio.status) as Status from datamodel=Illumio where nodename=Illumio.Illumio_PCE by Illumio.timestamp | search  $leader_fqdn$ $fqdn$ | eval event_type_value=case("$click.name2$"=="Online","workload.online","$click.name2$"=="Offline","system_task.agent_offline_check" ,"$click.name2$"=="Missed Heartbeat","system_task.agent_missed_heartbeats_check") | where event_type=event_type_value | dedup href | fillnull value="-" created_hostname severity status workload_href | table pce_fqdn created_hostname severity status workload_href | rename pce_fqdn as PCE created_hostname as "Host Name" severity as Severity status as Status workload_href as "Workload Href"&amp;earliest=$earliest$&amp;latest=$latest$</link>
+          <link target="_blank">search?q=| tstats values(Audit.event_type) as event_type, values(Audit.pce_fqdn) as pce_fqdn, values(Audit.href) as href, values(Audit.created_hostname) as created_hostname, values(Audit.severity) as severity, values(Audit.status) as Status from datamodel=Illumio.Audit WHERE Audit.pce_fqdn=$pce_tok|s$ BY Audit.timestamp | eval event_type_value=case("$click.name2$"=="Online","workload.online","$click.name2$"=="Offline","system_task.agent_offline_check" ,"$click.name2$"=="Missed Heartbeat","system_task.agent_missed_heartbeats_check") | where event_type=event_type_value | dedup href | fillnull value="-" created_hostname severity status workload_href | table pce_fqdn created_hostname severity status workload_href | rename pce_fqdn as PCE created_hostname as "Host Name" severity as Severity status as Status workload_href as "Workload Href"&amp;earliest=$time_range.earliest$&amp;latest=$time_range.latest$</link>
         </drilldown>
       </chart>
     </panel>
   </row>
   <row>
     <panel>
-      <title>Agent Event Count By EventType</title>
+      <title>Agent Event Count by Event Type</title>
       <input type="dropdown" token="agent_event_type">
         <label>Event Type</label>
         <fieldForLabel>event_type</fieldForLabel>
         <fieldForValue>event_type</fieldForValue>
-        <search>
-          <query>| tstats `summariesonly` latest(_time) as _time, values(Illumio.event_type) as event_type, $leader_values$ values(Illumio.pce_fqdn) as pce_fqdn from datamodel=Illumio where nodename=Illumio.Illumio_PCE by Illumio.timestamp | search  $leader_fqdn$ $fqdn$ event_type="agent.*" | dedup event_type | table event_type</query>
-          <earliest>$earliest$</earliest>
-          <latest>$latest$</latest>
+        <search base="audit_base_search">
+          <query>
+            | search event_type="agent.*"
+            | stats count BY event_type
+          </query>
         </search>
         <choice value="agent.*">All</choice>
         <default>agent.*</default>
         <initialValue>agent.*</initialValue>
-        <prefix>event_type=</prefix>
+        <prefix>event_type="</prefix>
+        <suffix>"</suffix>
       </input>
       <chart>
-        <search>
-          <query>| tstats `summariesonly` latest(_time) as _time, values(Illumio.event_type) as event_type, $leader_values$ values(Illumio.pce_fqdn) as pce_fqdn from datamodel=Illumio where nodename=Illumio.Illumio_PCE by Illumio.timestamp | search $leader_fqdn$ $fqdn$ $agent_event_type$ | timechart limit=0 count by event_type</query>
-          <earliest>$earliest$</earliest>
-          <latest>$latest$</latest>
+        <search base="audit_base_search">
+          <query>
+            | search $agent_event_type$
+            | timechart limit=0 count BY event_type
+          </query>
         </search>
         <option name="charting.axisTitleX.text">Time</option>
         <option name="charting.axisTitleY.text">VEN Count</option>
@@ -305,18 +211,21 @@
         <option name="charting.legend.placement">bottom</option>
         <option name="refresh.display">progressbar</option>
         <drilldown>
-          <link target="_blank">search?q=| tstats `summariesonly` latest(_time) as _time, values(Illumio.event_type) as event_type, $leader_values$ values(Illumio.pce_fqdn) as pce_fqdn, values(Illumio.created_hostname) as created_hostname, values(Illumio.severity) as severity, values(Illumio.status) as status, values(Illumio.category) as category from datamodel=Illumio where nodename=Illumio.Illumio_PCE by Illumio.timestamp | search $leader_fqdn$ $fqdn$ event_type="$click.name2$" | table pce_fqdn created_hostname category severity status event_type | fillnull value="-" created_hostname category severity status | rename pce_fqdn as PCE created_hostname as "Host Name" category as Category severity as Severity status as Status event_type as "Event Type"&amp;earliest=$earliest$&amp;latest=$latest$</link>
+          <link target="_blank">search?q=%7C%20tstats%20values(Audit.event_type)%20as%20event_type%2C%20values(Audit.pce_fqdn)%20as%20pce_fqdn%2C%20values(Audit.severity)%20as%20severity%2C%20values(Audit.status)%20as%20status%2C%20values(Audit.category)%20as%20category%20from%20datamodel%3DIllumio.Audit%20WHERE%20Audit.pce_fqdn%3D$pce_tok|s$%20BY%20Audit.timestamp%20%0A%7C%20search%20event_type%3D%22$click.name2$%22%20%0A%7C%20table%20pce_fqdn%20category%20severity%20status%20event_type%20%0A%7C%20fillnull%20value%3D%22-%22%0A%7C%20rename%20pce_fqdn%20as%20PCE%2C%20category%20as%20Category%2C%20severity%20as%20Severity%2C%20status%20as%20Status%2C%20event_type%20as%20%22Event%20Type%22&amp;earliest=$time_range.earliest$&amp;latest=$time_range.latest$</link>
         </drilldown>
       </chart>
     </panel>
     <panel>
-      <title>Workload Event Count By EventType</title>
+      <title>Workload Event Count by Event Type</title>
       <input type="dropdown" token="workload_event_type">
         <label>Event Type</label>
         <fieldForLabel>event_type</fieldForLabel>
         <fieldForValue>event_type</fieldForValue>
-        <search>
-          <query>| tstats `summariesonly` values(Illumio.event_type) as event_type, $leader_values$ values(Illumio.pce_fqdn) as pce_fqdn from datamodel=Illumio where nodename=Illumio.Illumio_PCE by Illumio.timestamp | search $leader_fqdn$ $fqdn$ (event_type="workload.*" OR event_type="workloads.*") | dedup event_type | table event_type</query>
+        <search base="audit_base_search">
+          <query>
+            | search (event_type="workload.*" OR event_type="workloads.*")
+            | stats count BY event_type
+          </query>
         </search>
         <choice value="workload.* OR event_type=workloads.*">All</choice>
         <prefix>(event_type=</prefix>
@@ -325,10 +234,11 @@
         <initialValue>workload.* OR event_type=workloads.*</initialValue>
       </input>
       <chart>
-        <search>
-          <query>| tstats `summariesonly` latest(_time) as _time, values(Illumio.event_type) as event_type, $leader_values$ values(Illumio.pce_fqdn) as pce_fqdn from datamodel=Illumio where nodename=Illumio.Illumio_PCE by Illumio.timestamp | search $leader_fqdn$ $fqdn$ $workload_event_type$ | timechart limit=0 count by event_type</query>
-          <earliest>$earliest$</earliest>
-          <latest>$latest$</latest>
+        <search base="audit_base_search">
+          <query>
+            | search $workload_event_type$
+            | timechart limit=0 count by event_type
+          </query>
         </search>
         <option name="charting.axisTitleX.text">Time</option>
         <option name="charting.axisTitleY.text">VEN Count</option>
@@ -337,7 +247,7 @@
         <option name="charting.legend.placement">bottom</option>
         <option name="refresh.display">progressbar</option>
         <drilldown>
-          <link target="_blank">search?q=| tstats `summariesonly` latest(_time) as _time, values(Illumio.event_type) as event_type, $leader_values$ values(Illumio.pce_fqdn) as pce_fqdn, values(Illumio.created_hostname) as created_hostname, values(Illumio.severity) as severity, values(Illumio.status) as status, values(Illumio.category) as category from datamodel=Illumio where nodename=Illumio.Illumio_PCE by Illumio.timestamp | search $leader_fqdn$ $fqdn$ event_type="$click.name2$" | table pce_fqdn created_hostname category severity status event_type | fillnull value="-" created_hostname category severity status | rename pce_fqdn as PCE created_hostname as "Host Name" category as Category severity as Severity status as Status event_type as "Event Type"&amp;earliest=$earliest$&amp;latest=$latest$</link>
+          <link target="_blank">search?q=%7C%20tstats%20values(Audit.event_type)%20as%20event_type%2C%20values(Audit.pce_fqdn)%20as%20pce_fqdn%2C%20values(Audit.severity)%20as%20severity%2C%20values(Audit.status)%20as%20status%2C%20values(Audit.category)%20as%20category%20FROM%20datamodel%3DIllumio.Audit%20WHERE%20Audit.pce_fqdn%3D$pce_tok|s$%20by%20Audit.timestamp%20%0A%7C%20search%20event_type%3D%22$click.name2$%22%20%0A%7C%20table%20pce_fqdn%20category%20severity%20status%20event_type%20%0A%7C%20fillnull%20value%3D%22-%22%0A%7C%20rename%20pce_fqdn%20as%20PCE%2C%20category%20as%20Category%2C%20severity%20as%20Severity%2C%20status%20as%20Status%2C%20event_type%20as%20%22Event%20Type%22&amp;earliest=$time_range.earliest$&amp;latest=$time_range.latest$</link>
         </drilldown>
       </chart>
     </panel>
