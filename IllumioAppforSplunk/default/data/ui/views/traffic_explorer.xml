@@ -256,7 +256,7 @@
           <colorPalette type="map">{"allowed":#53A051,"potentially-blocked":#F8BE34,"blocked":#DC4E41,"unknown":#808080}</colorPalette>
         </format>
         <drilldown>
-          <link target="_blank">search?q=%60illumio_get_index%60%20sourcetype%3D%22illumio%3Apce%3Acollector%22%20src_ip%3D%22$row.Source IP$%22%20dest_ip%3D%22$row.Destination IP$%22%20dest_port%3D%22$row.Port$%22%20transport%3D%22$row.Protocol$%22&amp;earliest=$time_range.earliest$&amp;latest=$time_range.latest$</link>
+          <link target="_blank">search?q=%60illumio_get_index%60%20sourcetype%3D%22illumio%3Apce%3Acollector%22%20(src_host%3D$row.Source|s$%20OR%20src_ip%3D$row.Source|s$)%20(dest_ip%3D$row.Destination|s$%20OR%20dest_host%3D$row.Destination|s$)%20dest_port%3D$row.Port|s$%20transport%3D$row.Protocol|s$&amp;earliest=$time_range.earliest$&amp;latest=$time_range.latest$</link>
         </drilldown>
       </table>
     </panel>
