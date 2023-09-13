@@ -218,7 +218,6 @@
   </row>
   <row>
     <panel>
-      <title>Node </title>
       <chart>
         <search base="base_search">
           <query>
