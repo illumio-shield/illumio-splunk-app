@@ -456,7 +456,7 @@
                 },
                 {
                     "fieldName": "pce_fqdn",
-                    "owner": "Traffic",
+                    "owner": "Status",
                     "type": "string",
                     "fieldSearch": "",
                     "required": false,
