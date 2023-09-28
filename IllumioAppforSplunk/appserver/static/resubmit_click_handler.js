@@ -1,4 +1,5 @@
 require([
+    "jquery",
     "splunkjs/mvc/simplexml/ready!"
 ], function($) {
     // add a handler to resubmit the dashboard form when a row is clicked in a
