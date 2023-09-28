@@ -194,6 +194,18 @@
     </panel>
   </row>
   <row>
+    <panel depends="$hidden$">
+      <search base="base_search">
+        <query>
+          | head 1
+          | eval hostname = "(\"" . mvjoin('nodes{}.hostname', "\", \"") . "\")"
+          | table hostname
+        </query>
+        <done>
+          <set token="hostnames">$result.hostname$</set>
+        </done>
+      </search>
+    </panel>
     <panel>
       <title>Node Status</title>
       <single>
@@ -219,15 +231,15 @@
   <row>
     <panel>
       <chart>
-        <search base="base_search">
+        <search>
           <query>
-            | head 1
-            | spath path="nodes{}.hostname" output=hostname
-            | mvexpand hostname
-            | map search="| tstats latest(Status.cpu) AS cpu, latest(Status.disk) AS disk, latest(Status.memory) AS memory FROM datamodel=Illumio.Status WHERE Status.cpu=* Status.memory=* Status.hostname=$$hostname$$ BY _time span=30m | convert auto(*)"
-            | timechart bins=200 latest(cpu) AS "CPU", latest(disk) AS "Disk", latest(memory) AS "Memory" BY hostname
+            | tstats latest(Status.cpu) AS cpu, latest(Status.disk) AS disk, latest(Status.memory) AS memory FROM datamodel=Illumio.Status WHERE Status.cpu=* Status.memory=* Status.hostname IN $hostnames$ BY _time Status.hostname span=30m
+            | convert auto(*)
+            | timechart bins=200 latest(cpu) AS "CPU", latest(disk) AS "Disk", latest(memory) AS "Memory" BY Status.hostname
             | eval Warning = 90, Critical = 95
           </query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
         </search>
         <option name="charting.axisTitleX.visibility">collapsed</option>
         <option name="charting.chart">line</option>
