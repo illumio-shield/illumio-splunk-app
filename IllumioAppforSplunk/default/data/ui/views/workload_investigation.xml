@@ -1,19 +1,36 @@
 <form version="1.1">
   <label>Workload Investigations</label>
+  <search id="workload_lookup_base_search">
+    <query>
+      | inputlookup illumio_workloads_lookup WHERE pce_fqdn=$pce_tok|s$ org_id=$org_id_tok|s$ (hostname=$host_ip|s$ OR public_ip=$host_ip|s$)
+      | where $label_filter$
+    </query>
+    <earliest>1</earliest>
+    <latest>now</latest>
+  </search>
   <fieldset submitButton="true" autoRun="true">
-    <input type="dropdown" token="pce_filter">
+    <input type="dropdown" token="pce_tok">
       <label>PCE</label>
       <search>
-        <query>| inputlookup illumio_workloads_lookup | stats count BY pce_fqdn
-        </query>
+        <query>| inputlookup illumio_workloads_lookup | stats count BY pce_fqdn</query>
         <earliest>1</earliest>
         <latest>now</latest>
       </search>
       <selectFirstChoice>true</selectFirstChoice>
       <fieldForLabel>pce_fqdn</fieldForLabel>
       <fieldForValue>pce_fqdn</fieldForValue>
-      <prefix>pce_fqdn="</prefix>
-      <suffix>"</suffix>
+    </input>
+    <input type="dropdown" token="org_id_tok">
+      <label>Org ID</label>
+      <search>
+        <query>| inputlookup illumio_workloads_lookup WHERE pce_fqdn=$pce_tok|s$ | stats count BY org_id</query>
+        <earliest>1</earliest>
+        <latest>now</latest>
+      </search>
+      <fieldForLabel>org_id</fieldForLabel>
+      <fieldForValue>org_id</fieldForValue>
+      <choice value="*">All</choice>
+      <default>*</default>
     </input>
     <input type="text" token="host_ip">
       <label>Hostname/IP</label>
@@ -26,13 +43,13 @@
       <fieldForValue>href</fieldForValue>
       <choice value=".*">All</choice>
       <default>.*</default>
-      <valuePrefix>isnotnull(mvfind('labels.href', "</valuePrefix>
+      <valuePrefix>isnotnull(mvfind('labels', "</valuePrefix>
       <valueSuffix>"))</valueSuffix>
       <delimiter> AND </delimiter>
       <prefix>(</prefix>
       <suffix>)</suffix>
       <search>
-        <query>| inputlookup illumio_labels_lookup WHERE $pce_filter$ | eval label = key + ":" + value | table href label</query>
+        <query>| inputlookup illumio_labels_lookup WHERE pce_fqdn=$pce_tok|s$ org_id=$org_id_tok|s$ | eval label = key + ":" + value | table href label</query>
         <earliest>1</earliest>
         <latest>now</latest>
       </search>
@@ -49,67 +66,56 @@
     <panel>
       <title>VENs by Status</title>
       <chart>
-        <search>
+        <search base="workload_lookup_base_search">
           <query>
-            | inputlookup illumio_workloads_lookup WHERE agent.status.status=* AND $pce_filter$ AND (hostname=$host_ip|s$ OR public_ip=$host_ip|s$)
-            | where $label_filter$
+            | search agent.status.status=*
             | rename agent.status.status AS Status
             | stats count BY Status
           </query>
-          <earliest>1</earliest>
-          <latest>now</latest>
         </search>
         <option name="charting.chart">pie</option>
         <option name="charting.drilldown">all</option>
         <option name="charting.legend.placement">none</option>
         <option name="refresh.display">progressbar</option>
         <drilldown>
-          <link target="_blank">search?q=%7C%20inputlookup%20illumio_workloads_lookup%20WHERE%20agent.status.status%3D$click.value$%20AND%20$pce_filter$%20AND%20(hostname%3D$host_ip|s$%20OR%20public_ip%3D$host_ip|s$)%0A%7C%20where%20$label_filter$&amp;earliest=$earliest$&amp;latest=$latest$</link>
+          <link target="_blank">search?q=%7C%20inputlookup%20illumio_workloads_lookup%20WHERE%20agent.status.status%3D$click.value$%20pce_fqdn%3D$pce_tok|s$%20org_id=$org_id_tok|s$%20(hostname%3D$host_ip|s$%20OR%20public_ip%3D$host_ip|s$)%0A%7C%20where%20$label_filter$&amp;earliest=$earliest$&amp;latest=$latest$</link>
         </drilldown>
       </chart>
     </panel>
     <panel>
       <title>Policy Enforcement Mode</title>
       <chart>
-        <search>
+        <search base="workload_lookup_base_search">
           <query>
-            | inputlookup illumio_workloads_lookup WHERE $pce_filter$ AND (hostname=$host_ip|s$ OR public_ip=$host_ip|s$)
-            | where $label_filter$
             | rename enforcement_mode AS "Enforcement Mode"
             | stats count BY "Enforcement Mode"
           </query>
-          <earliest>1</earliest>
-          <latest>now</latest>
         </search>
         <option name="charting.chart">pie</option>
         <option name="charting.drilldown">all</option>
         <option name="charting.legend.placement">none</option>
         <option name="refresh.display">progressbar</option>
         <drilldown>
-          <link target="_blank">search?q=%7C%20inputlookup%20illumio_workloads_lookup%20WHERE%20enforcement_mode%3D$click.value$%20AND%20$pce_filter$%20AND%20(hostname%3D$host_ip|s$%20OR%20public_ip%3D$host_ip|s$)%0A%7C%20where%20$label_filter$&amp;earliest=$earliest$&amp;latest=$latest$</link>
+          <link target="_blank">search?q=%7C%20inputlookup%20illumio_workloads_lookup%20WHERE%20enforcement_mode%3D$click.value$%20pce_fqdn%3D$pce_tok|s$%20org_id=$org_id_tok|s$%20(hostname%3D$host_ip|s$%20OR%20public_ip%3D$host_ip|s$)%0A%7C%20where%20$label_filter$&amp;earliest=$earliest$&amp;latest=$latest$</link>
         </drilldown>
       </chart>
     </panel>
     <panel>
       <title>Policy Synchronization Status</title>
       <chart>
-        <search>
+        <search base="workload_lookup_base_search">
           <query>
-            | inputlookup illumio_workloads_lookup WHERE $pce_filter$ AND (hostname=$host_ip|s$ OR public_ip=$host_ip|s$)
-            | where $label_filter$
             | fillnull value="unknown" agent.status.security_policy_sync_state
             | rename agent.status.security_policy_sync_state AS "Policy Sync State"
             | stats count BY "Policy Sync State"
           </query>
-          <earliest>1</earliest>
-          <latest>now</latest>
         </search>
         <option name="charting.chart">pie</option>
         <option name="charting.drilldown">all</option>
         <option name="charting.legend.placement">none</option>
         <option name="refresh.display">progressbar</option>
         <drilldown>
-          <link target="_blank">search?q=%7C%20inputlookup%20illumio_workloads_lookup%20WHERE%20agent.status.security_policy_sync_state%3D$click.value$%20AND%20$pce_filter$%20AND%20(hostname%3D$host_ip|s$%20OR%20public_ip%3D$host_ip|s$)%0A%7C%20where%20$label_filter$&amp;earliest=$earliest$&amp;latest=$latest$</link>
+          <link target="_blank">search?q=%7C%20inputlookup%20illumio_workloads_lookup%20WHERE%20agent.status.security_policy_sync_state%3D$click.value$%20pce_fqdn%3D$pce_tok|s$%20org_id=$org_id_tok|s$%20(hostname%3D$host_ip|s$%20OR%20public_ip%3D$host_ip|s$)%0A%7C%20where%20$label_filter$&amp;earliest=$earliest$&amp;latest=$latest$</link>
         </drilldown>
       </chart>
     </panel>
@@ -118,10 +124,8 @@
     <panel>
       <title>Workload Details</title>
       <table>
-        <search>
+        <search base="workload_lookup_base_search">
           <query>
-            | inputlookup illumio_workloads_lookup WHERE $pce_filter$ AND (hostname=$host_ip|s$ OR public_ip=$host_ip|s$)
-            | where $label_filter$
             | rename labels.href AS label_href
             | mvexpand label_href
             | lookup illumio_labels_lookup pce_fqdn href AS label_href OUTPUT key AS label_key value AS label_value
@@ -137,8 +141,6 @@
             | table href Workload PCE Online Status "Enforcement Mode" Labels OS Interfaces IPs "VEN Type" "Policy Sync State" "Policy Applied at" "Updated at"
             | sort - "Updated at"
           </query>
-          <earliest>1</earliest>
-          <latest>now</latest>
         </search>
         <fields>Workload PCE Online Status "Enforcement Mode" Labels OS Interfaces IPs "VEN Type" "Policy Sync State" "Policy Applied at" "Updated at"</fields>
         <option name="count">5</option>
