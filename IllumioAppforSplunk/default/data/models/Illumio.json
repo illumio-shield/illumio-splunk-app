@@ -39,6 +39,18 @@
                     "comment": "PCE fully-qualified domain name"
                 },
                 {
+                    "fieldName": "org_id",
+                    "owner": "Audit",
+                    "type": "number",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "org_id",
+                    "comment": "PCE Organization ID"
+                },
+                {
                     "fieldName": "href",
                     "owner": "Audit",
                     "type": "string",
@@ -97,6 +109,18 @@
                     "editable": true,
                     "displayName": "severity",
                     "comment": "Event severity"
+                },
+                {
+                    "fieldName": "object",
+                    "owner": "Audit",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "object",
+                    "comment": "Affected resource name"
                 },
                 {
                     "fieldName": "object_category",
@@ -245,6 +269,18 @@
                     "editable": true,
                     "displayName": "pce_fqdn",
                     "comment": "PCE fully-qualified domain name"
+                },
+                {
+                    "fieldName": "org_id",
+                    "owner": "Traffic",
+                    "type": "number",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "org_id",
+                    "comment": "PCE Organization ID"
                 },
                 {
                     "fieldName": "count",
