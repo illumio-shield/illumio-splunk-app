@@ -113,6 +113,16 @@
   <row>
     <panel>
       <title>Most Trafficked Workloads</title>
+      <input type="dropdown" token="topN_workloads" searchWhenChanged="true">
+        <label>Display</label>
+        <fieldForLabel>label</fieldForLabel>
+        <fieldForValue>value</fieldForValue>
+        <choice value="3">3 Workloads</choice>
+        <choice value="5">5 Workloads</choice>
+        <choice value="10">10 Workloads</choice>
+        <choice value="1000000">All Workloads</choice>
+        <default>10</default>
+      </input>
       <chart>
         <search base="traffic_base_search">
           <query>
@@ -120,7 +130,7 @@
             | eval outbound_flows = if(isnotnull(src_host), flows, null())
             | eval inbound_flows = if(isnotnull(dest_host), flows, null())
             | stats sum(inbound_flows) AS "Inbound Flows", sum(outbound_flows) AS "Outbound Flows" BY Workload
-            | addtotals | sort -Total | head 10 | fields - Total
+            | addtotals | head $topN_workloads$ | sort -Total | fields - Total
           </query>
         </search>
         <drilldown>
@@ -141,13 +151,22 @@
     </panel>
     <panel>
       <title>Most Trafficked Services</title>
+      <input type="dropdown" token="topN_services" searchWhenChanged="true">
+        <label>Display</label>
+        <fieldForLabel>label</fieldForLabel>
+        <fieldForValue>value</fieldForValue>
+        <choice value="3">3 Services</choice>
+        <choice value="5">5 Services</choice>
+        <choice value="10">10 Services</choice>
+        <choice value="1000000">All Services</choice>
+        <default>10</default>
+      </input>
       <chart>
         <search base="traffic_base_search">
           <query>
             | eval Service = dest_port . " " . upper(transport)
             | stats sum(flows) AS Count BY Service
-            | head 10
-            | sort -Count
+            | head $topN_services$ | sort -Count
           </query>
         </search>
         <drilldown>
