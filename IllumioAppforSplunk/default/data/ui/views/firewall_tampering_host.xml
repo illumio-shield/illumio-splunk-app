@@ -6,28 +6,26 @@
       <table id="quarantineHost">
         <search id="quarantineSearch">
           <query>
-            | savedsearch Illumio_Firewall_Tampering
-            | search $fqdn$
-            | rename created_hostname as hostname
-            | join type=outer hostname max=0
-                [| inputlookup illumio_workload_mapping_lookup
-                | table hostname, label, workload_uuid, os_id]
-            | table _time, hostname, label, workload_uuid, os_id, pce_fqdn
-            | rex field=hostname "(?&lt;hostname_q&gt;.*?)(\..*|$)(\..*|$)"
-            | eval Quarantine=workload_uuid + ","+ pce_fqdn, data_file=1
-            | rename workload_uuid as "Workload UUID", hostname as "Host Name", pce_fqdn as "PCE"
-            | stats values(label) as Label, values(os_id) as "OS Name", latest(_time) as Time by "Workload UUID", "Host Name", Quarantine, data_file, PCE
-            | join
+            | savedsearch Illumio_Firewall_Tampering pce_fqdn=$pce_fqdn$ org_id=$org_id$
+            | eval pce_fqdn = $pce_fqdn$, org_id = $org_id$, Timestamp = strftime(_time, "%Y-%m-%d %H:%M:%S %Z")
+            | lookup illumio_workloads_lookup ven.href AS ven_href OUTPUTNEW href AS workload_href, labels AS Labels
+                ```Map workload label HREFs to key:value pairs for display```
+            | lookup illumio_labels_lookup href AS Labels, pce_fqdn, org_id OUTPUT key AS label_key, value AS label_value
+            | eval Labels = mvzip(label_key, label_value, ":")
+            | fields - label_key label_value
+                ```Check that the user has the illumio_quarantine_workload role```
+            | appendcols
                 [| rest splunk_server=local /services/authentication/current-context
-                | eval show_quarantine=if(roles="illumio_quarantine_workload",1,0),data_file=1
-                | table show_quarantine,data_file]
-            | eval Quarantine=Quarantine +","+ show_quarantine, Investigate='Host Name', Time= strftime(Time, "%Y-%m-%d %H:%M:%S %Z")
-            | table Time, Label, "Host Name", "OS Name", PCE, Quarantine, Investigate
+                    | eval show_quarantine=if(roles="illumio_quarantine_workload", 1, 0)
+                    | table show_quarantine]
+            | filldown show_quarantine
+            | eval Quarantine = workload_href . "," . pce_fqdn . "," . org_id . "," . show_quarantine, Investigate=workload_hostname . "," . pce_fqdn . "," . org_id
+            | table Timestamp, pce_fqdn, org_id, Labels, workload_hostname, Quarantine, Investigate
+            | rename pce_fqdn AS PCE, org_id AS "Org ID", workload_hostname AS Hostname
           </query>
           <earliest>$earliest$</earliest>
           <latest>$latest$</latest>
         </search>
-        <fields>Time, Label, "Host Name", "OS Name", PCE, Quarantine, Investigate</fields>
         <option name="count">10</option>
         <option name="drilldown">none</option>
       </table>
