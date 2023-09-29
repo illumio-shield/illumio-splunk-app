@@ -2,7 +2,7 @@
   <label>Security Operations</label>
   <search id="traffic_base_search">
     <query>
-      | tstats sum(Traffic.count) AS flows, values(Traffic.src_host) AS src_host, values(Traffic.dest_host) AS dest_host FROM datamodel=Illumio.Traffic WHERE Traffic.pce_fqdn=$pce_tok|s$ Traffic.action=$action_tok|s$ Traffic.org_id=$org_id_tok|s$ BY _time Traffic.src_ip Traffic.dest_ip Traffic.dest_port Traffic.transport Traffic.action
+      | tstats `summariesonly` sum(Traffic.count) AS flows, values(Traffic.src_host) AS src_host, values(Traffic.dest_host) AS dest_host FROM datamodel=Illumio.Traffic WHERE Traffic.pce_fqdn=$pce_tok|s$ Traffic.action=$action_tok|s$ Traffic.org_id=$org_id_tok|s$ BY _time Traffic.src_ip Traffic.dest_ip Traffic.dest_port Traffic.transport Traffic.action
       | rename Traffic.src_ip AS src_ip, Traffic.dest_ip AS dest_ip, Traffic.dest_port AS dest_port, Traffic.transport AS transport, Traffic.action AS action
     </query>
     <earliest>$time_range.earliest$</earliest>
@@ -22,7 +22,7 @@
     <input type="dropdown" token="pce_tok">
       <label>PCE</label>
       <search>
-        <query>| tstats count FROM datamodel=Illumio.Audit BY Audit.pce_fqdn</query>
+        <query>| tstats `summariesonly` count FROM datamodel=Illumio.Audit BY Audit.pce_fqdn</query>
         <earliest>$time_range.earliest$</earliest>
         <latest>$time_range.latest$</latest>
       </search>
@@ -33,7 +33,7 @@
     <input type="dropdown" token="org_id_tok">
       <label>Org ID</label>
       <search>
-        <query>| tstats count FROM datamodel=Illumio.Audit WHERE Audit.pce_fqdn=$pce_tok|s$ BY Audit.org_id</query>
+        <query>| tstats `summariesonly` count FROM datamodel=Illumio.Audit WHERE Audit.pce_fqdn=$pce_tok|s$ BY Audit.org_id</query>
         <earliest>$time_range.earliest$</earliest>
         <latest>$time_range.latest$</latest>
       </search>
@@ -59,54 +59,48 @@
       <title>Audit Events</title>
       <single>
         <search>
-          <query>| savedsearch Illumio_Auditable_Events pce_fqdn=$pce_tok|s$ org_id=$org_id_tok|s$ | timechart count</query>
+          <query>| savedsearch Illumio_Auditable_Events | search pce_fqdn=$pce_tok|s$ org_id=$org_id_tok|s$ | stats count</query>
           <earliest>$time_range.earliest$</earliest>
           <latest>$time_range.latest$</latest>
         </search>
         <drilldown>
-          <link target="_blank">search?q=| savedsearch Illumio_Auditable_Events pce_fqdn=$pce_tok|s$ org_id=$org_id_tok|s$ | stats count BY event_type | sort 0 -count&amp;earliest=$time_range.earliest$&amp;latest=$time_range.latest$</link>
+          <link target="_blank">search?q=| savedsearch Illumio_Auditable_Events | search pce_fqdn="devtest0.ilabs.io" org_id="*" | stats count values(object) AS object values(object_id) AS object_id BY pce_fqdn org_id event_type user&amp;earliest=$time_range.earliest$&amp;latest=$time_range.latest$</link>
         </drilldown>
-        <option name="colorBy">trend</option>
-        <option name="colorMode">none</option>
-        <option name="trendColorInterpretation">inverse</option>
-        <option name="trendDisplayMode">absolute</option>
-        <option name="useColors">1</option>
+        <option name="useColors">0</option>
       </single>
     </panel>
     <panel>
       <title>Port Scan Events</title>
       <single>
         <search>
-          <query>| savedsearch Illumio_PortScan pce_fqdn=$pce_tok|s$ org_id=$org_id_tok|s$ | timechart count</query>
+          <query>| savedsearch Illumio_PortScan | search pce_fqdn=$pce_tok|s$ org_id=$org_id_tok|s$ | stats count</query>
           <earliest>$time_range.earliest$</earliest>
           <latest>$time_range.latest$</latest>
         </search>
+        <option name="drilldown">all</option>
+        <option name="rangeColors">["0x53a051","0xf8be34","0xdc4e41"]</option>
+        <option name="rangeValues">[0,10]</option>
+        <option name="useColors">1</option>
         <drilldown>
           <link target="_blank">port_scan?&amp;pce_fqdn=$pce_tok|s$&amp;org_id=$org_id_tok|s$&amp;earliest=$time_range.earliest$&amp;latest=$time_range.latest$</link>
         </drilldown>
-        <option name="colorBy">trend</option>
-        <option name="colorMode">none</option>
-        <option name="trendColorInterpretation">inverse</option>
-        <option name="trendDisplayMode">absolute</option>
-        <option name="useColors">1</option>
       </single>
     </panel>
     <panel>
       <title>Firewall Tampering Events</title>
       <single>
         <search>
-          <query>| savedsearch Illumio_Firewall_Tampering pce_fqdn=$pce_tok|s$ org_id=$org_id_tok|s$ | timechart count</query>
+          <query>| savedsearch Illumio_Firewall_Tampering | search pce_fqdn=$pce_tok|s$ org_id=$org_id_tok|s$ | stats count</query>
           <earliest>$time_range.earliest$</earliest>
           <latest>$time_range.latest$</latest>
         </search>
+        <option name="drilldown">all</option>
+        <option name="rangeColors">["0x53a051","0xf8be34","0xdc4e41"]</option>
+        <option name="rangeValues">[0,10]</option>
+        <option name="useColors">1</option>
         <drilldown>
           <link target="_blank">firewall_tampering_host?&amp;pce_fqdn=$pce_tok|s$&amp;org_id=$org_id_tok|s$&amp;earliest=$time_range.earliest$&amp;latest=$time_range.latest$</link>
         </drilldown>
-        <option name="colorBy">trend</option>
-        <option name="colorMode">none</option>
-        <option name="trendColorInterpretation">inverse</option>
-        <option name="trendDisplayMode">absolute</option>
-        <option name="useColors">1</option>
       </single>
     </panel>
   </row>
