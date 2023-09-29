@@ -5,9 +5,10 @@
       <table id="quarantineHost">
         <search id="quarantineSearch">
           <query>
-            | savedsearch Illumio_PortScan pce_fqdn=$pce_fqdn$ org_id=$org_id$
+            | savedsearch Illumio_PortScan
                 ```Convert timestamp here because _time gets lost in the mvcombine call later```
-            | eval pce_fqdn = $pce_fqdn$, org_id = $org_id$, Timestamp = strftime(_time, "%Y-%m-%d %H:%M:%S %Z")
+            | search pce_fqdn=$pce_fqdn$ org_id=$org_id$
+            | eval Timestamp = strftime(_time, "%Y-%m-%d %H:%M:%S %Z")
                 ```Look up labels and map them to key:value pairs using illumio_labels_lookup```
             | foreach *_href [lookup illumio_workloads_lookup href AS &lt;&lt;FIELD&gt;&gt; OUTPUTNEW labels AS &lt;&lt;MATCHSTR&gt;&gt;_labels
                 | lookup illumio_labels_lookup href AS &lt;&lt;MATCHSTR&gt;&gt;_labels, pce_fqdn, org_id OUTPUT key AS label_key, value AS label_value
@@ -23,15 +24,26 @@
                 ```For quarantine, we only care about internal workloads performing scanning```
             | eval show_quarantine = if(show_quarantine=1 AND src_href!="-", 1, 0)
             | eval workload_href = if(src_href="-", dest_href, src_href)
-            | eval Quarantine = workload_href . "," . pce_fqdn . "," . org_id . "," . show_quarantine, Investigate=if(src_host="-", dest_host, src_host) . "," . pce_fqdn . "," . org_id
-            | table Timestamp, src_ip, src_host, src_labels, dest_ip, dest_host, dest_labels, Quarantine, Investigate
-            | rename src_host as Source, src_ip as "Source IP", src_labels AS "Source Labels", dest_host as Destination, dest_ip as "Destination IP", dest_labels AS "Destination Labels"
+            | eval Quarantine = workload_href . "," . pce_fqdn . "," . org_id . "," . show_quarantine
+            | table Timestamp, pce_fqdn, org_id, src_ip, src_host, src_labels, dest_ip, dest_host, dest_labels, Quarantine
+            | rename pce_fqdn AS PCE, org_id AS "Org ID", src_host AS Source, src_ip AS "Source IP", src_labels AS "Source Labels", dest_host AS Destination, dest_ip AS "Destination IP", dest_labels AS "Destination Labels"
           </query>
           <earliest>$earliest$</earliest>
           <latest>$latest$</latest>
         </search>
         <option name="count">10</option>
-        <option name="drilldown">none</option>
+        <option name="drilldown">row</option>
+        <drilldown>
+          <condition match="'click.name2'=&quot;Quarantine&quot;">
+            <!-- for now, ignore clicks on the Quarantine column as the button is handled by custom JS -->
+          </condition>
+          <condition match="row.Source!='-'">
+            <link target="_blank">traffic_explorer?form.pce_tok=$row.PCE$&amp;form.org_id_tok=$row.Org ID$&amp;form.host_ip=$row.Source$&amp;form.time_range.earliest=$earliest$&amp;form.time_range.latest=$latest$</link>
+          </condition>
+          <condition>
+            <link target="_blank">traffic_explorer?form.pce_tok=$row.PCE$&amp;form.org_id_tok=$row.Org ID$&amp;form.host_ip=$row.Destination$&amp;form.time_range.earliest=$earliest$&amp;form.time_range.latest=$latest$</link>
+          </condition>
+        </drilldown>
       </table>
     </panel>
   </row>

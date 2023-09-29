@@ -5,7 +5,6 @@ require([
     'splunkjs/mvc/searchmanager',
     'splunkjs/mvc/simplexml/ready!'
 ], function(_, mvc, TableView, SearchManager) {
-
     var tableCampaign = mvc.Components.get("quarantineHost");
     var quarantineSearch = mvc.Components.get("quarantineSearch");
     $("body").append("<div id='screen_loader' class='screen_loader'></div>");
@@ -79,29 +78,11 @@ require([
                 }
             }
         }
-    }),
-    investigateButtonRenderer = TableView.BaseCellRenderer.extend({
-        canRender: function (cell) { return _(['Investigate']).contains(cell.field) },
-        render: function ($td, cell) {
-            // creating cell with Investigate button.
-            if(cell.field == "Investigate"){
-                var values = cell.value.split(",");
-                var hostIp = values[0] || "";
-                var pceFqdn = values[1] || "";
-                var orgId = values[2] || 1;
-                $td.html("<div class='ar_containter'><div class='investigate_button' value='Investigate'>Investigate</div><div>");
-                $td.on('click', function (e) {
-                    var URL = "traffic_explorer?form.pce_tok=" + pceFqdn + "&form.org_id_tok=" + orgId + "&form.host_ip=" + hostIp;
-                    window.open(URL);
-                });
-            }
-        }
-    });
+    })
     if (tableCampaign !== undefined) {
         tableCampaign.getVisualization(function (tableView) {
             // Add custom cell renderer and force re-render
             tableView.table.addCellRenderer(new quarantineButtonRenderer());
-            tableView.table.addCellRenderer(new investigateButtonRenderer());
             tableView.table.render();
         });
     }

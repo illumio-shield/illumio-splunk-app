@@ -6,8 +6,8 @@
       <table id="quarantineHost">
         <search id="quarantineSearch">
           <query>
-            | savedsearch Illumio_Firewall_Tampering pce_fqdn=$pce_fqdn$ org_id=$org_id$
-            | eval pce_fqdn = $pce_fqdn$, org_id = $org_id$, Timestamp = strftime(_time, "%Y-%m-%d %H:%M:%S %Z")
+            | savedsearch Illumio_Firewall_Tampering
+            | eval Timestamp = strftime(_time, "%Y-%m-%d %H:%M:%S %Z")
             | lookup illumio_workloads_lookup ven.href AS ven_href OUTPUTNEW href AS workload_href, labels AS Labels
                 ```Map workload label HREFs to key:value pairs for display```
             | lookup illumio_labels_lookup href AS Labels, pce_fqdn, org_id OUTPUT key AS label_key, value AS label_value
@@ -19,15 +19,23 @@
                     | eval show_quarantine=if(roles="illumio_quarantine_workload", 1, 0)
                     | table show_quarantine]
             | filldown show_quarantine
-            | eval Quarantine = workload_href . "," . pce_fqdn . "," . org_id . "," . show_quarantine, Investigate=workload_hostname . "," . pce_fqdn . "," . org_id
-            | table Timestamp, pce_fqdn, org_id, Labels, workload_hostname, Quarantine, Investigate
+            | eval Quarantine = workload_href . "," . pce_fqdn . "," . org_id . "," . show_quarantine
+            | table Timestamp, pce_fqdn, org_id, Labels, workload_hostname, Quarantine
             | rename pce_fqdn AS PCE, org_id AS "Org ID", workload_hostname AS Hostname
           </query>
           <earliest>$earliest$</earliest>
           <latest>$latest$</latest>
         </search>
         <option name="count">10</option>
-        <option name="drilldown">none</option>
+        <option name="drilldown">row</option>
+        <drilldown>
+          <condition match="'click.name2'=&quot;Quarantine&quot;">
+            <!-- for now, ignore clicks on the Quarantine column as the button is handled by custom JS -->
+          </condition>
+          <condition>
+            <link target="_blank">traffic_explorer?form.pce_tok=$row.PCE$&amp;form.org_id_tok=$row.Org ID$&amp;form.host_ip=$row.Hostname$&amp;form.time_range.earliest=$earliest$&amp;form.time_range.latest=$latest$</link>
+          </condition>
+        </drilldown>
       </table>
     </panel>
   </row>
