@@ -2,7 +2,7 @@
   <label>PCE Authentication Events</label>
   <search id="audit_base_search">
     <query>
-      | tstats values(Audit.href) AS event_href, values(Audit.src_user) AS src_user, values(Audit.user) AS user, values(Audit.src_ip) AS src_ip, values(Audit.event_type) AS event_type, values(Audit.notification_type) AS notification_type, values(Audit.severity) AS severity, values(Audit.status) AS status FROM datamodel=Illumio.Audit WHERE $pce_filter$ (Audit.user=$user_tok|s$ OR Audit.src_user=$user_tok|s$) (Audit.category="auditable" OR Audit.category="system_events") Audit.event_type="user.*" BY _time Audit.pce_fqdn
+      | tstats `summariesonly` values(Audit.href) AS event_href, values(Audit.src_user) AS src_user, values(Audit.user) AS user, values(Audit.src_ip) AS src_ip, values(Audit.event_type) AS event_type, values(Audit.notification_type) AS notification_type, values(Audit.severity) AS severity, values(Audit.status) AS status FROM datamodel=Illumio.Audit WHERE $pce_filter$ (Audit.user=$user_tok|s$ OR Audit.src_user=$user_tok|s$) (Audit.category="auditable" OR Audit.category="system_events") Audit.event_type="user.*" BY _time Audit.pce_fqdn
     </query>
     <earliest>$time_range.earliest$</earliest>
     <latest>$time_range.latest$</latest>
@@ -18,7 +18,7 @@
     <input type="multiselect" token="pce_filter">
       <label>PCE</label>
       <search>
-        <query>| tstats count FROM datamodel=Illumio.Audit BY Audit.pce_fqdn</query>
+        <query>| tstats `summariesonly` count FROM datamodel=Illumio.Audit BY Audit.pce_fqdn</query>
         <earliest>$time_range.earliest$</earliest>
         <latest>$time_range.latest$</latest>
       </search>
@@ -36,7 +36,7 @@
       <label>User</label>
       <search>
         <query>
-          | tstats count FROM datamodel=Illumio.Audit WHERE $pce_filter$ BY Audit.user
+          | tstats `summariesonly` count FROM datamodel=Illumio.Audit WHERE $pce_filter$ BY Audit.user
         </query>
         <earliest>$time_range.earliest$</earliest>
         <latest>$time_range.latest$</latest>

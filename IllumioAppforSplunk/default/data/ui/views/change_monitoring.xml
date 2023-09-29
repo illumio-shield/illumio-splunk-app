@@ -3,7 +3,7 @@
   <description>View recent changes made on connected Illumio PCEs</description>
   <search id="audit_base_search">
     <query>
-      | tstats count FROM datamodel=Illumio.Audit WHERE Audit.category="auditable" (Audit.action="created" OR Audit.action="updated" OR Audit.action="deleted") Audit.pce_fqdn=$pce_tok|s$ (Audit.user=$user_tok|s$ OR Audit.src_user=$user_tok|s$) Audit.object_category=$resource_type_tok|s$ BY _time Audit.action Audit.object_category Audit.user
+      | tstats `summariesonly` count FROM datamodel=Illumio.Audit WHERE Audit.category="auditable" (Audit.action="created" OR Audit.action="updated" OR Audit.action="deleted") Audit.pce_fqdn=$pce_tok|s$ (Audit.user=$user_tok|s$ OR Audit.src_user=$user_tok|s$) Audit.object_category=$resource_type_tok|s$ BY _time Audit.action Audit.object_category Audit.user
     </query>
     <earliest>$time_range.earliest$</earliest>
     <latest>$time_range.latest$</latest>
@@ -22,7 +22,7 @@
     <input type="dropdown" token="pce_tok">
       <label>PCE</label>
       <search>
-        <query>| tstats count from datamodel=Illumio.Audit BY Audit.pce_fqdn</query>
+        <query>| tstats `summariesonly` count from datamodel=Illumio.Audit BY Audit.pce_fqdn</query>
         <earliest>$time_range.earliest$</earliest>
         <latest>$time_range.latest$</latest>
       </search>
@@ -34,7 +34,7 @@
     <input type="dropdown" token="user_tok">
       <label>Username</label>
       <search>
-        <query>| tstats count FROM datamodel=Illumio.Audit WHERE Audit.pce_fqdn=$pce_tok|s$ BY Audit.src_user</query>
+        <query>| tstats `summariesonly` count FROM datamodel=Illumio.Audit WHERE Audit.pce_fqdn=$pce_tok|s$ BY Audit.src_user</query>
         <earliest>$time_range.earliest$</earliest>
         <latest>$time_range.latest$</latest>
       </search>
@@ -47,7 +47,7 @@
       <label>Resource Types</label>
       <search>
         <query>
-          | tstats count FROM datamodel=Illumio.Audit WHERE Audit.pce_fqdn=$pce_tok|s$ BY Audit.object_category
+          | tstats `summariesonly` count FROM datamodel=Illumio.Audit WHERE Audit.pce_fqdn=$pce_tok|s$ BY Audit.object_category
         </query>
         <earliest>$earliest$</earliest>
         <latest>$latest$</latest>

@@ -2,7 +2,7 @@
   <label>Traffic Explorer</label>
   <search id="traffic_base_search">
     <query>
-        | tstats sum(Traffic.count) AS flows, values(Traffic.src_host) AS src_host, values(Traffic.dest_host) AS dest_host, values(Traffic.direction) AS direction, values(Traffic.transport) AS transport, values(Traffic.src_label_pairs) AS src_labels, values(Traffic.dest_label_pairs) AS dest_labels FROM datamodel=Illumio.Traffic WHERE Traffic.pce_fqdn=$pce_tok|s$ Traffic.org_id=$org_id_tok|s$ (Traffic.src_ip=$host_ip|s$ OR Traffic.src_host=$host_ip|s$ OR Traffic.dest_ip=$host_ip|s$ OR Traffic.dest_host=$host_ip|s$) ($src_label_filter$ OR $dest_label_filter$) Traffic.transport=$protocol_tok|s$ Traffic.dest_port IN $port_filter$ Traffic.action IN $action_filter$ BY _time Traffic.pce_fqdn Traffic.src_ip Traffic.dest_ip Traffic.dest_port Traffic.action
+        | tstats `summariesonly` sum(Traffic.count) AS flows, values(Traffic.src_host) AS src_host, values(Traffic.dest_host) AS dest_host, values(Traffic.direction) AS direction, values(Traffic.transport) AS transport, values(Traffic.src_label_pairs) AS src_labels, values(Traffic.dest_label_pairs) AS dest_labels FROM datamodel=Illumio.Traffic WHERE Traffic.pce_fqdn=$pce_tok|s$ Traffic.org_id=$org_id_tok|s$ (Traffic.src_ip=$host_ip|s$ OR Traffic.src_host=$host_ip|s$ OR Traffic.dest_ip=$host_ip|s$ OR Traffic.dest_host=$host_ip|s$) ($src_label_filter$ OR $dest_label_filter$) Traffic.transport=$protocol_tok|s$ Traffic.dest_port IN $port_filter$ Traffic.action IN $action_filter$ BY _time Traffic.pce_fqdn Traffic.src_ip Traffic.dest_ip Traffic.dest_port Traffic.action
     </query>
     <earliest>$time_range.earliest$</earliest>
     <latest>$time_range.latest$</latest>
@@ -18,7 +18,7 @@
     <input type="dropdown" token="pce_tok">
       <label>PCE</label>
       <search>
-        <query>| tstats count FROM datamodel=Illumio.Traffic BY Traffic.pce_fqdn</query>
+        <query>| tstats `summariesonly` count FROM datamodel=Illumio.Traffic BY Traffic.pce_fqdn</query>
         <earliest>$time_range.earliest$</earliest>
         <latest>$time_range.latest$</latest>
       </search>
@@ -34,7 +34,7 @@
     <input type="dropdown" token="org_id_tok">
       <label>Org ID</label>
       <search>
-        <query>| tstats count FROM datamodel=Illumio.Traffic WHERE Traffic.pce_fqdn=$pce_tok|s$ BY Traffic.org_id</query>
+        <query>| tstats `summariesonly` count FROM datamodel=Illumio.Traffic WHERE Traffic.pce_fqdn=$pce_tok|s$ BY Traffic.org_id</query>
         <earliest>$time_range.earliest$</earliest>
         <latest>$time_range.latest$</latest>
       </search>
@@ -56,7 +56,7 @@
       <label>Labels</label>
       <search>
         <query>
-          | tstats values(Traffic.src_label_pairs) AS src_label_pairs, values(Traffic.dest_label_pairs) AS dest_label_pairs FROM datamodel=Illumio.Traffic WHERE Traffic.pce_fqdn=$pce_tok|s$ Traffic.org_id=$org_id_tok|s$ (Traffic.src_ip=$host_ip|s$ OR Traffic.src_host=$host_ip|s$ OR Traffic.dest_ip=$host_ip|s$ OR Traffic.dest_host=$host_ip|s$)
+          | tstats `summariesonly` values(Traffic.src_label_pairs) AS src_label_pairs, values(Traffic.dest_label_pairs) AS dest_label_pairs FROM datamodel=Illumio.Traffic WHERE Traffic.pce_fqdn=$pce_tok|s$ Traffic.org_id=$org_id_tok|s$ (Traffic.src_ip=$host_ip|s$ OR Traffic.src_host=$host_ip|s$ OR Traffic.dest_ip=$host_ip|s$ OR Traffic.dest_host=$host_ip|s$)
           | eval label_pairs = mvdedup(mvappend(src_label_pairs, dest_label_pairs))
           | mvexpand label_pairs
           | where label_pairs != "" AND isnotnull(label_pairs)
@@ -97,7 +97,7 @@
         <label>Policy Decision</label>
         <search>
           <query>
-            | tstats count FROM datamodel=Illumio.Traffic WHERE Traffic.pce_fqdn=$pce_tok|s$ Traffic.org_id=$org_id_tok|s$ (Traffic.src_ip=$host_ip|s$ OR Traffic.src_host=$host_ip|s$ OR Traffic.dest_ip=$host_ip|s$ OR Traffic.dest_host=$host_ip|s$) ($src_label_filter$ OR $dest_label_filter$) Traffic.transport=$protocol_tok|s$ Traffic.dest_port IN $port_filter$ BY Traffic.action
+            | tstats `summariesonly` count FROM datamodel=Illumio.Traffic WHERE Traffic.pce_fqdn=$pce_tok|s$ Traffic.org_id=$org_id_tok|s$ (Traffic.src_ip=$host_ip|s$ OR Traffic.src_host=$host_ip|s$ OR Traffic.dest_ip=$host_ip|s$ OR Traffic.dest_host=$host_ip|s$) ($src_label_filter$ OR $dest_label_filter$) Traffic.transport=$protocol_tok|s$ Traffic.dest_port IN $port_filter$ BY Traffic.action
           </query>
           <earliest>$time_range.earliest$</earliest>
           <latest>$time_range.latest$</latest>
@@ -116,7 +116,7 @@
         <label>Port</label>
         <search>
           <query>
-            | tstats count FROM datamodel=Illumio.Traffic WHERE Traffic.pce_fqdn=$pce_tok|s$ Traffic.org_id=$org_id_tok|s$ (Traffic.src_ip=$host_ip|s$ OR Traffic.src_host=$host_ip|s$ OR Traffic.dest_ip=$host_ip|s$ OR Traffic.dest_host=$host_ip|s$) ($src_label_filter$ OR $dest_label_filter$) Traffic.transport=$protocol_tok|s$ Traffic.action IN $action_filter$ BY Traffic.dest_port
+            | tstats `summariesonly` count FROM datamodel=Illumio.Traffic WHERE Traffic.pce_fqdn=$pce_tok|s$ Traffic.org_id=$org_id_tok|s$ (Traffic.src_ip=$host_ip|s$ OR Traffic.src_host=$host_ip|s$ OR Traffic.dest_ip=$host_ip|s$ OR Traffic.dest_host=$host_ip|s$) ($src_label_filter$ OR $dest_label_filter$) Traffic.transport=$protocol_tok|s$ Traffic.action IN $action_filter$ BY Traffic.dest_port
             | sort +Traffic.dest_port
           </query>
           <earliest>$time_range.earliest$</earliest>
@@ -136,7 +136,7 @@
         <label>Protocol</label>
         <search>
           <query>
-            | tstats count FROM datamodel=Illumio.Traffic WHERE Traffic.pce_fqdn=$pce_tok|s$ Traffic.org_id=$org_id_tok|s$ (Traffic.src_ip=$host_ip|s$ OR Traffic.src_host=$host_ip|s$ OR Traffic.dest_ip=$host_ip|s$ OR Traffic.dest_host=$host_ip|s$) ($src_label_filter$ OR $dest_label_filter$) Traffic.dest_port IN $port_filter$ Traffic.action IN $action_filter$ BY Traffic.transport
+            | tstats `summariesonly` count FROM datamodel=Illumio.Traffic WHERE Traffic.pce_fqdn=$pce_tok|s$ Traffic.org_id=$org_id_tok|s$ (Traffic.src_ip=$host_ip|s$ OR Traffic.src_host=$host_ip|s$ OR Traffic.dest_ip=$host_ip|s$ OR Traffic.dest_host=$host_ip|s$) ($src_label_filter$ OR $dest_label_filter$) Traffic.dest_port IN $port_filter$ Traffic.action IN $action_filter$ BY Traffic.transport
           </query>
           <earliest>$time_range.earliest$</earliest>
           <latest>$time_range.latest$</latest>

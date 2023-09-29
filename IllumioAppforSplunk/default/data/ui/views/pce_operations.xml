@@ -54,7 +54,7 @@
       <label>PCE</label>
       <selectFirstChoice>true</selectFirstChoice>
       <search>
-        <query>| tstats count FROM datamodel=Illumio.Status BY Status.pce_fqdn</query>
+        <query>| tstats `summariesonly` count FROM datamodel=Illumio.Status BY Status.pce_fqdn</query>
         <earliest>$time_range.earliest$</earliest>
         <latest>$time_range.latest$</latest>
       </search>
@@ -233,7 +233,7 @@
       <chart>
         <search>
           <query>
-            | tstats latest(Status.cpu) AS cpu, latest(Status.disk) AS disk, latest(Status.memory) AS memory FROM datamodel=Illumio.Status WHERE Status.cpu=* Status.memory=* Status.hostname IN $hostnames$ BY _time Status.hostname span=30m
+            | tstats `summariesonly` latest(Status.cpu) AS cpu, latest(Status.disk) AS disk, latest(Status.memory) AS memory FROM datamodel=Illumio.Status WHERE Status.cpu=* Status.memory=* Status.hostname IN $hostnames$ BY _time Status.hostname span=30m
             | convert auto(*)
             | timechart bins=200 latest(cpu) AS "CPU", latest(disk) AS "Disk", latest(memory) AS "Memory" BY Status.hostname
             | eval Warning = 90, Critical = 95
