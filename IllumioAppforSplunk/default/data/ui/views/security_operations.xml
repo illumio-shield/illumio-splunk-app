@@ -64,7 +64,7 @@
           <latest>$time_range.latest$</latest>
         </search>
         <drilldown>
-          <link target="_blank">search?q=| savedsearch Illumio_Auditable_Events | search pce_fqdn="devtest0.ilabs.io" org_id="*" | stats count values(object) AS object values(object_id) AS object_id BY pce_fqdn org_id event_type user&amp;earliest=$time_range.earliest$&amp;latest=$time_range.latest$</link>
+          <link target="_blank">search?q=| savedsearch Illumio_Auditable_Events | search pce_fqdn=$pce_tok|s$ org_id=$org_id_tok|s$ | stats count values(object) AS object values(object_id) AS object_id BY pce_fqdn org_id event_type user&amp;earliest=$time_range.earliest$&amp;latest=$time_range.latest$</link>
         </drilldown>
         <option name="useColors">0</option>
       </single>
