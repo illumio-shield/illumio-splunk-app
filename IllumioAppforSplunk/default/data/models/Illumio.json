@@ -319,6 +319,18 @@
                     "comment": "OSI L4 transport - e.g. tcp, udp, icmp"
                 },
                 {
+                    "fieldName": "network",
+                    "owner": "Traffic",
+                    "type": "string",
+                    "fieldSearch": "",
+                    "required": false,
+                    "multivalue": false,
+                    "hidden": false,
+                    "editable": true,
+                    "displayName": "network",
+                    "comment": "Network name"
+                },
+                {
                     "fieldName": "dest_href",
                     "owner": "Traffic",
                     "type": "string",
