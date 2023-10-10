@@ -64,7 +64,7 @@
           <latest>$time_range.latest$</latest>
         </search>
         <drilldown>
-          <link target="_blank">search?q=| savedsearch Illumio_Auditable_Events | search pce_fqdn=$pce_tok|s$ org_id=$org_id_tok|s$ | stats count values(object) AS object values(object_id) AS object_id BY pce_fqdn org_id event_type user&amp;earliest=$time_range.earliest$&amp;latest=$time_range.latest$</link>
+          <link target="_blank">search?q=| savedsearch Illumio_Auditable_Events | search pce_fqdn=$pce_tok|s$ org_id=$org_id_tok|s$ | stats count values(object) AS object values(object_id) AS object_id values(user) AS user BY pce_fqdn org_id event_type&amp;earliest=$time_range.earliest$&amp;latest=$time_range.latest$</link>
         </drilldown>
         <option name="useColors">0</option>
       </single>
@@ -73,7 +73,7 @@
       <title>Port Scan Events</title>
       <single>
         <search>
-          <query>| savedsearch Illumio_PortScan | search pce_fqdn=$pce_tok|s$ org_id=$org_id_tok|s$ | stats count</query>
+          <query>| savedsearch Illumio_PortScan pce_fqdn=$pce_tok$ org_id=$org_id_tok$ | stats count</query>
           <earliest>$time_range.earliest$</earliest>
           <latest>$time_range.latest$</latest>
         </search>
@@ -124,7 +124,7 @@
             | eval outbound_flows = if(isnotnull(src_host), flows, null())
             | eval inbound_flows = if(isnotnull(dest_host), flows, null())
             | stats sum(inbound_flows) AS "Inbound Flows", sum(outbound_flows) AS "Outbound Flows" BY Workload
-            | addtotals | head $topN_workloads$ | sort -Total | fields - Total
+            | addtotals | sort -Total | head $topN_workloads$ | fields - Total
           </query>
         </search>
         <drilldown>
@@ -158,9 +158,10 @@
       <chart>
         <search base="traffic_base_search">
           <query>
-            | eval Service = dest_port . " " . upper(transport)
+            ```Don't prefix the port for e.g. ICMP/ICMPv6 traffic```
+            | eval Service = if(dest_port=0, upper(transport), dest_port . " " . upper(transport))
             | stats sum(flows) AS Count BY Service
-            | head $topN_services$ | sort -Count
+            | sort -Count | head $topN_services$
           </query>
         </search>
         <drilldown>
