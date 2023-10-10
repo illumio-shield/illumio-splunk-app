@@ -159,7 +159,7 @@
         <search base="traffic_base_search">
           <query>
             ```Don't prefix the port for e.g. ICMP/ICMPv6 traffic```
-            | eval Service = if(dest_port=0, upper(transport), dest_port . " " . upper(transport))
+            | eval Service = if(dest_port&lt;=0, upper(transport), dest_port . " " . upper(transport))
             | stats sum(flows) AS Count BY Service
             | sort -Count | head $topN_services$
           </query>
