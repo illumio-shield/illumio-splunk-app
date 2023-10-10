@@ -5,16 +5,15 @@
       <table id="quarantineHost">
         <search id="quarantineSearch">
           <query>
-            | savedsearch Illumio_PortScan
+            | savedsearch Illumio_PortScan pce_fqdn=$pce_fqdn$ org_id=$org_id$
                 ```Convert timestamp here because _time gets lost in the mvcombine call later```
-            | search pce_fqdn=$pce_fqdn$ org_id=$org_id$
             | eval Timestamp = strftime(_time, "%Y-%m-%d %H:%M:%S %Z")
                 ```Look up labels and map them to key:value pairs using illumio_labels_lookup```
             | foreach *_href [lookup illumio_workloads_lookup href AS &lt;&lt;FIELD&gt;&gt; OUTPUTNEW labels AS &lt;&lt;MATCHSTR&gt;&gt;_labels
                 | lookup illumio_labels_lookup href AS &lt;&lt;MATCHSTR&gt;&gt;_labels, pce_fqdn, org_id OUTPUT key AS label_key, value AS label_value
                 | eval &lt;&lt;MATCHSTR&gt;&gt;_labels = mvzip(label_key, label_value, ":")
                 | fields - label_key label_value]
-            | fillnull value="-" src_labels dest_labels
+            | fillnull value="-" src_host src_href dest_host dest_href src_labels dest_labels
                 ```Check that the user has the illumio_quarantine_workload role```
             | appendcols
                 [| rest splunk_server=local /services/authentication/current-context
