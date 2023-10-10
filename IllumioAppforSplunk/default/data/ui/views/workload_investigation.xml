@@ -2,7 +2,7 @@
   <label>Workload Investigations</label>
   <search id="workload_lookup_base_search">
     <query>
-      | inputlookup illumio_workloads_lookup WHERE pce_fqdn=$pce_tok|s$ org_id=$org_id_tok|s$ (hostname=$host_ip|s$ OR public_ip=$host_ip|s$)
+      | inputlookup illumio_workloads_lookup WHERE pce_fqdn=$pce_tok|s$ org_id=$org_id_tok|s$ deleted=0 (hostname=$host_ip|s$ OR public_ip=$host_ip|s$)
       | where $label_filter$
     </query>
     <earliest>1</earliest>
@@ -49,7 +49,7 @@
       <prefix>(</prefix>
       <suffix>)</suffix>
       <search>
-        <query>| inputlookup illumio_labels_lookup WHERE pce_fqdn=$pce_tok|s$ org_id=$org_id_tok|s$ | eval label = key + ":" + value | table href label</query>
+        <query>| inputlookup illumio_labels_lookup WHERE pce_fqdn=$pce_tok|s$ org_id=$org_id_tok|s$ deleted=0 | eval label = key + ":" + value | table href label</query>
         <earliest>1</earliest>
         <latest>now</latest>
       </search>
@@ -78,7 +78,7 @@
         <option name="charting.legend.placement">none</option>
         <option name="refresh.display">progressbar</option>
         <drilldown>
-          <link target="_blank">search?q=%7C%20inputlookup%20illumio_workloads_lookup%20WHERE%20agent.status.status%3D$click.value$%20pce_fqdn%3D$pce_tok|s$%20org_id=$org_id_tok|s$%20(hostname%3D$host_ip|s$%20OR%20public_ip%3D$host_ip|s$)%0A%7C%20where%20$label_filter$&amp;earliest=$earliest$&amp;latest=$latest$</link>
+          <link target="_blank">search?q=%7C%20inputlookup%20illumio_workloads_lookup%20WHERE%20agent.status.status%3D$click.value$%20pce_fqdn%3D$pce_tok|s$%20org_id=$org_id_tok|s$%20deleted%3D0%20(hostname%3D$host_ip|s$%20OR%20public_ip%3D$host_ip|s$)%0A%7C%20where%20$label_filter$&amp;earliest=$earliest$&amp;latest=$latest$</link>
         </drilldown>
       </chart>
     </panel>
@@ -96,7 +96,7 @@
         <option name="charting.legend.placement">none</option>
         <option name="refresh.display">progressbar</option>
         <drilldown>
-          <link target="_blank">search?q=%7C%20inputlookup%20illumio_workloads_lookup%20WHERE%20enforcement_mode%3D$click.value$%20pce_fqdn%3D$pce_tok|s$%20org_id=$org_id_tok|s$%20(hostname%3D$host_ip|s$%20OR%20public_ip%3D$host_ip|s$)%0A%7C%20where%20$label_filter$&amp;earliest=$earliest$&amp;latest=$latest$</link>
+          <link target="_blank">search?q=%7C%20inputlookup%20illumio_workloads_lookup%20WHERE%20enforcement_mode%3D$click.value$%20pce_fqdn%3D$pce_tok|s$%20org_id=$org_id_tok|s$%20deleted%3D0%20(hostname%3D$host_ip|s$%20OR%20public_ip%3D$host_ip|s$)%0A%7C%20where%20$label_filter$&amp;earliest=$earliest$&amp;latest=$latest$</link>
         </drilldown>
       </chart>
     </panel>
@@ -115,7 +115,7 @@
         <option name="charting.legend.placement">none</option>
         <option name="refresh.display">progressbar</option>
         <drilldown>
-          <link target="_blank">search?q=%7C%20inputlookup%20illumio_workloads_lookup%20WHERE%20agent.status.security_policy_sync_state%3D$click.value$%20pce_fqdn%3D$pce_tok|s$%20org_id=$org_id_tok|s$%20(hostname%3D$host_ip|s$%20OR%20public_ip%3D$host_ip|s$)%0A%7C%20where%20$label_filter$&amp;earliest=$earliest$&amp;latest=$latest$</link>
+          <link target="_blank">search?q=%7C%20inputlookup%20illumio_workloads_lookup%20WHERE%20agent.status.security_policy_sync_state%3D$click.value$%20pce_fqdn%3D$pce_tok|s$%20org_id=$org_id_tok|s$%20deleted%3D0%20(hostname%3D$host_ip|s$%20OR%20public_ip%3D$host_ip|s$)%0A%7C%20where%20$label_filter$&amp;earliest=$earliest$&amp;latest=$latest$</link>
         </drilldown>
       </chart>
     </panel>
