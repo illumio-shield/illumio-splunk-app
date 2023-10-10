@@ -3,7 +3,7 @@
   <description>View recent changes made on connected Illumio PCEs</description>
   <search id="audit_base_search">
     <query>
-      | tstats `summariesonly` count FROM datamodel=Illumio.Audit WHERE Audit.category="auditable" (Audit.action="created" OR Audit.action="updated" OR Audit.action="deleted") Audit.pce_fqdn=$pce_tok|s$ (Audit.user=$user_tok|s$ OR Audit.src_user=$user_tok|s$) Audit.object_category=$resource_type_tok|s$ BY _time Audit.action Audit.object_category Audit.user
+      | tstats `summariesonly` count FROM datamodel=Illumio.Audit WHERE Audit.category="auditable" (Audit.action="created" OR Audit.action="updated" OR Audit.action="deleted") Audit.pce_fqdn=$pce_tok|s$ Audit.org_id=$org_id_tok|s$ (Audit.user=$user_tok|s$ OR Audit.src_user=$user_tok|s$) Audit.object_category=$resource_type_tok|s$ BY _time Audit.action Audit.object_category Audit.user
     </query>
     <earliest>$time_range.earliest$</earliest>
     <latest>$time_range.latest$</latest>
@@ -31,10 +31,24 @@
       <choice value="*">All</choice>
       <default>*</default>
     </input>
+    <input type="dropdown" token="org_id_tok">
+      <label>Org ID</label>
+      <search>
+        <query>| tstats `summariesonly` count FROM datamodel=Illumio.Audit WHERE Audit.pce_fqdn=$pce_tok|s$ BY Audit.org_id</query>
+        <earliest>$time_range.earliest$</earliest>
+        <latest>$time_range.latest$</latest>
+      </search>
+      <fieldForLabel>Audit.org_id</fieldForLabel>
+      <fieldForValue>Audit.org_id</fieldForValue>
+      <choice value="*">All</choice>
+      <default>*</default>
+    </input>
     <input type="dropdown" token="user_tok">
       <label>Username</label>
       <search>
-        <query>| tstats `summariesonly` count FROM datamodel=Illumio.Audit WHERE Audit.pce_fqdn=$pce_tok|s$ BY Audit.src_user</query>
+        <query>
+            | tstats `summariesonly` count FROM datamodel=Illumio.Audit WHERE Audit.category="auditable" (Audit.action="created" OR Audit.action="updated" OR Audit.action="deleted") Audit.pce_fqdn=$pce_tok|s$ Audit.org_id=$org_id_tok|s$ BY Audit.src_user
+        </query>
         <earliest>$time_range.earliest$</earliest>
         <latest>$time_range.latest$</latest>
       </search>
@@ -47,10 +61,10 @@
       <label>Resource Types</label>
       <search>
         <query>
-          | tstats `summariesonly` count FROM datamodel=Illumio.Audit WHERE Audit.pce_fqdn=$pce_tok|s$ BY Audit.object_category
+          | tstats `summariesonly` count FROM datamodel=Illumio.Audit WHERE Audit.category="auditable" (Audit.action="created" OR Audit.action="updated" OR Audit.action="deleted") Audit.pce_fqdn=$pce_tok|s$ Audit.org_id=$org_id_tok|s$ BY Audit.object_category
         </query>
-        <earliest>$earliest$</earliest>
-        <latest>$latest$</latest>
+        <earliest>$time_range.earliest$</earliest>
+        <latest>$time_range.latest$</latest>
       </search>
       <fieldForLabel>Audit.object_category</fieldForLabel>
       <fieldForValue>Audit.object_category</fieldForValue>
@@ -64,7 +78,7 @@
       <table>
         <search>
           <query>
-            `illumio_get_index` sourcetype="illumio:pce" event_type="sec_policy.create" pce_fqdn=$pce_tok|s$ (user=$user_tok|s$ OR src_user=$user_tok|s$)
+            `illumio_get_index` sourcetype="illumio:pce" event_type="sec_policy.create" pce_fqdn=$pce_tok|s$ org_id=$org_id_tok|s$ (user=$user_tok|s$ OR src_user=$user_tok|s$)
             | spath path=resource_changes{} output=resource_changes
             | mvexpand resource_changes
             | spath input=resource_changes path=changes.workloads_affected.after output=workloads_affected
@@ -114,7 +128,7 @@
         <option name="charting.drilldown">all</option>
         <option name="refresh.display">progressbar</option>
         <drilldown>
-          <link target="_blank">search?q=%60illumio_get_index%60%20sourcetype%3D%22illumio%3Apce%22%20category%3Dauditable%20action%3D$click.value$%20(user%3D$user_tok|s$%20OR%20src_user%3D$user_tok|s$)%20pce_fqdn%3D$pce_tok|s$%20change_type%3D$resource_type_tok|s$&amp;earliest=$time_range.earliest$&amp;latest=$time_range.latest$</link>
+          <link target="_blank">search?q=%60illumio_get_index%60%20sourcetype%3D%22illumio%3Apce%22%20category%3Dauditable%20action%3D$click.value$%20(user%3D$user_tok|s$%20OR%20src_user%3D$user_tok|s$)%20pce_fqdn%3D$pce_tok|s$%20org_id%3D$org_id_tok|s$%20change_type%3D$resource_type_tok|s$&amp;earliest=$time_range.earliest$&amp;latest=$time_range.latest$</link>
         </drilldown>
       </chart>
     </panel>
@@ -157,7 +171,7 @@
       <table>
         <search>
           <query>
-            `illumio_get_index` sourcetype="illumio:pce" (NOT "system_events") (action="created" OR action="updated" OR action="deleted") pce_fqdn=$pce_tok|s$ (user=$user_tok|s$ OR src_user=$user_tok|s$) change_type=$resource_type_tok|s$
+            `illumio_get_index` sourcetype="illumio:pce" (NOT "system_events") (action="created" OR action="updated" OR action="deleted") pce_fqdn=$pce_tok|s$ org_id=$org_id_tok|s$ (user=$user_tok|s$ OR src_user=$user_tok|s$) change_type=$resource_type_tok|s$
             | spath path=resource_changes{}.resource output=resources
             | mvexpand resources
             | eval resource_types=json_array_to_mv(json_keys(resources))

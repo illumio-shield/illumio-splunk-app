@@ -2,7 +2,7 @@
   <label>PCE Authentication Events</label>
   <search id="audit_base_search">
     <query>
-      | tstats `summariesonly` values(Audit.href) AS event_href, values(Audit.src_user) AS src_user, values(Audit.user) AS user, values(Audit.src_ip) AS src_ip, values(Audit.event_type) AS event_type, values(Audit.notification_type) AS notification_type, values(Audit.severity) AS severity, values(Audit.status) AS status FROM datamodel=Illumio.Audit WHERE $pce_filter$ (Audit.user=$user_tok|s$ OR Audit.src_user=$user_tok|s$) (Audit.category="auditable" OR Audit.category="system_events") Audit.event_type="user.*" BY _time Audit.pce_fqdn
+      | tstats `summariesonly` values(Audit.href) AS event_href, values(Audit.src_user) AS src_user, values(Audit.user) AS user, values(Audit.src_ip) AS src_ip, values(Audit.event_type) AS event_type, values(Audit.notification_type) AS notification_type, values(Audit.severity) AS severity, values(Audit.status) AS status FROM datamodel=Illumio.Audit WHERE Audit.pce_fqdn=$pce_filter|s$ Audit.org_id=$org_id_tok|s$ (Audit.user=$user_tok|s$ OR Audit.src_user=$user_tok|s$) (Audit.category="auditable" OR Audit.category="system_events") Audit.event_type="user.*" BY _time Audit.pce_fqdn
     </query>
     <earliest>$time_range.earliest$</earliest>
     <latest>$time_range.latest$</latest>
@@ -15,28 +15,35 @@
         <latest>now</latest>
       </default>
     </input>
-    <input type="multiselect" token="pce_filter">
+    <input type="dropdown" token="pce_tok">
       <label>PCE</label>
       <search>
-        <query>| tstats `summariesonly` count FROM datamodel=Illumio.Audit BY Audit.pce_fqdn</query>
+        <query>| tstats `summariesonly` count from datamodel=Illumio.Audit BY Audit.pce_fqdn</query>
         <earliest>$time_range.earliest$</earliest>
         <latest>$time_range.latest$</latest>
       </search>
       <fieldForLabel>Audit.pce_fqdn</fieldForLabel>
       <fieldForValue>Audit.pce_fqdn</fieldForValue>
-      <default>*</default>
       <choice value="*">All</choice>
-      <valuePrefix>Audit.pce_fqdn="</valuePrefix>
-      <valueSuffix>"</valueSuffix>
-      <delimiter> OR </delimiter>
-      <prefix>(</prefix>
-      <suffix>)</suffix>
+      <default>*</default>
+    </input>
+    <input type="dropdown" token="org_id_tok">
+      <label>Org ID</label>
+      <search>
+        <query>| tstats `summariesonly` count FROM datamodel=Illumio.Audit WHERE Audit.pce_fqdn=$pce_tok|s$ BY Audit.org_id</query>
+        <earliest>$time_range.earliest$</earliest>
+        <latest>$time_range.latest$</latest>
+      </search>
+      <fieldForLabel>Audit.org_id</fieldForLabel>
+      <fieldForValue>Audit.org_id</fieldForValue>
+      <choice value="*">All</choice>
+      <default>*</default>
     </input>
     <input type="dropdown" token="user_tok">
       <label>User</label>
       <search>
         <query>
-          | tstats `summariesonly` count FROM datamodel=Illumio.Audit WHERE $pce_filter$ BY Audit.user
+          | tstats `summariesonly` count FROM datamodel=Illumio.Audit WHERE Audit.pce_fqdn=$pce_filter|s$ Audit.org_id=$org_id_tok|s$ BY Audit.user
         </query>
         <earliest>$time_range.earliest$</earliest>
         <latest>$time_range.latest$</latest>
@@ -150,7 +157,7 @@
             | rename event_type AS "Event Type", src_user AS "Initiating User", user AS "Target User", src_ip AS "Source IP", notification_type AS "Notification Type", severity AS "Severity", status AS "Status"
             | eval Timestamp = strptime('Timestamp',"%Y-%m-%dT%H:%M:%S.%f%Z")
             | fieldformat "Timestamp" = strftime('Timestamp',"%+")
-            | sort 0 -Timestamp
+            | sort -Timestamp
           </query>
           <sampleRatio>1</sampleRatio>
         </search>
