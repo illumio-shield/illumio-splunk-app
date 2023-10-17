@@ -1,9 +1,10 @@
 require(["splunkjs/mvc/utils"], function (SplunkUtil) {
     var app_name = SplunkUtil.getCurrentApp();
     require(['jquery',
-        'splunkjs/mvc',
-        'splunkjs/mvc/searchmanager',
-        'splunkjs/mvc/simplexml/ready!'],
+            'splunkjs/mvc',
+            'splunkjs/mvc/searchmanager',
+            'jquery.ui.autocomplete',
+            'splunkjs/mvc/simplexml/ready!'],
         function ($, mvc, searchManager) {
             var service = mvc.createService();
             var ipListsSelectedValues = {};
@@ -31,26 +32,23 @@ require(["splunkjs/mvc/utils"], function (SplunkUtil) {
                         var properties = props.properties();
                         for (var i = 0; i < properties.entry.length; i++) {
                             var macro_name = properties.entry[i].name;
-                            if (macro_name === "illumio_system_health")
+                            if (macro_name === "illumio_system_health") {
                                 set_system_health_configuration(properties.entry[i].content.definition);
-                            else if (macro_name === "illumio_rule_update")
+                            } else if (macro_name === "illumio_rule_update") {
                                 set_sec_rule_change_configuration(properties.entry[i].content.definition);
-                            else if (macro_name === "illumio_policy_provisioning")
+                            } else if (macro_name === "illumio_policy_provisioning") {
                                 set_affected_workload_threshold_configuration(properties.entry[i].content.definition);
-                            else if (macro_name === "illumio_workload_labeling")
+                            } else if (macro_name === "illumio_workload_labeling") {
                                 set_workload_label_change(properties.entry[i].content.definition)
-                            else if (alert_name === "") {
+                            } else if (alert_name === "") {
                                 document.getElementById("alert_name_id").readOnly = false;
                                 reset_ruleset_update();
-                            }
-                            else if (alert_name != null && macro_name === ("illumio_ruleset_update_" + alert_name))
+                            } else if (alert_name != null && macro_name === ("illumio_ruleset_update_" + alert_name)) {
                                 set_ruleset_update_configuration(properties.entry[i].content.definition, alert_name);
+                            }
                         }
-
                     });
-
                 });
-
             }
 
             function fetch_and_create_alert(alert_name) {
@@ -973,8 +971,6 @@ require(["splunkjs/mvc/utils"], function (SplunkUtil) {
                     setData(MultiSelectResult.data().rows, multiSelectId, prepareData, addItem, filterItems, setSelectedValue);
                     load_macro();
                 });
-
-
             }
 
             load_macro();
@@ -997,8 +993,7 @@ require(["splunkjs/mvc/utils"], function (SplunkUtil) {
             }
 
             function populateDropdown(multiSelectId, dataArray, addItem) {
-                $('#' + multiSelectId)
-                    .autocomplete({
+                $('#' + multiSelectId).autocomplete({
                         source: function (request, response) {
                             var results = $.ui.autocomplete.filter(dataArray, request.term);
                             // Add item to dropdown while typing
