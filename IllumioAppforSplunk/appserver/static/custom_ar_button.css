@@ -1,53 +1,7 @@
-.ar_containter{
-    text-align: center;
-}
-.ar_button {
-    display: inline-block;
-    padding: 4px 12px;
-    margin-bottom: 0;
+#quarantineHost table tbody tr td.color-formatted {
     border-radius: 4px;
-    text-align: center;
-    font-size: 12px;
-    line-height: 16px;
-    cursor: pointer;
-    background-color: #65a637;
-    border: 1px solid #4d7e2a;
-    border-bottom-color: #4d7e2a;
-    border-top-color: #4d7e2a;
-    color: #fff;
-    box-shadow: inset 0 1px 0 #69ac39;
-    text-shadow: none
-}
-.investigate_button{
-    display: inline-block;
-    padding: 4px 12px;
-    margin-bottom: 0;
-    border-radius: 4px;
-    text-align: center;
-    font-size: 12px;
-    line-height: 16px;
-    cursor: pointer;
-    background-color: #0000FF;
-    border: 1px solid #0000FF;
-    border-bottom-color: #0000FF;
-    border-top-color: #0000FF;
-    color: #fff;
-    box-shadow: inset 0 1px 0 #0000FF;
-}
-.ar_disable_button{
-    display: inline-block;
-    padding: 4px 12px;
-    margin-bottom: 0;
-    border-radius: 4px;
-    text-align: center;
-    font-size: 12px;
-    line-height: 16px;
-    cursor: pointer;
-    background-color: #ccc;
-    border: 1px solid #ccc;
-    color: #6d6a6a;
-    text-shadow: none
-}
-div[data-role="app-nav-container"] > a[title="Illumio App For Splunk"]{
-    background-color:#f8893a !important;
+    margin: 12px;
+    padding: 12px;
+    display: flex;
+    justify-content: center;
 }

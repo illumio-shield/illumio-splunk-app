@@ -1,9 +1,9 @@
-<dashboard version="1.1" script="invoke_ar_action.js" stylesheet="custom_ar_button.css">
+<dashboard version="1.1" stylesheet="custom_ar_button.css">
   <label>Port Scan</label>
   <row>
     <panel>
       <table id="quarantineHost">
-        <search id="quarantineSearch">
+        <search>
           <query>
             | savedsearch Illumio_PortScan pce_fqdn=$pce_fqdn$ org_id=$org_id$
                 ```Convert timestamp here because _time gets lost in the mvcombine call later```
@@ -23,18 +23,25 @@
                 ```For quarantine, we only care about internal workloads performing scanning```
             | eval show_quarantine = if(show_quarantine=1 AND src_href!="-", 1, 0)
             | eval workload_href = if(src_href="-", dest_href, src_href)
-            | eval Quarantine = workload_href . "," . pce_fqdn . "," . org_id . "," . show_quarantine
-            | table Timestamp, pce_fqdn, org_id, src_ip, src_host, src_labels, dest_ip, dest_host, dest_labels, Quarantine
+            | eval Quarantine = if(show_quarantine=1, "Quarantine Workload", "")
+            | table Timestamp, pce_fqdn, org_id, src_ip, src_host, src_labels, dest_ip, dest_host, dest_labels, Quarantine, workload_href
             | rename pce_fqdn AS PCE, org_id AS "Org ID", src_host AS Source, src_ip AS "Source IP", src_labels AS "Source Labels", dest_host AS Destination, dest_ip AS "Destination IP", dest_labels AS "Destination Labels"
           </query>
           <earliest>$earliest$</earliest>
           <latest>$latest$</latest>
         </search>
+        <fields>Timestamp PCE "Org ID" "Source IP" Source "Source Labels" "Destination IP" Destination "Destination Labels" Quarantine</fields>
         <option name="count">10</option>
         <option name="drilldown">row</option>
+        <format type="color" field="Quarantine">
+          <colorPalette type="map">{"Quarantine Workload": #007abd}</colorPalette>
+        </format>
         <drilldown>
+          <condition match="'click.name2'=&quot;Quarantine&quot; AND 'click.value2'!=&quot;&quot;">
+            <link target="_blank">search?q=%7C%20makeresults%201%20%7C%20sendalert%20illumio_quarantine%20param.workload_href%3D%22$row.workload_href$%22%20param.pce_fqdn%3D%22$row.PCE$%22%20param.org_id%3D$row.Org ID$&amp;earliest=$earliest$&amp;latest=$latest$</link>
+          </condition>
           <condition match="'click.name2'=&quot;Quarantine&quot;">
-            <!-- for now, ignore clicks on the Quarantine column as the button is handled by custom JS -->
+            <!-- for consistent behaviour, if the user clicks the Quarantine cell and quarantine is disabled, ignore the click -->
           </condition>
           <condition match="row.Source!='-'">
             <link target="_blank">traffic_explorer?form.pce_tok=$row.PCE$&amp;form.org_id_tok=$row.Org ID$&amp;form.host_ip=$row.Source$&amp;form.time_range.earliest=$earliest$&amp;form.time_range.latest=$latest$</link>
