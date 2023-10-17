@@ -303,7 +303,7 @@
             | spath input=ven_heartbeat_average_latency_seconds path=value output=heartbeat_latency
             | eval ven_policy_average_latency_seconds = mvindex(values, mvfind(values, ".+name\":\s*\"ven_policy_average_latency_seconds"))
             | spath input=ven_policy_average_latency_seconds path=value output=policy_latency
-            | timechart partial=f limit=0 eval(round(avg(heartbeat_latency),4)) AS "Heartbeat Latency", eval(round(avg(policy_latency),4)) AS "Policy Latency" useother=f usenull=f
+            | timechart limit=0 eval(round(avg(heartbeat_latency),4)) AS "Heartbeat Latency", eval(round(avg(policy_latency),4)) AS "Policy Latency" useother=f usenull=f
           </query>
         </search>
         <option name="charting.axisTitleX.visibility">collapsed</option>
@@ -328,7 +328,7 @@
             | spath input=collector_summaries_per_second path=value output=collector_rate
             | eval traffic_summaries_per_second = mvindex(values, mvfind(values, ".+name\":\s*\"traffic_summaries_per_second"))
             | spath input=traffic_summaries_per_second path=value output=traffic_rate
-            | timechart partial=f limit=0 eval(round(avg(collector_rate),4)) AS "Collector Summary Rate" eval(round(avg(traffic_rate),4)) AS "Traffic Summary Rate" useother=f usenull=f
+            | timechart limit=0 eval(round(avg(collector_rate),4)) AS "Collector Summary Rate" eval(round(avg(traffic_rate),4)) AS "Traffic Summary Rate" useother=f usenull=f
           </query>
         </search>
         <option name="charting.axisTitleX.visibility">collapsed</option>
