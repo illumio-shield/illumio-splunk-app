@@ -16,11 +16,11 @@
   </search>
   <fieldset submitButton="true" autoRun="true">
     <input type="time" token="time_range">
-    <label>Time Range</label>
-    <default>
-      <earliest>-60m@m</earliest>
-      <latest>now</latest>
-    </default>
+      <label>Time Range</label>
+      <default>
+        <earliest>-60m@m</earliest>
+        <latest>now</latest>
+      </default>
     </input>
     <input type="dropdown" token="pce_tok">
       <label>PCE</label>
@@ -188,20 +188,19 @@
   </row>
   <row>
     <panel>
-      <title>Agent Event Count by Event Type</title>
+      <title>Workload Events</title>
       <input type="dropdown" token="agent_event_type">
         <label>Event Type</label>
         <fieldForLabel>event_type</fieldForLabel>
         <fieldForValue>event_type</fieldForValue>
         <search base="audit_base_search">
           <query>
-            | search event_type="agent.*"
+            | search (event_type="agent.*" OR event_type="workload.*" OR event_type="workloads.*")
             | stats count BY event_type
           </query>
         </search>
         <choice value="agent.*">All</choice>
-        <default>agent.*</default>
-        <initialValue>agent.*</initialValue>
+        <default>agent.* OR event_type="workload.*" OR event_type="workloads.*</default>
         <prefix>event_type="</prefix>
         <suffix>"</suffix>
       </input>
@@ -220,42 +219,6 @@
         <option name="refresh.display">progressbar</option>
         <drilldown>
           <link target="_blank">search?q=%7C%20tstats%20%60summariesonly%60%20values(Audit.event_type)%20as%20event_type%2C%20values(Audit.pce_fqdn)%20as%20pce_fqdn%2C%20values(Audit.severity)%20as%20severity%2C%20values(Audit.status)%20as%20status%2C%20values(Audit.category)%20as%20category%20from%20datamodel%3DIllumio.Audit%20WHERE%20Audit.pce_fqdn%3D$pce_tok|s$%20Audit.org_id=$org_id_tok|s$%20BY%20Audit.timestamp%20%0A%7C%20search%20event_type%3D%22$click.name2$%22%20%0A%7C%20table%20pce_fqdn%20category%20severity%20status%20event_type%20%0A%7C%20fillnull%20value%3D%22-%22%0A%7C%20rename%20pce_fqdn%20as%20PCE%2C%20category%20as%20Category%2C%20severity%20as%20Severity%2C%20status%20as%20Status%2C%20event_type%20as%20%22Event%20Type%22&amp;earliest=$time_range.earliest$&amp;latest=$time_range.latest$</link>
-        </drilldown>
-      </chart>
-    </panel>
-    <panel>
-      <title>Workload Event Count by Event Type</title>
-      <input type="dropdown" token="workload_event_type">
-        <label>Event Type</label>
-        <fieldForLabel>event_type</fieldForLabel>
-        <fieldForValue>event_type</fieldForValue>
-        <search base="audit_base_search">
-          <query>
-            | search (event_type="workload.*" OR event_type="workloads.*")
-            | stats count BY event_type
-          </query>
-        </search>
-        <choice value="workload.* OR event_type=workloads.*">All</choice>
-        <prefix>(event_type=</prefix>
-        <suffix>)</suffix>
-        <default>workload.* OR event_type=workloads.*</default>
-        <initialValue>workload.* OR event_type=workloads.*</initialValue>
-      </input>
-      <chart>
-        <search base="audit_base_search">
-          <query>
-            | search $workload_event_type$
-            | timechart limit=0 count by event_type
-          </query>
-        </search>
-        <option name="charting.axisTitleX.text">Time</option>
-        <option name="charting.axisTitleY.text">VEN Count</option>
-        <option name="charting.chart">line</option>
-        <option name="charting.drilldown">all</option>
-        <option name="charting.legend.placement">bottom</option>
-        <option name="refresh.display">progressbar</option>
-        <drilldown>
-          <link target="_blank">search?q=%7C%20tstats%20%60summariesonly%60%20values(Audit.event_type)%20as%20event_type%2C%20values(Audit.pce_fqdn)%20as%20pce_fqdn%2C%20values(Audit.severity)%20as%20severity%2C%20values(Audit.status)%20as%20status%2C%20values(Audit.category)%20as%20category%20FROM%20datamodel%3DIllumio.Audit%20WHERE%20Audit.pce_fqdn%3D$pce_tok|s$%20Audit.org_id=$org_id_tok|s$%20BY%20Audit.timestamp%20%0A%7C%20search%20event_type%3D%22$click.name2$%22%20%0A%7C%20table%20pce_fqdn%20category%20severity%20status%20event_type%20%0A%7C%20fillnull%20value%3D%22-%22%0A%7C%20rename%20pce_fqdn%20as%20PCE%2C%20category%20as%20Category%2C%20severity%20as%20Severity%2C%20status%20as%20Status%2C%20event_type%20as%20%22Event%20Type%22&amp;earliest=$time_range.earliest$&amp;latest=$time_range.latest$</link>
         </drilldown>
       </chart>
     </panel>
