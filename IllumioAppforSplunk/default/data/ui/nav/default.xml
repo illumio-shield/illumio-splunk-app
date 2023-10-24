@@ -10,7 +10,5 @@
   </collection>
   <view name="traffic_explorer" />
   <view name="change_monitoring" />
-  <view name="illumio_alerts_configuration" />
-  <view name="alerts" />
   <view name="search" />
 </nav>
