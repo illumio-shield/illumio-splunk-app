@@ -3,10 +3,22 @@
   <search id="workload_lookup_base_search">
     <query>
       | inputlookup illumio_workloads_lookup WHERE pce_fqdn=$pce_tok|s$ org_id=$org_id_tok|s$ deleted=0 (hostname=$host_ip|s$ OR public_ip=$host_ip|s$)
-      | where $label_filter$
+      | search $label_filter$
     </query>
     <earliest>1</earliest>
     <latest>now</latest>
+  </search>
+  <search id="audit_base_search">
+    <query>
+      | tstats `summariesonly` values(Audit.src_user) AS src_user, values(Audit.user) AS user, values(Audit.src_ip) AS src_ip, values(Audit.notification_type) AS notification_type, values(Audit.severity) AS severity, values(Audit.status) AS status, values(Audit.pce_fqdn) AS pce_fqdn, values(Audit.event_type) AS event_type, values(Audit.object_id) AS object_id FROM datamodel=Illumio.Audit WHERE Audit.pce_fqdn=$pce_tok|s$ Audit.org_id=$org_id_tok|s$ (Audit.event_type="agent.*" OR Audit.event_type="workload.*" OR Audit.event_type="workloads.*") Audit.event_type!="*.create" Audit.event_type!="*.update" Audit.event_type!="*.delete" BY _time Audit.href
+      | lookup illumio_workloads_lookup href AS object_id OUTPUTNEW href AS workload_href, name, hostname, public_ip, labels
+      | lookup illumio_workloads_lookup ven.href AS object_id OUTPUTNEW href AS workload_href, name, hostname, public_ip, labels
+      | search $label_filter$ (hostname=$host_ip|s$ OR public_ip=$host_ip|s$)
+      | eval Workload = if(isnull(name), hostname, name)
+      | rename Audit.href AS href
+    </query>
+    <earliest>$time_range.earliest$</earliest>
+    <latest>$time_range.latest$</latest>
   </search>
   <fieldset submitButton="true" autoRun="true">
     <input type="dropdown" token="pce_tok">
@@ -35,16 +47,15 @@
     <input type="text" token="host_ip">
       <label>Hostname/IP</label>
       <default>*</default>
-      <initialValue>*</initialValue>
     </input>
     <input type="multiselect" token="label_filter">
       <label>Labels</label>
       <fieldForLabel>label</fieldForLabel>
       <fieldForValue>href</fieldForValue>
-      <choice value=".*">All</choice>
-      <default>.*</default>
-      <valuePrefix>isnotnull(mvfind('labels', "</valuePrefix>
-      <valueSuffix>"))</valueSuffix>
+      <choice value="*">All</choice>
+      <default>*</default>
+      <valuePrefix>labels="</valuePrefix>
+      <valueSuffix>"</valueSuffix>
       <delimiter> AND </delimiter>
       <prefix>(</prefix>
       <suffix>)</suffix>
@@ -78,7 +89,7 @@
         <option name="charting.legend.placement">none</option>
         <option name="refresh.display">progressbar</option>
         <drilldown>
-          <link target="_blank">search?q=%7C%20inputlookup%20illumio_workloads_lookup%20WHERE%20agent.status.status%3D$click.value$%20pce_fqdn%3D$pce_tok|s$%20org_id=$org_id_tok|s$%20deleted%3D0%20(hostname%3D$host_ip|s$%20OR%20public_ip%3D$host_ip|s$)%0A%7C%20where%20$label_filter$&amp;earliest=$earliest$&amp;latest=$latest$</link>
+          <link target="_blank">search?q=%7C%20inputlookup%20illumio_workloads_lookup%20WHERE%20agent.status.status%3D$click.value$%20pce_fqdn%3D$pce_tok|s$%20org_id=$org_id_tok|s$%20deleted%3D0%20(hostname%3D$host_ip|s$%20OR%20public_ip%3D$host_ip|s$)%0A%7C%20search%20$label_filter$&amp;earliest=$earliest$&amp;latest=$latest$</link>
         </drilldown>
       </chart>
     </panel>
@@ -96,7 +107,7 @@
         <option name="charting.legend.placement">none</option>
         <option name="refresh.display">progressbar</option>
         <drilldown>
-          <link target="_blank">search?q=%7C%20inputlookup%20illumio_workloads_lookup%20WHERE%20enforcement_mode%3D$click.value$%20pce_fqdn%3D$pce_tok|s$%20org_id=$org_id_tok|s$%20deleted%3D0%20(hostname%3D$host_ip|s$%20OR%20public_ip%3D$host_ip|s$)%0A%7C%20where%20$label_filter$&amp;earliest=$earliest$&amp;latest=$latest$</link>
+          <link target="_blank">search?q=%7C%20inputlookup%20illumio_workloads_lookup%20WHERE%20enforcement_mode%3D$click.value$%20pce_fqdn%3D$pce_tok|s$%20org_id=$org_id_tok|s$%20deleted%3D0%20(hostname%3D$host_ip|s$%20OR%20public_ip%3D$host_ip|s$)%0A%7C%20search%20$label_filter$&amp;earliest=$earliest$&amp;latest=$latest$</link>
         </drilldown>
       </chart>
     </panel>
@@ -115,7 +126,7 @@
         <option name="charting.legend.placement">none</option>
         <option name="refresh.display">progressbar</option>
         <drilldown>
-          <link target="_blank">search?q=%7C%20inputlookup%20illumio_workloads_lookup%20WHERE%20agent.status.security_policy_sync_state%3D$click.value$%20pce_fqdn%3D$pce_tok|s$%20org_id=$org_id_tok|s$%20deleted%3D0%20(hostname%3D$host_ip|s$%20OR%20public_ip%3D$host_ip|s$)%0A%7C%20where%20$label_filter$&amp;earliest=$earliest$&amp;latest=$latest$</link>
+          <link target="_blank">search?q=%7C%20inputlookup%20illumio_workloads_lookup%20WHERE%20agent.status.security_policy_sync_state%3D$click.value$%20pce_fqdn%3D$pce_tok|s$%20org_id=$org_id_tok|s$%20deleted%3D0%20(hostname%3D$host_ip|s$%20OR%20public_ip%3D$host_ip|s$)%0A%7C%20search%20$label_filter$&amp;earliest=$earliest$&amp;latest=$latest$</link>
         </drilldown>
       </chart>
     </panel>
@@ -126,29 +137,92 @@
       <table>
         <search base="workload_lookup_base_search">
           <query>
-            | rename labels.href AS label_href
-            | mvexpand label_href
-            | lookup illumio_labels_lookup pce_fqdn href AS label_href OUTPUT key AS label_key value AS label_value
+            | lookup illumio_labels_lookup pce_fqdn href AS labels OUTPUT key AS label_key value AS label_value
+            | lookup illumio_workload_interfaces_lookup workload_href AS href OUTPUTNEW name AS interface_name, address AS interface_address
             | eval Workload = if(isnull(name), hostname, name)
             | eval OS = os_id + " - " + os_detail
             | eval Online = if(online = 1, "online", "offline")
             | eval "Updated at" = strftime(strptime(updated_at, "%Y-%m-%dT%H:%M:%S.%6NZ"), "%+")
             | eval "Policy Applied at" = if(isnull('agent.status.security_policy_applied_at'), "No policy applied", strftime(strptime('agent.status.security_policy_applied_at', "%Y-%m-%dT%H:%M:%S.%6NZ"), "%+"))
             | eval Labels = mvzip(label_key, label_value, ":")
-            | stats values AS * BY href
+            | eval Interfaces = mvzip(interface_name, interface_address, ": ")
             | eval PCE = if(isnotnull('agent.active_pce_fqdn'), 'agent.active_pce_fqdn', pce_fqdn)
-            | rename interfaces.name AS Interfaces, interfaces.address AS IPs, ven.status AS Status, ven.ven_type AS "VEN Type", enforcement_mode AS "Enforcement Mode", agent.status.security_policy_sync_state AS "Policy Sync State"
-            | table href Workload PCE Online Status "Enforcement Mode" Labels OS Interfaces IPs "VEN Type" "Policy Sync State" "Policy Applied at" "Updated at"
+            | rename ven.status AS Status, ven.ven_type AS "VEN Type", enforcement_mode AS "Enforcement Mode", agent.status.security_policy_sync_state AS "Policy Sync State"
+            | table Workload PCE Online Status "Enforcement Mode" Labels OS Interfaces "VEN Type" "Policy Sync State" "Policy Applied at" "Updated at" href
             | sort - "Updated at"
           </query>
         </search>
-        <fields>Workload PCE Online Status "Enforcement Mode" Labels OS Interfaces IPs "VEN Type" "Policy Sync State" "Policy Applied at" "Updated at"</fields>
+        <fields>Workload PCE Online Status "Enforcement Mode" Labels OS Interfaces "VEN Type" "Policy Sync State" "Policy Applied at" "Updated at"</fields>
         <option name="count">5</option>
         <option name="drilldown">row</option>
         <option name="refresh.display">progressbar</option>
         <option name="wrap">true</option>
         <drilldown>
           <link target="_blank">search?q=%7C%20inputlookup%20illumio_workloads_lookup%20WHERE%20href%3D$row.href|s$&amp;earliest=$earliest$&amp;latest=$latest$</link>
+        </drilldown>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Audit Events</title>
+      <input type="time" token="time_range" searchWhenChanged="true">
+        <label>Time Range</label>
+        <default>
+          <earliest>-60m@m</earliest>
+          <latest>now</latest>
+        </default>
+      </input>
+      <input type="dropdown" token="event_type_tok" searchWhenChanged="true">
+        <label>Event Type</label>
+        <choice value="*">All</choice>
+        <search base="audit_base_search">
+          <query>| stats count by event_type</query>
+        </search>
+        <fieldForLabel>event_type</fieldForLabel>
+        <fieldForValue>event_type</fieldForValue>
+        <default>*</default>
+      </input>
+      <input type="dropdown" token="severity_tok" searchWhenChanged="true">
+        <label>Severity</label>
+        <choice value="*">All</choice>
+        <search base="audit_base_search">
+          <query>| stats count by severity</query>
+        </search>
+        <fieldForLabel>severity</fieldForLabel>
+        <fieldForValue>severity</fieldForValue>
+        <default>*</default>
+      </input>
+      <input type="dropdown" token="status_tok" searchWhenChanged="true">
+        <label>Status</label>
+        <choice value="*">All</choice>
+        <search base="audit_base_search">
+          <query>| stats count by status</query>
+        </search>
+        <fieldForLabel>status</fieldForLabel>
+        <fieldForValue>status</fieldForValue>
+        <default>*</default>
+      </input>
+      <table>
+        <search base="audit_base_search">
+          <query>
+            | search event_type=$event_type_tok|s$ severity=$severity_tok|s$ status=$status_tok|s$
+            | lookup illumio_labels_lookup pce_fqdn href AS labels OUTPUT key AS label_key value AS label_value
+            | eval Labels = mvzip(label_key, label_value, ":")
+            | fillnull value="-" notification_type Labels
+            | table _time pce_fqdn Workload Labels event_type notification_type severity status href
+            | rename _time AS Timestamp, pce_fqdn AS PCE, event_type AS "Event Type", notification_type AS "Notification Type", severity AS Severity, status AS Status
+            | fieldformat Timestamp = strftime(Timestamp, "%+")
+            | sort -Timestamp
+          </query>
+        </search>
+        <fields>Timestamp PCE Workload Labels "Event Type" "Notification Type" Severity Status</fields>
+        <option name="count">5</option>
+        <option name="drilldown">row</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="wrap">true</option>
+        <drilldown>
+          <link target="_blank">search?q=%60illumio_get_index%60%20sourcetype%3D%22illumio%3Apce%22%20href%3D$row.href|s$&amp;earliest=$earliest$&amp;latest=$latest$</link>
         </drilldown>
       </table>
     </panel>

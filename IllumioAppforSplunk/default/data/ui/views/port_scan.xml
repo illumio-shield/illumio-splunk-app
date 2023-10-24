@@ -44,10 +44,10 @@
             <!-- for consistent behaviour, if the user clicks the Quarantine cell and quarantine is disabled, ignore the click -->
           </condition>
           <condition match="row.Source!='-'">
-            <link target="_blank">traffic_explorer?form.pce_tok=$row.PCE$&amp;form.org_id_tok=$row.Org ID$&amp;form.host_ip=$row.Source$&amp;form.time_range.earliest=$earliest$&amp;form.time_range.latest=$latest$</link>
+            <link target="_blank">workload_investigation?form.pce_tok=$row.PCE$&amp;form.org_id_tok=$row.Org ID$&amp;form.host_ip=$row.Source$&amp;form.time_range.earliest=$earliest$&amp;form.time_range.latest=$latest$</link>
           </condition>
           <condition>
-            <link target="_blank">traffic_explorer?form.pce_tok=$row.PCE$&amp;form.org_id_tok=$row.Org ID$&amp;form.host_ip=$row.Destination$&amp;form.time_range.earliest=$earliest$&amp;form.time_range.latest=$latest$</link>
+            <link target="_blank">workload_investigation?form.pce_tok=$row.PCE$&amp;form.org_id_tok=$row.Org ID$&amp;form.host_ip=$row.Destination$&amp;form.time_range.earliest=$earliest$&amp;form.time_range.latest=$latest$</link>
           </condition>
         </drilldown>
       </table>
