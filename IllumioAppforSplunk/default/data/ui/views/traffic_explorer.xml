@@ -2,7 +2,7 @@
   <label>Traffic Explorer</label>
   <search id="traffic_base_search">
     <query>
-        | tstats `summariesonly` sum(Traffic.count) AS flows, values(Traffic.src_host) AS src_host, values(Traffic.dest_host) AS dest_host, values(Traffic.direction) AS direction, values(Traffic.transport) AS transport, values(Traffic.src_label_pairs) AS src_labels, values(Traffic.dest_label_pairs) AS dest_labels FROM datamodel=Illumio.Traffic WHERE Traffic.pce_fqdn=$pce_tok|s$ Traffic.org_id=$org_id_tok|s$ (Traffic.src_ip=$host_ip|s$ OR Traffic.src_host=$host_ip|s$ OR Traffic.dest_ip=$host_ip|s$ OR Traffic.dest_host=$host_ip|s$) ($src_label_filter$ OR $dest_label_filter$) Traffic.transport=$protocol_tok|s$ Traffic.dest_port IN $port_filter$ Traffic.action IN $action_filter$ BY _time Traffic.pce_fqdn Traffic.src_ip Traffic.dest_ip Traffic.dest_port Traffic.action
+        | tstats `summariesonly` sum(Traffic.count) AS flows, values(Traffic.src_host) AS src_host, values(Traffic.dest_host) AS dest_host, values(Traffic.direction) AS direction, values(Traffic.transport) AS transport, values(Traffic.src_label_pairs) AS src_labels, values(Traffic.dest_label_pairs) AS dest_labels FROM datamodel=Illumio.Traffic WHERE Traffic.pce_fqdn=$pce_tok|s$ Traffic.org_id=$org_id_tok|s$ (Traffic.src_ip=$src_host_ip|s$ OR Traffic.src_host=$src_host_ip|s$) (Traffic.dest_ip=$dest_host_ip|s$ OR Traffic.dest_host=$dest_host_ip|s$) ($src_label_filter$ OR $dest_label_filter$) Traffic.transport=$protocol_tok|s$ Traffic.dest_port IN $port_filter$ Traffic.action IN $action_filter$ BY _time Traffic.pce_fqdn Traffic.src_ip Traffic.dest_ip Traffic.dest_port Traffic.action
     </query>
     <earliest>$time_range.earliest$</earliest>
     <latest>$time_range.latest$</latest>
@@ -25,11 +25,6 @@
       <selectFirstChoice>true</selectFirstChoice>
       <fieldForLabel>Traffic.pce_fqdn</fieldForLabel>
       <fieldForValue>Traffic.pce_fqdn</fieldForValue>
-      <change>
-        <set token="form.action_filter">*</set>
-        <set token="form.port_filter">*</set>
-        <set token="form.protocol_tok">*</set>
-      </change>
     </input>
     <input type="dropdown" token="org_id_tok">
       <label>Org ID</label>
@@ -43,61 +38,66 @@
       <choice value="*">All</choice>
       <default>*</default>
     </input>
-    <input type="text" token="host_ip">
-      <label>Hostname/IP</label>
+    <input type="text" token="src_host_ip">
+      <label>Source Hostname/IP</label>
       <default>*</default>
-      <change>
-        <set token="form.action_filter">*</set>
-        <set token="form.port_filter">*</set>
-        <set token="form.protocol_tok">*</set>
-      </change>
     </input>
-    <input type="multiselect" token="src_label_filter">
-      <label>Labels</label>
-      <search>
-        <query>
-          | tstats `summariesonly` values(Traffic.src_label_pairs) AS src_label_pairs, values(Traffic.dest_label_pairs) AS dest_label_pairs FROM datamodel=Illumio.Traffic WHERE Traffic.pce_fqdn=$pce_tok|s$ Traffic.org_id=$org_id_tok|s$ (Traffic.src_ip=$host_ip|s$ OR Traffic.src_host=$host_ip|s$ OR Traffic.dest_ip=$host_ip|s$ OR Traffic.dest_host=$host_ip|s$)
-          | eval label_pairs = mvdedup(mvappend(src_label_pairs, dest_label_pairs))
-          | mvexpand label_pairs
-          | where label_pairs != "" AND isnotnull(label_pairs)
-          | fields label_pairs
-        </query>
-        <earliest>$time_range.earliest$</earliest>
-        <latest>$time_range.latest$</latest>
-      </search>
-      <fieldForLabel>label_pairs</fieldForLabel>
-      <fieldForValue>label_pairs</fieldForValue>
-      <choice value="*">All</choice>
+    <input type="text" token="dest_host_ip">
+      <label>Destination Hostname/IP</label>
       <default>*</default>
-      <valuePrefix>Traffic.src_label_pairs="</valuePrefix>
-      <valueSuffix>"</valueSuffix>
-      <delimiter> AND </delimiter>
-      <prefix>(</prefix>
-      <suffix>)</suffix>
-      <change>
-        <set token="form.action_filter">*</set>
-        <set token="form.port_filter">*</set>
-        <set token="form.protocol_tok">*</set>
-        <set token="form.dest_label_filter">$value$</set>
-      </change>
-    </input>
-    <input type="multiselect" token="dest_label_filter" depends="$hidden$">
-      <choice value="*">All</choice>
-      <default>*</default>
-      <valuePrefix>Traffic.dest_label_pairs="</valuePrefix>
-      <valueSuffix>"</valueSuffix>
-      <delimiter> AND </delimiter>
-      <prefix>(</prefix>
-      <suffix>)</suffix>
     </input>
   </fieldset>
   <row>
     <panel>
+      <input type="multiselect" token="src_label_filter">
+        <label>Source Labels</label>
+        <search>
+          <query>
+            | tstats `summariesonly` values(Traffic.src_label_pairs) AS src_label_pairs FROM datamodel=Illumio.Traffic WHERE Traffic.pce_fqdn=$pce_tok|s$ Traffic.org_id=$org_id_tok|s$ (Traffic.src_ip=$src_host_ip|s$ OR Traffic.src_host=$src_host_ip|s$) (Traffic.dest_ip=$dest_host_ip|s$ OR Traffic.dest_host=$dest_host_ip|s$)
+            | mvexpand src_label_pairs
+            | where src_label_pairs != "" AND isnotnull(src_label_pairs)
+            | fields src_label_pairs
+          </query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+        <fieldForLabel>src_label_pairs</fieldForLabel>
+        <fieldForValue>src_label_pairs</fieldForValue>
+        <choice value="*">All</choice>
+        <default>*</default>
+        <valuePrefix>Traffic.src_label_pairs="</valuePrefix>
+        <valueSuffix>"</valueSuffix>
+        <delimiter> AND </delimiter>
+        <prefix>(</prefix>
+        <suffix>)</suffix>
+      </input>
+      <input type="multiselect" token="dest_label_filter">
+        <label>Destination Labels</label>
+        <search>
+          <query>
+            | tstats `summariesonly` values(Traffic.dest_label_pairs) AS dest_label_pairs FROM datamodel=Illumio.Traffic WHERE Traffic.pce_fqdn=$pce_tok|s$ Traffic.org_id=$org_id_tok|s$ (Traffic.src_ip=$src_host_ip|s$ OR Traffic.src_host=$src_host_ip|s$) (Traffic.dest_ip=$dest_host_ip|s$ OR Traffic.dest_host=$dest_host_ip|s$)
+            | mvexpand dest_label_pairs
+            | where dest_label_pairs != "" AND isnotnull(dest_label_pairs)
+            | fields dest_label_pairs
+          </query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+        <fieldForLabel>dest_label_pairs</fieldForLabel>
+        <fieldForValue>dest_label_pairs</fieldForValue>
+        <choice value="*">All</choice>
+        <default>*</default>
+        <valuePrefix>Traffic.dest_label_pairs="</valuePrefix>
+        <valueSuffix>"</valueSuffix>
+        <delimiter> AND </delimiter>
+        <prefix>(</prefix>
+        <suffix>)</suffix>
+      </input>
       <input type="multiselect" token="action_filter">
         <label>Policy Decision</label>
         <search>
           <query>
-            | tstats `summariesonly` count FROM datamodel=Illumio.Traffic WHERE Traffic.pce_fqdn=$pce_tok|s$ Traffic.org_id=$org_id_tok|s$ (Traffic.src_ip=$host_ip|s$ OR Traffic.src_host=$host_ip|s$ OR Traffic.dest_ip=$host_ip|s$ OR Traffic.dest_host=$host_ip|s$) ($src_label_filter$ OR $dest_label_filter$) Traffic.transport=$protocol_tok|s$ Traffic.dest_port IN $port_filter$ BY Traffic.action
+            | tstats `summariesonly` count FROM datamodel=Illumio.Traffic WHERE Traffic.pce_fqdn=$pce_tok|s$ Traffic.org_id=$org_id_tok|s$ (Traffic.src_ip=$src_host_ip|s$ OR Traffic.src_host=$src_host_ip|s$) (Traffic.dest_ip=$dest_host_ip|s$ OR Traffic.dest_host=$dest_host_ip|s$) ($src_label_filter$ OR $dest_label_filter$) Traffic.transport=$protocol_tok|s$ Traffic.dest_port IN $port_filter$ BY Traffic.action
           </query>
           <earliest>$time_range.earliest$</earliest>
           <latest>$time_range.latest$</latest>
@@ -116,7 +116,7 @@
         <label>Port</label>
         <search>
           <query>
-            | tstats `summariesonly` count FROM datamodel=Illumio.Traffic WHERE Traffic.pce_fqdn=$pce_tok|s$ Traffic.org_id=$org_id_tok|s$ (Traffic.src_ip=$host_ip|s$ OR Traffic.src_host=$host_ip|s$ OR Traffic.dest_ip=$host_ip|s$ OR Traffic.dest_host=$host_ip|s$) ($src_label_filter$ OR $dest_label_filter$) Traffic.transport=$protocol_tok|s$ Traffic.action IN $action_filter$ BY Traffic.dest_port
+            | tstats `summariesonly` count FROM datamodel=Illumio.Traffic WHERE Traffic.pce_fqdn=$pce_tok|s$ Traffic.org_id=$org_id_tok|s$ (Traffic.src_ip=$src_host_ip|s$ OR Traffic.src_host=$src_host_ip|s$) (Traffic.dest_ip=$dest_host_ip|s$ OR Traffic.dest_host=$dest_host_ip|s$) ($src_label_filter$ OR $dest_label_filter$) Traffic.transport=$protocol_tok|s$ Traffic.action IN $action_filter$ BY Traffic.dest_port
             | sort +Traffic.dest_port
           </query>
           <earliest>$time_range.earliest$</earliest>
@@ -136,7 +136,7 @@
         <label>Protocol</label>
         <search>
           <query>
-            | tstats `summariesonly` count FROM datamodel=Illumio.Traffic WHERE Traffic.pce_fqdn=$pce_tok|s$ Traffic.org_id=$org_id_tok|s$ (Traffic.src_ip=$host_ip|s$ OR Traffic.src_host=$host_ip|s$ OR Traffic.dest_ip=$host_ip|s$ OR Traffic.dest_host=$host_ip|s$) ($src_label_filter$ OR $dest_label_filter$) Traffic.dest_port IN $port_filter$ Traffic.action IN $action_filter$ BY Traffic.transport
+            | tstats `summariesonly` count FROM datamodel=Illumio.Traffic WHERE Traffic.pce_fqdn=$pce_tok|s$ Traffic.org_id=$org_id_tok|s$ (Traffic.src_ip=$src_host_ip|s$ OR Traffic.src_host=$src_host_ip|s$) (Traffic.dest_ip=$dest_host_ip|s$ OR Traffic.dest_host=$dest_host_ip|s$) ($src_label_filter$ OR $dest_label_filter$) Traffic.dest_port IN $port_filter$ Traffic.action IN $action_filter$ BY Traffic.transport
           </query>
           <earliest>$time_range.earliest$</earliest>
           <latest>$time_range.latest$</latest>
@@ -208,7 +208,6 @@
       <input type="dropdown" token="nflows" searchWhenChanged="true">
         <label>Number of links to chart</label>
         <default>50</default>
-        <initialValue>50</initialValue>
         <choice value="10">10</choice>
         <choice value="20">20</choice>
         <choice value="30">30</choice>
