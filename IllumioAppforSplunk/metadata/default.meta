@@ -1,5 +1,5 @@
 []
-access = read : [ * ], write : [ admin ] 
+access = read : [ * ], write : [ admin, sc_admin ]
 
 [tags]
 export = system
@@ -17,9 +17,6 @@ export = system
 access = read : [ * ], write : [ * ]
 export = system
 
-[views/illumio_alerts_configuration]
-access = read : [ admin ], write: [ admin ]
-
 [macros/illumio_get_index]
-access = read : [ * ], write : [ admin, power ]
+access = read : [ * ], write : [ admin, sc_admin, power ]
 export = system

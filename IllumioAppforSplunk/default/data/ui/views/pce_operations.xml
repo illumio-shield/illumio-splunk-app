@@ -4,7 +4,7 @@
     see https://community.splunk.com/t5/Security/Restrict-specific-users-to-view-only-certain-panels/m-p/297735#M7978 -->
   <search>
     <query>
-      | rest splunk_server=local /services/authentication/current-context | table roles | search NOT roles="admin"
+      | rest splunk_server=local /services/authentication/current-context | table roles | search NOT (roles="admin" OR roles="sc_admin")
     </query>
     <done>
       <!-- no result indicates that the user has the admin role-->
