@@ -189,7 +189,7 @@
         <option name="charting.legend.placement">bottom</option>
         <option name="charting.axisTitleX.text">Time</option>
         <option name="charting.axisTitleY.text">Total</option>
-        <option name="charting.drilldown">none</option>
+        <option name="charting.drilldown">all</option>
         <drilldown>
           <link target="_blank">search?q=%60illumio_get_index%60%20sourcetype%3D%22illumio%3Apce%3Acollector%22%20pce_fqdn%3D$pce_tok|s$%20org_id%3D$org_id_tok|s$%20action%3D$click.name2|s$&amp;earliest=$earliest$&amp;latest=$latest$</link>
         </drilldown>
