@@ -2,7 +2,8 @@
   <label>PCE Authentication Events</label>
   <search id="audit_base_search">
     <query>
-      | tstats `summariesonly` values(Audit.href) AS event_href, values(Audit.src_user) AS src_user, values(Audit.user) AS user, values(Audit.src_ip) AS src_ip, values(Audit.event_type) AS event_type, values(Audit.notification_type) AS notification_type, values(Audit.severity) AS severity, values(Audit.status) AS status FROM datamodel=Illumio.Audit WHERE Audit.pce_fqdn=$pce_tok|s$ Audit.org_id=$org_id_tok|s$ (Audit.user=$user_tok|s$ OR Audit.src_user=$user_tok|s$) (Audit.category="auditable" OR Audit.category="system_events") Audit.event_type="user.*" BY _time Audit.pce_fqdn
+      | tstats `summariesonly` values(Audit.timestamp) AS Timestamp, values(Audit.src_user) AS src_user, values(Audit.user) AS user, values(Audit.src_ip) AS src_ip FROM datamodel=Illumio.Audit WHERE Audit.pce_fqdn=$pce_tok|s$ Audit.org_id=$org_id_tok|s$ (Audit.user=$user_tok|s$ OR Audit.src_user=$user_tok|s$) (Audit.category="auditable" OR Audit.category="system_events") Audit.event_type="user.*" BY _time Audit.pce_fqdn Audit.href Audit.event_type Audit.status Audit.severity Audit.notification_type
+      | rename Audit.pce_fqdn AS PCE, Audit.event_type AS event_type, Audit.notification_type AS notification_type, Audit.severity AS severity, Audit.status AS status, Audit.href AS event_href
     </query>
     <earliest>$time_range.earliest$</earliest>
     <latest>$time_range.latest$</latest>
@@ -150,13 +151,12 @@
       <table>
         <search base="audit_base_search">
           <query>
-            | rename _time AS Timestamp, Audit.pce_fqdn AS PCE
             | fillnull value="-"
             | search $event_type_include$ $event_type_exclude$ $status_filter$ $severity_filter$ $notification_type_filter$
             | table event_href, Timestamp, PCE, event_type, src_user, user, src_ip, notification_type, severity, status
             | rename event_type AS "Event Type", src_user AS "Initiating User", user AS "Target User", src_ip AS "Source IP", notification_type AS "Notification Type", severity AS "Severity", status AS "Status"
-            | eval Timestamp = strptime('Timestamp',"%Y-%m-%dT%H:%M:%S.%f%Z")
-            | fieldformat "Timestamp" = strftime('Timestamp',"%+")
+            | eval Timestamp = strptime('Timestamp', "%Y-%m-%dT%H:%M:%S.%f%Z")
+            | fieldformat "Timestamp" = strftime('Timestamp', "%+")
             | sort -Timestamp
           </query>
           <sampleRatio>1</sampleRatio>
