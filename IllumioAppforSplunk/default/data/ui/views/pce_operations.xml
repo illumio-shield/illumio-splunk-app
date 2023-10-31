@@ -230,20 +230,28 @@
   </row>
   <row>
     <panel>
+      <title>Node Performance</title>
       <chart>
-        <search>
+        <search base="base_search">
           <query>
-            | tstats `summariesonly` latest(Status.cpu) AS cpu, latest(Status.disk) AS disk, latest(Status.memory) AS memory FROM datamodel=Illumio.Status WHERE Status.cpu=* Status.memory=* Status.hostname IN $hostnames$ BY _time Status.hostname span=30m
-            | convert auto(*)
-            | timechart partial=f bins=200 latest(cpu) AS "CPU", latest(disk) AS "Disk", latest(memory) AS "Memory" BY Status.hostname
+            | spath path="nodes{}" output=nodes
+            | mvexpand nodes
+            | table nodes _time
+            | spath input=nodes path=hostname
+            | spath input=nodes path=cpu.percent output=CPU
+            | spath input=nodes path=memory.percent output=Memory
+            | spath input=nodes path="disk{}" output=disk
+            | mvexpand disk
+            | spath input=disk path=location output=disk_name
+            | eval {disk_name}_disk = spath(disk, "value.percent")
+            | fields - nodes disk disk_name
+            | timechart latest(*) AS * BY hostname
             | eval Warning = 90, Critical = 95
           </query>
-          <earliest>$time_range.earliest$</earliest>
-          <latest>$time_range.latest$</latest>
         </search>
         <option name="charting.axisTitleX.visibility">collapsed</option>
         <option name="charting.chart">line</option>
-        <option name="charting.chart.nullValueMode">zero</option>
+        <option name="charting.chart.nullValueMode">connect</option>
         <option name="charting.chart.showDataLabels">none</option>
         <option name="charting.drilldown">all</option>
         <option name="charting.fieldColors">{"Warning": "0xf8be34", "Critical": "0xdc4e41"}</option>
@@ -320,7 +328,7 @@
     </panel>
     <panel>
       <chart>
-        <title>Summary Rate (Average)</title>
+        <title>Traffic Flow Ingestion Rate (Average)</title>
         <search base="base_search">
           <query>
             | spath "groups{}.components{}.contents{}.cluster{}.metrics{}.entries{}.values{}" output=values
