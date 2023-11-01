@@ -4,7 +4,8 @@
 * [Prerequisites](#prerequisites)
     * [Splunk Architecture](#splunk-architecture)
 * [Installation](#installation)
-    * [Upgrade Steps](#upgrade-steps)
+    * [Configuration](#configuration)
+* [Upgrade Steps](#upgrade-steps)
 * [Custom Roles](#custom-roles)
 * [Alerts](#alerts)
 * [Saved Searches](#saved-searches)
@@ -101,7 +102,39 @@ tar zxf /path/to/IllumioAppforSplunk.spl -C $SPLUNK_HOME/etc/apps/
 
 7. Restart Splunk
 
-### Upgrade Steps  
+### Configuration  
+
+**Create an index for your Illumio events**
+
+> [!NOTE]
+> This is an optional, but recommended, step. If one or more indexes were already created when configuring the TA-Illumio add-on, skip this step.
+
+1. Navigate to Settings -> Indexes
+2. Click the **New Index** button in the top-right
+3. Enter an index name and select **Illumio App for Splunk** from the App dropdown menu
+4. Set the other index parameters based 
+5. Click **Save**
+
+> [!NOTE]
+> Make sure to configure the index based on your organization's compliance requirements and data retention policies. See the Splunk documentation on [configuring index retirement and archiving policy](https://docs.splunk.com/Documentation/Splunk/9.1.1/Indexer/Setaretirementandarchivingpolicy) for more details.
+
+**Update the *illumio_get_index* macro**
+
+1. Navigate to Settings -> Advanced Search -> Search Macros
+2. Select **Illumio App for Splunk** from the App dropdown menu
+3. Click the `illumio_get_index` macro name to open the edit form
+4. Update the definition to reference one or more indexes. For example, `(index="illumio_pce1" OR index="illumio_pce2")`
+5. Click **Save**
+
+**Accelerate the Illumio data model**
+
+This is an optional, but recommended, step. See the [data model acceleration](#data-model-acceleration) section below for more details.  
+
+**Install the Sankey Diagram app**
+
+The **Traffic Explorer** dashboard renders traffic flows using the [Sankey diagram custom visualization app](https://splunkbase.splunk.com/app/3112). The app is required for the panel to be displayed, but is otherwise optional.  
+
+## Upgrade Steps  
 
 After upgrading the app through the Splunk UI or manually by following the steps above, follow any additional steps below for the updated version.  
 
@@ -127,19 +160,10 @@ After upgrading the app through the Splunk UI or manually by following the steps
 
 * The **Illumio** data model needs to be rebuilt after upgrading the app. Refer to the [Data Model Acceleration](#data-model-acceleration) section below.
 
-**NOTE: Only for SaaS PCE users:**
+> [!NOTE]
+> **For SaaS PCE users:** If the "Illumio_PCE_Health_Alert" is enabled, it will need to be reconfigured.
 
-* If the user has configured the "Illumio_PCE_Health_Alert" alert under the "Alert Configuration" dashboard then the user needs to reconfigure it.
-
-### v3.1.0 to v3.2.0  
-
-* The **Illumio** data model needs to be rebuilt after upgrading the app. Refer to the [Data Model Acceleration](#data-model-acceleration) section below.
-
-### v3.0.0 to v3.1.0  
-
-* The **Illumio** data model needs to be rebuilt after upgrading the app. Refer to the [Data Model Acceleration](#data-model-acceleration) section below.
-
-### v2.3.0 to v3.0.0  
+### <= v2.3.0 up to v3.2.0  
 
 * The **Illumio** data model needs to be rebuilt after upgrading the app. Refer to the [Data Model Acceleration](#data-model-acceleration) section below.
 
@@ -304,6 +328,8 @@ To uninstall the Illumio App for Splunk, follow these steps:
 
 **New Features**  
 
+* Added support for label types beyond the default RAEL dimensions
+* The app now seamlessly supports inputs for multiple PCEs as well as multiple organizations within the same PCE cluster
 * A custom script, `resubmit_click_handler.js`, has been added. It is used on the `Change Monitoring` and `Traffic Explorer` dashboards to automatically update searches when a token-set drilldown is clicked
 
 **Improvements**  
@@ -318,6 +344,7 @@ To uninstall the Illumio App for Splunk, follow these steps:
 * Search performance on dashboards has been significantly improved
 * Dashboard searches have been overhauled to use KV Store lookups for PCE metadata objects where appropriate
 * Role/App/Environment/Location label filters have been removed from dashboards and replaced with a single multivalue filter for all label dimensions
+* Dashboards other than **PCE Operations** now provide an **Org ID** filter
 * **Change Monitoring**
     * Removed Daily Changes/Creates/Updates/Deletes panels in favour of single **Total Changes** chart
     * Simplified searches and drilldowns
