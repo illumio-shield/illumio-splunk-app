@@ -1,6 +1,13 @@
-<form version="1.1" script="multiselect_input.js">
+<form version="1.1" script="resubmit_click_handler.js">
   <label>Traffic Explorer</label>
-  <fieldset submitButton="false">
+  <search id="traffic_base_search">
+    <query>
+        | tstats `summariesonly` sum(Traffic.count) AS flows, values(Traffic.src_host) AS src_host, values(Traffic.dest_host) AS dest_host, values(Traffic.direction) AS direction, values(Traffic.transport) AS transport, values(Traffic.src_label_pairs) AS src_labels, values(Traffic.dest_label_pairs) AS dest_labels FROM datamodel=Illumio.Traffic WHERE Traffic.pce_fqdn=$pce_tok|s$ Traffic.org_id=$org_id_tok|s$ (Traffic.src_ip=$src_host_ip|s$ OR Traffic.src_host=$src_host_ip|s$) (Traffic.dest_ip=$dest_host_ip|s$ OR Traffic.dest_host=$dest_host_ip|s$) ($src_label_filter$ OR $dest_label_filter$) Traffic.transport=$protocol_tok|s$ Traffic.dest_port IN $port_filter$ Traffic.action IN $action_filter$ BY _time Traffic.pce_fqdn Traffic.src_ip Traffic.dest_ip Traffic.dest_port Traffic.action
+    </query>
+    <earliest>$time_range.earliest$</earliest>
+    <latest>$time_range.latest$</latest>
+  </search>
+  <fieldset submitButton="true" autoRun="true">
     <input type="time" token="time_range">
       <label>Time Range</label>
       <default>
@@ -8,229 +15,136 @@
         <latest>now</latest>
       </default>
     </input>
-    <input depends="$supercluster$" type="dropdown" token="is_supercluster" searchWhenChanged="true">
-      <label>Supercluster Leader</label>
-      <fieldForLabel>leader_fqdn</fieldForLabel>
-      <fieldForValue>leader_fqdn</fieldForValue>
-      <search>
-        <query>| inputlookup illumio_host_details_lookup | dedup leader_fqdn | table leader_fqdn</query>
-        <earliest>1</earliest>
-        <latest>now</latest>
-      </search>
-      <choice value="*">Not Configured</choice>
-      <prefix>( leader_fqdn="</prefix>
-      <suffix>" )</suffix>
-      <change>
-        <condition label="Not Configured">
-          <set token="leader_fqdn"></set>
-          <set token="form.fqdn">*</set>
-        </condition>
-        <condition>
-          <set token="leader_fqdn">$is_supercluster$</set>
-          <set token="form.fqdn">*</set>
-        </condition>
-      </change>
-      <default>*</default>
-      <initialValue>*</initialValue>
-    </input>
-    <input type="multiselect" token="fqdn" searchWhenChanged="true">
+    <input type="dropdown" token="pce_tok">
       <label>PCE</label>
       <search>
-        <query>| inputlookup illumio_host_details_lookup 
-| fillnull value="-" leader_fqdn 
-| search $leader_fqdn$
-| dedup fqdn 
-| table fqdn</query>
-        <earliest>1</earliest>
-        <latest>now</latest>
+        <query>| tstats `summariesonly` count FROM datamodel=Illumio.Traffic BY Traffic.pce_fqdn</query>
+        <earliest>$time_range.earliest$</earliest>
+        <latest>$time_range.latest$</latest>
       </search>
-      <fieldForLabel>fqdn</fieldForLabel>
-      <fieldForValue>fqdn</fieldForValue>
-      <choice value="*">All</choice>
-      <default>*</default>
-      <initialValue>*</initialValue>
-      <valuePrefix>pce_fqdn="</valuePrefix>
-      <valueSuffix>"</valueSuffix>
-      <delimiter> OR </delimiter>
-      <prefix>( </prefix>
-      <suffix> )</suffix>
-      <change>
-        <set token="form.action">*</set>
-        <set token="form.port">*</set>
-        <set token="form.protocol">*</set>
-      </change>
+      <selectFirstChoice>true</selectFirstChoice>
+      <fieldForLabel>Traffic.pce_fqdn</fieldForLabel>
+      <fieldForValue>Traffic.pce_fqdn</fieldForValue>
     </input>
-    <input type="text" token="host_ip">
-      <label>Hostname/IP</label>
-      <default>*</default>
-      <initialValue>*</initialValue>
-      <change>
-        <set token="form.action">*</set>
-        <set token="form.port">*</set>
-        <set token="form.protocol">*</set>
-      </change>
-    </input>
-    <input type="dropdown" token="app_label" searchWhenChanged="true">
-      <label>App Label</label>
-      <choice value="*">All</choice>
-      <default>*</default>
-      <prefix>(</prefix>
-      <suffix>)</suffix>
-      <fieldForLabel>label</fieldForLabel>
-      <fieldForValue>label</fieldForValue>
+    <input type="dropdown" token="org_id_tok">
+      <label>Org ID</label>
       <search>
-        <query>| inputlookup illumio_workload_mapping_lookup | search type="app" | dedup label | table label</query>
-        <earliest>1</earliest>
-        <latest>now</latest>
+        <query>| tstats `summariesonly` count FROM datamodel=Illumio.Traffic WHERE Traffic.pce_fqdn=$pce_tok|s$ BY Traffic.org_id</query>
+        <earliest>$time_range.earliest$</earliest>
+        <latest>$time_range.latest$</latest>
       </search>
-      <change>
-        <condition label="All">
-          <set token="app_label_collector"></set>
-          <set token="form.action">*</set>
-          <set token="form.port">*</set>
-          <set token="form.protocol">*</set>
-        </condition>
-        <condition>
-          <set token="app_label_collector">(src_app_label="$value$" OR dest_app_label="$value$")</set>
-          <set token="form.action">*</set>
-          <set token="form.port">*</set>
-          <set token="form.protocol">*</set>
-        </condition>
-      </change>
-      <initialValue>*</initialValue>
-    </input>
-    <input type="dropdown" token="env_label" searchWhenChanged="true">
-      <label>Env Label</label>
+      <fieldForLabel>Traffic.org_id</fieldForLabel>
+      <fieldForValue>Traffic.org_id</fieldForValue>
       <choice value="*">All</choice>
       <default>*</default>
-      <fieldForLabel>label</fieldForLabel>
-      <fieldForValue>label</fieldForValue>
-      <search>
-        <query>| inputlookup illumio_workload_mapping_lookup | search type="env" | dedup label | table label</query>
-        <earliest>1</earliest>
-        <latest>now</latest>
-      </search>
-      <change>
-        <condition label="All">
-          <set token="env_label_collector"></set>
-          <set token="form.action">*</set>
-          <set token="form.port">*</set>
-          <set token="form.protocol">*</set>
-        </condition>
-        <condition>
-          <set token="env_label_collector">(src_env_label="$value$" OR dest_env_label="$value$")</set>
-          <set token="form.action">*</set>
-          <set token="form.port">*</set>
-          <set token="form.protocol">*</set>
-        </condition>
-      </change>
-      <initialValue>*</initialValue>
     </input>
-    <input type="dropdown" token="loc_label" searchWhenChanged="true">
-      <label>Loc Label</label>
-      <choice value="*">All</choice>
+    <input type="text" token="src_host_ip">
+      <label>Source Hostname/IP</label>
       <default>*</default>
-      <change>
-        <condition label="All">
-          <set token="loc_label_collector"></set>
-          <set token="form.action">*</set>
-          <set token="form.port">*</set>
-          <set token="form.protocol">*</set>
-        </condition>
-        <condition>
-          <set token="loc_label_collector">(src_loc_label="$value$" OR dest_loc_label="$value$")</set>
-          <set token="form.action">*</set>
-          <set token="form.port">*</set>
-          <set token="form.protocol">*</set>
-        </condition>
-      </change>
-      <initialValue>()</initialValue>
-      <fieldForLabel>label</fieldForLabel>
-      <fieldForValue>label</fieldForValue>
-      <search>
-        <query>| inputlookup illumio_workload_mapping_lookup | search type="loc" | dedup label | table label</query>
-        <earliest>1</earliest>
-        <latest>now</latest>
-      </search>
+    </input>
+    <input type="text" token="dest_host_ip">
+      <label>Destination Hostname/IP</label>
+      <default>*</default>
     </input>
   </fieldset>
-  <row depends="$hidden$">
-    <panel>
-      <table>
-        <search>
-          <done>
-            <condition match="$result.count$&gt;0">
-              <set token="supercluster"></set>
-              <set token="leader_fqdn"></set>
-            </condition>
-            <condition>
-              <unset token="supercluster"></unset>
-              <set token="leader_fqdn"></set>
-            </condition>
-          </done>
-          <query>| inputlookup illumio_host_details_lookup | stats count by leader_fqdn</query>
-          <earliest>1</earliest>
-          <latest>now</latest>
-        </search>
-        <option name="drilldown">none</option>
-        <option name="refresh.display">progressbar</option>
-      </table>
-    </panel>
-  </row>
   <row>
     <panel>
-      <input type="multiselect" token="action" searchWhenChanged="true">
+      <input type="multiselect" token="src_label_filter">
+        <label>Source Labels</label>
+        <search>
+          <query>
+            | tstats `summariesonly` values(Traffic.src_label_pairs) AS src_label_pairs FROM datamodel=Illumio.Traffic WHERE Traffic.pce_fqdn=$pce_tok|s$ Traffic.org_id=$org_id_tok|s$ (Traffic.src_ip=$src_host_ip|s$ OR Traffic.src_host=$src_host_ip|s$) (Traffic.dest_ip=$dest_host_ip|s$ OR Traffic.dest_host=$dest_host_ip|s$)
+            | mvexpand src_label_pairs
+            | where src_label_pairs != "" AND isnotnull(src_label_pairs)
+            | fields src_label_pairs
+          </query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+        <fieldForLabel>src_label_pairs</fieldForLabel>
+        <fieldForValue>src_label_pairs</fieldForValue>
+        <choice value="*">All</choice>
+        <default>*</default>
+        <valuePrefix>Traffic.src_label_pairs="</valuePrefix>
+        <valueSuffix>"</valueSuffix>
+        <delimiter> AND </delimiter>
+        <prefix>(</prefix>
+        <suffix>)</suffix>
+      </input>
+      <input type="multiselect" token="dest_label_filter">
+        <label>Destination Labels</label>
+        <search>
+          <query>
+            | tstats `summariesonly` values(Traffic.dest_label_pairs) AS dest_label_pairs FROM datamodel=Illumio.Traffic WHERE Traffic.pce_fqdn=$pce_tok|s$ Traffic.org_id=$org_id_tok|s$ (Traffic.src_ip=$src_host_ip|s$ OR Traffic.src_host=$src_host_ip|s$) (Traffic.dest_ip=$dest_host_ip|s$ OR Traffic.dest_host=$dest_host_ip|s$)
+            | mvexpand dest_label_pairs
+            | where dest_label_pairs != "" AND isnotnull(dest_label_pairs)
+            | fields dest_label_pairs
+          </query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+        <fieldForLabel>dest_label_pairs</fieldForLabel>
+        <fieldForValue>dest_label_pairs</fieldForValue>
+        <choice value="*">All</choice>
+        <default>*</default>
+        <valuePrefix>Traffic.dest_label_pairs="</valuePrefix>
+        <valueSuffix>"</valueSuffix>
+        <delimiter> AND </delimiter>
+        <prefix>(</prefix>
+        <suffix>)</suffix>
+      </input>
+      <input type="multiselect" token="action_filter">
         <label>Policy Decision</label>
-        <choice value="*">All</choice>
-        <prefix>(</prefix>
-        <suffix>)</suffix>
-        <valuePrefix>action=</valuePrefix>
-        <delimiter> OR </delimiter>
-        <fieldForLabel>action</fieldForLabel>
-        <fieldForValue>action</fieldForValue>
         <search>
-          <query>`illumio_get_index` sourcetype="illumio:pce:collector" (src_ip=$host_ip|s$ OR dst_ip=$host_ip|s$ OR src_hostname=$host_ip|s$ OR dst_hostname=$host_ip|s$) $leader_fqdn$ $fqdn$ $app_label_collector$ $env_label_collector$ $loc_label_collector$ $port$ $protocol$ 
-| stats count by action</query>
+          <query>
+            | tstats `summariesonly` count FROM datamodel=Illumio.Traffic WHERE Traffic.pce_fqdn=$pce_tok|s$ Traffic.org_id=$org_id_tok|s$ (Traffic.src_ip=$src_host_ip|s$ OR Traffic.src_host=$src_host_ip|s$) (Traffic.dest_ip=$dest_host_ip|s$ OR Traffic.dest_host=$dest_host_ip|s$) ($src_label_filter$ OR $dest_label_filter$) Traffic.transport=$protocol_tok|s$ Traffic.dest_port IN $port_filter$ BY Traffic.action
+          </query>
           <earliest>$time_range.earliest$</earliest>
           <latest>$time_range.latest$</latest>
         </search>
+        <choice value="*">All</choice>
         <default>*</default>
+        <prefix>(</prefix>
+        <suffix>)</suffix>
+        <valuePrefix>"</valuePrefix>
+        <valueSuffix>"</valueSuffix>
+        <delimiter>, </delimiter>
+        <fieldForLabel>Traffic.action</fieldForLabel>
+        <fieldForValue>Traffic.action</fieldForValue>
       </input>
-      <input type="multiselect" token="port" searchWhenChanged="true">
+      <input type="multiselect" token="port_filter">
         <label>Port</label>
+        <search>
+          <query>
+            | tstats `summariesonly` count FROM datamodel=Illumio.Traffic WHERE Traffic.pce_fqdn=$pce_tok|s$ Traffic.org_id=$org_id_tok|s$ (Traffic.src_ip=$src_host_ip|s$ OR Traffic.src_host=$src_host_ip|s$) (Traffic.dest_ip=$dest_host_ip|s$ OR Traffic.dest_host=$dest_host_ip|s$) ($src_label_filter$ OR $dest_label_filter$) Traffic.transport=$protocol_tok|s$ Traffic.action IN $action_filter$ BY Traffic.dest_port
+            | sort +Traffic.dest_port
+          </query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
         <choice value="*">All</choice>
+        <default>*</default>
         <prefix>(</prefix>
         <suffix>)</suffix>
-        <valuePrefix>dst_port=</valuePrefix>
-        <delimiter> OR </delimiter>
-        <fieldForLabel>Port</fieldForLabel>
-        <fieldForValue>Port</fieldForValue>
-        <search>
-          <query>`illumio_get_index` sourcetype="illumio:pce:collector" (src_ip=$host_ip|s$ OR dst_ip=$host_ip|s$ OR src_hostname=$host_ip|s$ OR dst_hostname=$host_ip|s$) $leader_fqdn$ $fqdn$ $app_label_collector$ $env_label_collector$ $loc_label_collector$ $action$ $protocol$
-| dedup dst_port
-| search dst_port&gt;0  
-| table dst_port 
-| sort +dst_port 
-| rename dst_port AS Port</query>
-          <earliest>$time_range.earliest$</earliest>
-          <latest>$time_range.latest$</latest>
-        </search>
-        <default>*</default>
+        <valuePrefix>"</valuePrefix>
+        <valueSuffix>"</valueSuffix>
+        <delimiter>, </delimiter>
+        <fieldForLabel>Traffic.dest_port</fieldForLabel>
+        <fieldForValue>Traffic.dest_port</fieldForValue>
       </input>
-      <input type="dropdown" token="protocol" searchWhenChanged="true">
+      <input type="dropdown" token="protocol_tok">
         <label>Protocol</label>
-        <choice value="*">All</choice>
-        <prefix>(protocol=</prefix>
-        <suffix>)</suffix>
-        <fieldForLabel>protocol</fieldForLabel>
-        <fieldForValue>protocol</fieldForValue>
         <search>
-          <query>`illumio_get_index` sourcetype="illumio:pce:collector" (src_ip=$host_ip|s$ OR dst_ip=$host_ip|s$ OR src_hostname=$host_ip|s$ OR dst_hostname=$host_ip|s$) $leader_fqdn$ $fqdn$ $app_label_collector$ $env_label_collector$ $loc_label_collector$ $action$ $port$
-| stats count by protocol</query>
+          <query>
+            | tstats `summariesonly` count FROM datamodel=Illumio.Traffic WHERE Traffic.pce_fqdn=$pce_tok|s$ Traffic.org_id=$org_id_tok|s$ (Traffic.src_ip=$src_host_ip|s$ OR Traffic.src_host=$src_host_ip|s$) (Traffic.dest_ip=$dest_host_ip|s$ OR Traffic.dest_host=$dest_host_ip|s$) ($src_label_filter$ OR $dest_label_filter$) Traffic.dest_port IN $port_filter$ Traffic.action IN $action_filter$ BY Traffic.transport
+          </query>
           <earliest>$time_range.earliest$</earliest>
           <latest>$time_range.latest$</latest>
         </search>
+        <choice value="*">All</choice>
         <default>*</default>
+        <fieldForLabel>Traffic.transport</fieldForLabel>
+        <fieldForValue>Traffic.transport</fieldForValue>
       </input>
       <html>
       <div style="font-size:13px; font-style:italic">Please specify either hostname(s) or scope labels. If both hostname and scope labels are specified, then the filter uses AND condition.</div>
@@ -239,36 +153,32 @@
   </row>
   <row>
     <panel>
-      <title>Policy Decision</title>
-      <chart>
-        <search>
-          <query>`illumio_get_index` sourcetype="illumio:pce:collector" (src_ip=$host_ip|s$ OR dst_ip=$host_ip|s$ OR src_hostname=$host_ip|s$ OR dst_hostname=$host_ip|s$) $leader_fqdn$ $fqdn$ $app_label_collector$ $env_label_collector$ $loc_label_collector$ $port$ $protocol$ $action$
-| rename action AS "Policy Decision"
-| stats sum(count) by "Policy Decision"</query>
-          <earliest>$time_range.earliest$</earliest>
-          <latest>$time_range.latest$</latest>
+      <title>Flows by Policy Decision</title>
+      <chart id="resubmit_on_click_0">
+        <search base="traffic_base_search">
+          <query>
+            | stats sum(flows) AS Flows BY Traffic.action
+            | rename Traffic.action AS "Policy Decision"
+          </query>
         </search>
         <option name="charting.chart">pie</option>
         <option name="charting.drilldown">all</option>
         <option name="refresh.display">progressbar</option>
         <option name="charting.fieldColors">{"allowed":#53A051,"potentially-blocked":#F8BE34,"blocked":#DC4E41,"unknown":#808080}</option>
         <drilldown>
-          <link target="_blank">search?q=%60illumio_get_index%60%20sourcetype%3D%22illumio%3Apce%3Acollector%22%20(src_ip%3D$host_ip|s$%20OR%20dst_ip%3D$host_ip|s$%20OR%20src_hostname%3D$host_ip|s$%20OR%20dst_hostname%3D$host_ip|s$)%20$leader_fqdn$%20$fqdn$%20(action%3D%22$click.value$%22)%20$app_label_collector$%20$env_label_collector$%20$loc_label_collector$%20$port$%20$protocol$%20$action$&amp;earliest=$time_range.earliest$&amp;latest=$time_range.latest$</link>
+          <set token="form.action_filter">$click.value$</set>
         </drilldown>
       </chart>
     </panel>
     <panel>
       <title>Flows by Port</title>
-      <table>
-        <search>
-          <query>`illumio_get_index` sourcetype="illumio:pce:collector" (src_ip=$host_ip|s$ OR dst_ip=$host_ip|s$ OR src_hostname=$host_ip|s$ OR dst_hostname=$host_ip|s$) $leader_fqdn$ $fqdn$ $app_label_collector$ $env_label_collector$ $loc_label_collector$ $port$ $protocol$ $action$
-| rename dst_port as Port
-| eval Port=if(Port=0,"-",Port) 
-| stats sum(count) as Flows by Port 
-| sort - Flows
-| where Port!="-"</query>
-          <earliest>$time_range.earliest$</earliest>
-          <latest>$time_range.latest$</latest>
+      <table id="resubmit_on_click_1">
+        <search base="traffic_base_search">
+          <query>
+            | stats sum(flows) AS Flows BY Traffic.dest_port
+            | rename Traffic.dest_port AS Port
+            | sort -Flows
+          </query>
         </search>
         <option name="count">5</option>
         <option name="drilldown">row</option>
@@ -280,35 +190,7 @@
           <scale type="minMidMax"></scale>
         </format>
         <drilldown>
-          <link target="_blank">search?q=%60illumio_get_index%60%20sourcetype%3D%22illumio%3Apce%3Acollector%22%20(src_ip%3D$host_ip|s$%20OR%20dst_ip%3D$host_ip|s$%20OR%20src_hostname%3D$host_ip|s$%20OR%20dst_hostname%3D$host_ip|s$)%20$leader_fqdn$%20$fqdn$%20$app_label_collector$%20$env_label_collector$%20$loc_label_collector$%20$port$%20$protocol$%20$action$%20dst_port%3D%22$click.value$%22&amp;earliest=$time_range.earliest$&amp;latest=$time_range.latest$</link>
-        </drilldown>
-      </table>
-    </panel>
-    <panel>
-      <title>Flows by Policy Decision</title>
-      <table>
-        <search>
-          <query>`illumio_get_index` sourcetype="illumio:pce:collector" (src_ip=$host_ip|s$ OR dst_ip=$host_ip|s$ OR src_hostname=$host_ip|s$ OR dst_hostname=$host_ip|s$) $leader_fqdn$ $fqdn$ $app_label_collector$ $env_label_collector$ $loc_label_collector$ $port$ $protocol$ $action$
-| stats sum(count) as "Flows" by action 
-| rename action AS "Policy Decision" 
-| sort -Flows</query>
-          <earliest>$time_range.earliest$</earliest>
-          <latest>$time_range.latest$</latest>
-        </search>
-        <option name="drilldown">row</option>
-        <format type="color" field="Number of flows">
-          <colorPalette type="minMidMax" maxColor="#006D9C" minColor="#FFFFFF"></colorPalette>
-          <scale type="minMidMax"></scale>
-        </format>
-        <format type="color" field="Flows">
-          <colorPalette type="minMidMax" maxColor="#006D9C" minColor="#FFFFFF"></colorPalette>
-          <scale type="minMidMax"></scale>
-        </format>
-        <format type="color" field="Policy Decision">
-          <colorPalette type="map">{"allowed":#53A051,"potentially-blocked":#F8BE34,"blocked":#DC4E41,"unknown":#808080}</colorPalette>
-        </format>
-        <drilldown>
-          <link target="_blank">search?q=%60illumio_get_index%60%20sourcetype%3D%22illumio%3Apce%3Acollector%22%20(src_ip%3D$host_ip|s$%20OR%20dst_ip%3D$host_ip|s$%20OR%20src_hostname%3D$host_ip|s$%20OR%20dst_hostname%3D$host_ip|s$)%20$leader_fqdn$%20$fqdn$%20$app_label_collector$%20$env_label_collector$%20$loc_label_collector$%20$port$%20$protocol$%20$action$%20action%3D%22$click.value$%22&amp;earliest=$time_range.earliest$&amp;latest=$time_range.latest$</link>
+          <set token="form.port_filter">$click.value$</set>
         </drilldown>
       </table>
     </panel>
@@ -324,83 +206,60 @@
     <panel>
       <title>Communications Map between Labeled Workloads</title>
       <input type="dropdown" token="nflows" searchWhenChanged="true">
-        <label>Number of links to chart:</label>
-        <default>100000000</default>
-        <initialValue>100000000</initialValue>
+        <label>Number of links to chart</label>
+        <default>50</default>
         <choice value="10">10</choice>
         <choice value="20">20</choice>
         <choice value="30">30</choice>
         <choice value="50">50</choice>
+        <choice value="100">100</choice>
         <choice value="100000000">All</choice>
       </input>
       <viz type="sankey_diagram_app.sankey_diagram">
-        <search>
-          <query>`illumio_get_index` sourcetype="illumio:pce:collector" 
-| fillnull value="-" src_role_label src_app_label src_env_label src_loc_label dest_role_label dest_app_label dest_env_label dest_loc_label
-| search (src_ip=$host_ip|s$ OR dst_ip=$host_ip|s$ OR src_hostname=$host_ip|s$ OR dst_hostname=$host_ip|s$) $leader_fqdn$ $fqdn$ $app_label_collector$ $env_label_collector$ $loc_label_collector$ $port$ $protocol$ $action$
-| eval "src_labels" = 'src_role_label'." 
-".'src_app_label'." 
-".'src_env_label'." 
-".'src_loc_label'
-| eval "dst_labels" = 'dest_role_label'." 
-".'dest_app_label'." 
-".'dest_env_label'." 
-".'dest_loc_label'
-| stats sum(count) by src_labels dst_labels dst_port
-| rename dst_port as Port sum(count) as "Number of Flows"
-| table src_labels dst_labels "Number of Flows" Port 
-| sort -"Number of Flows"
-| head $nflows$</query>
-          <earliest>$time_range.earliest$</earliest>
-          <latest>$time_range.latest$</latest>
+        <search base="traffic_base_search">
+          <query>
+            | eval Source = if(isnotnull(src_host), src_host, 'Traffic.src_ip')
+            | eval Destination = if(isnotnull(dest_host), dest_host, 'Traffic.dest_ip')
+            | rename Traffic.dest_port as Port
+            | stats sum(flows) AS Flows BY Source Destination Port
+            | table Source Destination Flows Port
+            | sort -Flows
+            | head $nflows$
+          </query>
         </search>
-        <option name="drilldown">none</option>
+        <option name="drilldown">all</option>
         <option name="refresh.display">progressbar</option>
-        <option name="sankey_diagram_app.sankey_diagram.colorMode">sequential</option>
+        <option name="sankey_diagram_app.sankey_diagram.colorMode">categorical</option>
         <option name="sankey_diagram_app.sankey_diagram.maxColor">#ff99cc</option>
         <option name="sankey_diagram_app.sankey_diagram.minColor">#33ccff</option>
         <option name="sankey_diagram_app.sankey_diagram.numOfBins">3</option>
-        <option name="sankey_diagram_app.sankey_diagram.showBackwards">false</option>
+        <option name="sankey_diagram_app.sankey_diagram.showBackwards">true</option>
         <option name="sankey_diagram_app.sankey_diagram.showLabels">true</option>
         <option name="sankey_diagram_app.sankey_diagram.showLegend">true</option>
-        <option name="sankey_diagram_app.sankey_diagram.showSelf">false</option>
+        <option name="sankey_diagram_app.sankey_diagram.showSelf">true</option>
         <option name="sankey_diagram_app.sankey_diagram.showTooltip">true</option>
         <option name="sankey_diagram_app.sankey_diagram.styleBackwards">false</option>
-        <option name="sankey_diagram_app.sankey_diagram.useColors">false</option>
+        <option name="sankey_diagram_app.sankey_diagram.useColors">true</option>
+        <drilldown>
+          <link target="_blank">search?q=%60illumio_get_index%60%20sourcetype%3D%22illumio%3Apce%3Acollector%22%20pce_fqdn%3D$pce_tok|s$%20transport%3D$protocol_tok$%20action%20IN%20$action_filter$%20(src_ip%3D%22$row.Source$%22%20OR%20src_host%3D%22$row.Source$%22)%20(dest_ip%3D%22$row.Destination$%22%20OR%20dest_host%3D%22$row.Destination$%22)&amp;earliest=$time_range.earliest$&amp;latest=$time_range.latest$</link>
+        </drilldown>
       </viz>
     </panel>
   </row>
   <row>
     <panel>
-      <html>
-        <style>
-            td.string.color-formatted {
-              color:#000000 !important;
-            }
-            td.numeric.color-formatted{
-              color:#000000 !important;
-            }
-        </style>
-      </html>
       <title>Traffic Events</title>
       <table>
-        <search>
-          <query>`illumio_get_index` sourcetype="illumio:pce:collector" (src_ip=$host_ip|s$ OR dst_ip=$host_ip|s$ OR src_hostname=$host_ip|s$ OR dst_hostname=$host_ip|s$) $leader_fqdn$ $fqdn$ $app_label_collector$ $env_label_collector$ $loc_label_collector$ $port$ $protocol$ $action$
-| fillnull value="-" src_hostname dst_hostname pce_fqdn src_role_label src_app_label src_env_label src_loc_label dest_role_label dest_app_label dest_env_label dest_loc_label
-| eval "Source labels - RAEL" = 'src_role_label'." 
-".'src_app_label'." 
-".'src_env_label'." 
-".'src_loc_label'
-| eval "Destination labels - RAEL" = 'dest_role_label'." 
-".'dest_app_label'." 
-".'dest_env_label'." 
-".'dest_loc_label'
-| table timestamp, src_ip, src_hostname, "Source labels - RAEL", dir, dst_port, protocol, count, action, "Destination labels - RAEL", dst_ip, dst_hostname, pce_fqdn
-| rename timestamp AS "Timestamp" src_ip AS "Source IP" src_hostname as "Source Host" dir AS "Direction" dst_ip AS "Destination IP" dst_hostname AS "Destination Host" dst_port AS "Port" protocol AS "Protocol" count as "Flows" action AS "Policy Decision" pce_fqdn AS "PCE" 
-| eval Timestamp=strptime('Timestamp',"%Y-%m-%dT%H:%M:%S.%3N") | fieldformat "Timestamp"=strftime('Timestamp',"%+") | sort 0 -Timestamp 
+        <search base="traffic_base_search">
+          <query>
+            | eval Source = if(isnotnull(src_host), src_host, 'Traffic.src_ip')
+            | eval Destination = if(isnotnull(dest_host), dest_host, 'Traffic.dest_ip')
+            | table _time, Traffic.pce_fqdn, Source, direction, Destination, Traffic.dest_port, transport, flows, Traffic.action, src_labels, dest_labels
+            | rename _time AS Timestamp, Traffic.pce_fqdn AS "PCE", direction AS Direction, Traffic.dest_port AS "Port", transport AS Protocol, flows AS Flows, Traffic.action AS "Policy Decision", src_labels AS "Source Labels", dest_labels AS "Destination Labels"
+            | fillnull value="-" "Source Labels" "Destination Labels"
+            | fieldformat Timestamp = strftime(Timestamp, "%+")
+            | sort -Timestamp
           </query>
-          <earliest>$time_range.earliest$</earliest>
-          <latest>$time_range.latest$</latest>
         </search>
         <option name="count">10</option>
         <option name="drilldown">row</option>
@@ -409,7 +268,7 @@
           <colorPalette type="map">{"allowed":#53A051,"potentially-blocked":#F8BE34,"blocked":#DC4E41,"unknown":#808080}</colorPalette>
         </format>
         <drilldown>
-          <link target="_blank">search?q=%60illumio_get_index%60%20sourcetype%3D%22illumio%3Apce%3Acollector%22%0D%0A%7C%20eval%20timestamp%3Dstrptime('timestamp'%2C%22%25Y-%25m-%25dT%25H%3A%25M%3A%25S%22)%20%0D%0A%7C%20eval%20time%3Dstrptime(%22$row.Timestamp$%22%2C%22%25a%20%25B%20%25d%20%25H%3A%25M%3A%25S%20%25Z%20%25Y%22)%20%0D%0A%7C%20fillnull%20value%3D%22-%22%20src_hostname%20dst_hostname%20pce_fqdn%20%0D%0A%7C%20search%20src_ip%3D%22$row.Source IP$%22%20src_hostname%3D%22$row.Source Host$%22%20dir%3D%22$row.Direction$%22%20dst_port%3D%22$row.Port$%22%20protocol%3D%22$row.Protocol$%22%20count%3D%22$row.Flows$%22%20action%3D%22$row.Policy Decision$%22%20dst_ip%3D%22$row.Destination IP$%22%20dst_hostname%3D%22$row.Destination Host$%22%20pce_fqdn%3D%22$row.PCE$%22%0D%0A%7C%20where%20timestamp%3Dtime&amp;earliest=$time_range.earliest$&amp;latest=$time_range.latest$</link>
+          <link target="_blank">search?q=%60illumio_get_index%60%20sourcetype%3D%22illumio%3Apce%3Acollector%22%20(src_host%3D$row.Source|s$%20OR%20src_ip%3D$row.Source|s$)%20(dest_ip%3D$row.Destination|s$%20OR%20dest_host%3D$row.Destination|s$)%20dest_port%3D$row.Port|s$%20transport%3D$row.Protocol|s$&amp;earliest=$time_range.earliest$&amp;latest=$time_range.latest$</link>
         </drilldown>
       </table>
     </panel>

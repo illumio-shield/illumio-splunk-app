@@ -1,155 +1,95 @@
-<form version="1.1" script="pce_operations.js,multiselect_input.js" stylesheet="pce_operations.css">
+<form version="1.1" stylesheet="pce_operations.css">
   <label>PCE Operations (On-Prem Only)</label>
-
+  <!-- check user roles and hide Data Ingestion panels if the user is not an admin
+    see https://community.splunk.com/t5/Security/Restrict-specific-users-to-view-only-certain-panels/m-p/297735#M7978 -->
+  <search>
+    <query>
+      | rest splunk_server=local /services/authentication/current-context | table roles | search NOT (roles="admin" OR roles="sc_admin")
+    </query>
+    <done>
+      <!-- no result indicates that the user has the admin role-->
+      <condition match="$job.resultCount$==0">
+        <set token="access">enabled</set>
+      </condition>
+      <!-- otherwise, unset access to hide the _internal panel searches -->
+      <condition>
+        <unset token="access"></unset>
+      </condition>
+    </done>
+  </search>
   <search id="base_search">
     <query>
-      | search `illumio_get_index` sourcetype="illumio:pce:metadata" illumio_type="illumio:pce:health" $leader_fqdn$ fqdn="$fqdn$" | table *
+      `illumio_get_index` sourcetype="illumio:pce:health" pce_fqdn="$pce_tok$" | table *
     </query>
-    <earliest>$earliest$</earliest>
-    <latest>$latest$</latest>
+    <earliest>$time_range.earliest$</earliest>
+    <latest>$time_range.latest$</latest>
   </search>
-
-  <search id="base_one_cluster_details" base="base_search">
+  <search id="base_service_status" base="base_search">
     <query>
-      head 1 | spath path="nodes{}" output=nodes | mvexpand nodes | table nodes _time | spath input=nodes | table *
+      | head 1 | spath path="nodes{}.services" output="services" | mvexpand services | table services | spath input=services | table *
     </query>
   </search>
-
-  <search id="base_cluster_details" base="base_search">
+  <search id="base_database_status" base="base_search">
     <query>
-      spath path="nodes{}" output=nodes | mvexpand nodes | table nodes _time | spath input=nodes | table *
+      | spath "groups{}.components{}" output=components
+      | mvexpand components
+      | spath input=components section
+      | where section="Policy Database Summary"
+      | spath input=components "contents{}.entries{}.values{}" output=values
+      | mvexpand values
+      | spath input=values name
+      | eval {name} = spath(values, "value")
+      | table *
     </query>
   </search>
-
-  <!-- Do not use base search for cluster_details to avoid chart flashing issue due to base search chain. -->
-  <search id="cluster_details">
-    <query>`illumio_get_index` sourcetype="illumio:pce:metadata" illumio_type="illumio:pce:health" $leader_fqdn$ fqdn="$fqdn$" | head 1 | spath path="nodes{}" output=nodes | mvexpand nodes | table nodes | spath input=nodes | table hostname, disk{}.location</query>
-  </search>
-
-  <search id="policy_database_details">
-    <query>`illumio_get_index`  illumio_type="illumio:pce:health" $leader_fqdn$ fqdn="$fqdn$" |  spath path="groups{}.components{4}.contents{}.entries{}.values{}.value" output="val" | sort -_time | head 1 | table val | mvexpand val | eval val=if('val'="",NULL,'val') | transpose | head 1 | fields - column | eval "row 1"= 'row 1'." GB" ,"row 2"='row 2'." %","row 4"='row 4'." %" | fillnull value="N/A" "row 1" , "row 2" , "row 3" "row 4"</query>
-  </search>
-
-  <search id="pce_service_details">
-    <query>`illumio_get_index` sourcetype="illumio:pce:metadata" illumio_type="illumio:pce:health" $leader_fqdn$ fqdn="$fqdn$" | head 1 | spath path="nodes{}.services" output="services" | mvexpand services | table services | spath input=services | stats dc("not_running{}") as NotRunning, dc("partial{}") as Partial, dc("optional{}") as Optional, dc("running{}") as Running, dc("unknown{}") as Unknown </query>
-  </search>
-
-  <search id="ven_search">
-    <query>
-      | tstats `summariesonly` avg(Illumio.ven_policy_average_latency_seconds) as ven_policy_average_latency_seconds, avg(Illumio.ven_heartbeat_average_latency_seconds) as ven_heartbeat_average_latency_seconds from datamodel=Illumio where nodename=Illumio.Illumio_PCE.Illumio_PCE_Policy Illumio.pce_fqdn="$fqdn$" $tstats_leader_fqdn$ by _time, Illumio.pce_hostname span=1ms
-      | rename Illumio.pce_hostname as pce_hostname
-    </query>
-    <earliest>$earliest$</earliest>
-    <latest>$latest$</latest>
-  </search>
-
-  <search id="collector_summaries_search">
-    <query>
-      | tstats `summariesonly` avg(Illumio.collector_summaries_per_second) as collector_summaries_per_second from datamodel=Illumio where nodename=Illumio.Illumio_PCE.Illumio_PCE_Syslog_Collector Illumio.pce_fqdn="$fqdn$" $tstats_leader_fqdn$ by _time, Illumio.pce_hostname span=1ms
-      | rename Illumio.pce_hostname as pce_hostname
-    </query>
-    <earliest>$earliest$</earliest>
-    <latest>$latest$</latest>
-  </search>
-
-  <search id="traffic_summaries_search">
-    <query>
-      | tstats `summariesonly` avg(Illumio.traffic_summaries_per_second) as traffic_summaries_per_second from datamodel=Illumio where nodename=Illumio.Illumio_PCE.Illumio_PCE_Traffic Illumio.pce_fqdn="$fqdn$" $tstats_leader_fqdn$ by _time, Illumio.pce_hostname span=1ms
-      | rename Illumio.pce_hostname as pce_hostname
-    </query>
-    <earliest>$earliest$</earliest>
-    <latest>$latest$</latest>
-  </search>
-
-  <fieldset submitButton="false">
-    <input type="time" id="time_id" searchWhenChanged="true">
+  <fieldset submitButton="true" autoRun="true">
+    <input type="time" token="time_range" id="time_id">
       <label>Time Range</label>
       <default>
         <earliest>-60m@m</earliest>
         <latest>now</latest>
       </default>
     </input>
-    <input depends="$supercluster$" type="dropdown" token="is_supercluster" searchWhenChanged="true">
-      <label>Supercluster Leader</label>
-      <fieldForLabel>leader_fqdn</fieldForLabel>
-      <fieldForValue>leader_fqdn</fieldForValue>
-      <search>
-        <query>| inputlookup illumio_host_details_lookup | dedup leader_fqdn | table leader_fqdn</query>
-        <earliest>1</earliest>
-        <latest>now</latest>
-      </search>
-      <choice value="*">Not Configured</choice>
-      <change>
-        <condition label="Not Configured">
-          <set token="leader_fqdn"></set>
-          <set token="tstats_leader_fqdn"></set>
-        </condition>
-        <condition>
-          <set token="leader_fqdn">( leader_fqdn="$is_supercluster$" )</set>
-          <set token="tstats_leader_fqdn">( Illumio.leader_fqdn="$is_supercluster$" )</set>
-        </condition>
-      </change>
-      <default>*</default>
-      <initialValue>*</initialValue>
-    </input>
-    <input type="dropdown" token="fqdn" searchWhenChanged="true">
+    <input type="dropdown" token="pce_tok">
       <label>PCE</label>
       <selectFirstChoice>true</selectFirstChoice>
       <search>
-        <query>| inputlookup illumio_host_details_lookup 
-| fillnull value="-" leader_fqdn 
-| search $leader_fqdn$
-| dedup fqdn 
-| table fqdn</query>
+        <query>| tstats `summariesonly` count FROM datamodel=Illumio.Status BY Status.pce_fqdn</query>
+        <earliest>$time_range.earliest$</earliest>
+        <latest>$time_range.latest$</latest>
       </search>
-      <fieldForLabel>fqdn</fieldForLabel>
-      <fieldForValue>fqdn</fieldForValue>
-      <change>
-        <set token="form.selected_pce_hostname">*</set>
-        <set token="form.selected_pce_syslog_hostname">*</set>
-      </change>
+      <fieldForLabel>Status.pce_fqdn</fieldForLabel>
+      <fieldForValue>Status.pce_fqdn</fieldForValue>
     </input>
   </fieldset>
-  <row depends="$hidden$">
-    <panel>
-      <table>
-        <search>
-          <done>
-            <condition match="$result.count$&gt;0">
-              <set token="supercluster"></set>
-              <set token="leader_fqdn"></set>
-              <set token="tstats_leader_fqdn"></set>
-            </condition>
-            <condition>
-              <unset token="supercluster"></unset>
-              <set token="leader_fqdn"></set>
-              <set token="tstats_leader_fqdn"></set>
-            </condition>
-          </done>
-          <query>| inputlookup illumio_host_details_lookup | stats count by leader_fqdn</query>
-          <earliest>1</earliest>
-          <latest>now</latest>
-        </search>
-        <option name="drilldown">none</option>
-        <option name="refresh.display">progressbar</option>
-      </table>
-    </panel>
-  </row>
   <row>
     <panel>
       <title>Cluster Status</title>
       <single>
-        <search>
-          <query>`illumio_get_index` sourcetype="illumio:pce:metadata" illumio_type="illumio:pce:health" $leader_fqdn$ fqdn="$fqdn$" | head 1  | eval "Cluster Status" = upper(substr(status,0,1)) + lower(substr(status,2)) | table "Cluster Status" | eval severity=case('Cluster Status'="Normal", 0, 'Cluster Status'="Warning", 5, 'Cluster Status'="Critical", 8) | rangemap field=severity low=0-4 elevated=4-6 default=severe</query>
+        <search base="base_search">
+          <query>
+            | head 1
+            | eval "Cluster Status" = upper(substr(status,0,1)) + lower(substr(status,2))
+            | table "Cluster Status"
+            | eval severity=case('Cluster Status'="Normal", 0, 'Cluster Status'="Warning", 5, 'Cluster Status'="Critical", 8)
+            | rangemap field=severity low=0-4 elevated=4-6 default=severe
+          </query>
         </search>
-        <option name="drilldown">none</option>
+        <option name="drilldown">all</option>
+        <drilldown>
+          <link target="_blank">search?q=%60illumio_get_index%60%20sourcetype%3D%22illumio%3Apce%3Ahealth%22%20pce_fqdn%3D%22$pce_tok$%22%20%0A%7C%20head%201%20%0A%7C%20rename%20status%20AS%20pce_status%20%0A%7C%20spath%20%22notifications%7B%7D%22%20output%3Dnotifications%20%0A%7C%20mvexpand%20notifications%20%0A%7C%20spath%20input%3Dnotifications%20%0A%7C%20table%20_time%20pce_fqdn%20type%20pce_status%20token%20status%20message&amp;earliest=$time_range.earliest$&amp;latest=$time_range.latest$</link>
+        </drilldown>
       </single>
     </panel>
     <panel>
       <title>PCE Run Level</title>
       <single>
-        <search>
-          <query>`illumio_get_index` sourcetype="illumio:pce:metadata" illumio_type="illumio:pce:health" $leader_fqdn$ fqdn="$fqdn$" | head 1 | spath path="nodes{}" output=nodes | mvexpand nodes | table nodes | spath input=nodes | head 1 | table runlevel</query>
+        <search base="base_search">
+          <query>
+            | head 1
+            | eval runlevel = spath(_raw, "nodes{0}.runlevel")
+            | table runlevel
+          </query>
         </search>
         <option name="drilldown">none</option>
       </single>
@@ -158,238 +98,297 @@
   <row>
     <panel>
       <title>PCE Service Status</title>
-      <html>
-          <div id="pce_service_status"/>
-      </html>
+      <single>
+        <search base="base_service_status">
+          <query>| stats dc("running{}") as Running</query>
+        </search>
+        <option name="colorMode">none</option>
+        <option name="rangeColors">["0x53a051","0x53a051"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="underLabel">Running</option>
+        <option name="useColors">1</option>
+      </single>
+      <single>
+        <search base="base_service_status">
+          <query>| stats dc("not_running{}") as Stopped</query>
+        </search>
+        <option name="colorMode">none</option>
+        <option name="rangeColors">["0xdc4e41","0xdc4e41"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="underLabel">Stopped</option>
+        <option name="useColors">1</option>
+      </single>
+      <single>
+        <search base="base_service_status">
+          <query>| stats dc("partial{}") as Partial</query>
+        </search>
+        <option name="colorMode">none</option>
+        <option name="rangeColors">["0xf8be34","0xf8be34"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="underLabel">Partial</option>
+        <option name="useColors">1</option>
+      </single>
+      <single>
+        <search base="base_service_status">
+          <query>| stats dc("optional{}") as Optional
+          </query>
+        </search>
+        <option name="underLabel">Optional</option>
+      </single>
+      <single>
+        <search base="base_service_status">
+          <query>| stats dc("unknown{}") as Unknown</query>
+        </search>
+        <option name="underLabel">Unknown</option>
+      </single>
     </panel>
   </row>
   <row>
     <panel>
       <title>Policy Database Summary</title>
-      <html>
-          <div id="policy_database_summary"/>
-      </html>
+      <single>
+        <search base="base_database_status">
+          <query>| stats values(policy_database_size_gb) AS "Database Size" BY _time | fillnull "Database Size"</query>
+        </search>
+        <option name="numberPrecision">0.00</option>
+        <option name="rangeColors">["0x53a051","0x0877a6","0xf8be34","0xf1813f","0xdc4e41"]</option>
+        <option name="underLabel">Database Size</option>
+        <option name="unit">GB</option>
+        <option name="useColors">0</option>
+      </single>
+      <single>
+        <search base="base_database_status">
+          <query>| stats values(policy_database_utilization_percentage) AS "Disk Utilization" BY _time | fillnull "Disk Utilization"</query>
+        </search>
+        <option name="numberPrecision">0.00</option>
+        <option name="rangeColors">["0x53a051","0xf8be34","0xdc4e41"]</option>
+        <option name="rangeValues">[90,95]</option>
+        <option name="trendDisplayMode">percent</option>
+        <option name="underLabel">Disk Utilization</option>
+        <option name="unit">%</option>
+        <option name="useColors">1</option>
+      </single>
+      <single>
+        <search base="base_database_status">
+          <query>| stats values(policy_database_transaction_id_max_age) AS "Transaction Max Age" BY _time | fillnull "Transaction Max Age"</query>
+        </search>
+        <option name="rangeColors">["0x53a051","0xf8be34","0xdc4e41"]</option>
+        <option name="rangeValues">[1000000000,2000000000]</option>
+        <option name="showSparkline">0</option>
+        <option name="showTrendIndicator">0</option>
+        <option name="underLabel">Transaction Max Age</option>
+        <option name="useColors">1</option>
+      </single>
+      <single>
+        <search base="base_database_status">
+          <query>| stats values(policy_database_vacuum_backlog_percentage) AS "Vacuum Backlog" BY _time | fillnull "Vacuum Backlog"</query>
+        </search>
+        <option name="numberPrecision">0.0</option>
+        <option name="rangeColors">["0x53a051","0xf8be34","0xdc4e41"]</option>
+        <option name="rangeValues">[40,80]</option>
+        <option name="trendDisplayMode">percent</option>
+        <option name="underLabel">Vacuum Backlog</option>
+        <option name="unit">%</option>
+        <option name="useColors">1</option>
+      </single>
     </panel>
   </row>
   <row>
-    <panel depends="$pce_details$">
-      <title>Cluster Cores</title>
-      <html>
-          <table id="pce" class="pce_details"/>
-      </html>
+    <panel depends="$hidden$">
+      <search base="base_search">
+        <query>
+          | head 1
+          | eval hostname = "(\"" . mvjoin('nodes{}.hostname', "\", \"") . "\")"
+          | table hostname
+        </query>
+        <done>
+          <set token="hostnames">$result.hostname$</set>
+        </done>
+      </search>
     </panel>
-  </row>
-  <row id="info_text">
     <panel>
-      <title>Panels below are available for on-premise Illumio PCE 19.3.2 and 20.2.0 or higher versions.</title>
-    </panel>
-  </row>
-  <row>
-    <panel>
-      <input type="dropdown" token="selected_panel_name" searchWhenChanged="true">
-        <showClearButton>false</showClearButton>
-        <label>VEN Panel</label>
-        <choice value="ven_heartbeat_latency">VEN Heartbeat Latency</choice>
-        <choice value="ven_policy_latency">VEN Policy Latency</choice>
-        <default>ven_heartbeat_latency</default>
-        <initialValue>ven_heartbeat_latency</initialValue>
-        <change>
-          <condition value="ven_policy_latency">
-            <set token="form.selected_pce_hostname">*</set>
-            <set token="ven_policy_latency"></set>
-            <unset token="ven_heartbeat_latency"></unset>
-          </condition>
-          <condition>
-            <set token="form.selected_pce_hostname">*</set>
-            <set token="ven_heartbeat_latency"></set>
-            <unset token="ven_policy_latency"></unset>
-          </condition>
-        </change>
-      </input>
-      <input type="multiselect" id="multiselect_pce_hostname" token="selected_pce_hostname" searchWhenChanged="true">
-        <label>Nodes</label>
-        <choice value="*">All</choice>
-        <default>*</default>
-        <prefix>(</prefix>
-        <suffix>)</suffix>
-        <initialValue>*</initialValue>
-        <valuePrefix>pce_hostname="</valuePrefix>
-        <valueSuffix>"</valueSuffix>
-        <delimiter> OR </delimiter>
-        <fieldForLabel>pce_hostname</fieldForLabel>
-        <fieldForValue>pce_hostname</fieldForValue>
-        <search base="ven_search">
+      <title>Node Status</title>
+      <single>
+        <search base="base_search">
           <query>
-            | dedup pce_hostname
-            | table pce_hostname
+            | head 1
+            | spath path="nodes{}" output=nodes
+            | mvexpand nodes
+            | table nodes _time
+            | spath input=nodes
+            | rename services.status as status
+            | eval status = upper(substr(status,0,1)) + lower(substr(status,2))
+            | stats values(status) AS status BY hostname
+            | eval severity = case(status = "Normal", 0, status = "Warning", 5, status = "Critical", 8)
+            | rangemap field=severity low=0-4 elevated=4-6 default=severe
           </query>
         </search>
-      </input>
-    </panel>
-    <panel>
-      <input type="dropdown" token="selected_type" searchWhenChanged="true">
-        <label>Type</label>
-        <showClearButton>false</showClearButton>
-        <choice value="collector">Collector</choice>
-        <choice value="flow_analytics">Traffic</choice>
-        <change>
-          <condition value="flow_analytics">
-            <set token="form.selected_pce_syslog_hostname">*</set>
-            <set token="traffic"></set>
-            <set token="filter_type">Illumio.traffic_summaries_per_second=*</set>
-            <unset token="collector"></unset>
-          </condition>
-          <condition>
-            <set token="form.selected_pce_syslog_hostname">*</set>
-            <set token="collector"></set>
-            <set token="filter_type">Illumio.collector_summaries_per_second=*</set>
-            <unset token="traffic"></unset>
-          </condition>
-        </change>
-        <default>collector</default>
-        <initialValue>collector</initialValue>
-      </input>
-      <input type="multiselect" id="multiselect_pce_syslog_hostname" token="selected_pce_syslog_hostname" searchWhenChanged="true">
-        <label>Nodes</label>
-        <choice value="*">All</choice>
-        <default>*</default>
-        <prefix>(</prefix>
-        <suffix>)</suffix>
-        <initialValue>*</initialValue>
-        <valuePrefix>pce_hostname="</valuePrefix>
-        <valueSuffix>"</valueSuffix>
-        <delimiter> OR </delimiter>
-        <fieldForLabel>pce_hostname</fieldForLabel>
-        <fieldForValue>pce_hostname</fieldForValue>
-        <search>
-          <query>
-            | tstats `summariesonly` count from datamodel=Illumio where nodename=Illumio.Illumio_PCE $filter_type$ Illumio.pce_fqdn="$fqdn$" $tstats_leader_fqdn$ Illumio.event_source=$selected_type$ by Illumio.pce_hostname
-            | rename Illumio.pce_hostname as pce_hostname
-            | dedup pce_hostname
-            | table pce_hostname
-          </query>
-          <earliest>$earliest$</earliest>
-          <latest>$latest$</latest>
-        </search>
-      </input>
+        <option name="height">200</option>
+        <option name="trellis.enabled">1</option>
+      </single>
     </panel>
   </row>
   <row>
-    <panel depends="$ven_heartbeat_latency$">
+    <panel>
+      <title>Node Performance</title>
       <chart>
-        <title>VEN Heartbeat Latency (Average)</title>
-        <search base="ven_search">
+        <search base="base_search">
           <query>
-            | $ven_heartbeat_latency$ search $selected_pce_hostname$
-            | timechart limit=0 eval(round(avg(ven_heartbeat_average_latency_seconds),4)) by pce_hostname useother=f usenull=f</query>
+            | spath path="nodes{}" output=nodes
+            | mvexpand nodes
+            | table nodes _time
+            | spath input=nodes path=hostname
+            | spath input=nodes path=cpu.percent output=CPU
+            | spath input=nodes path=memory.percent output=Memory
+            | spath input=nodes path="disk{}" output=disk
+            | mvexpand disk
+            | spath input=disk path=location output=disk_name
+            | eval {disk_name}_disk = spath(disk, "value.percent")
+            | fields - nodes disk disk_name
+            | timechart latest(*) AS * BY hostname
+            | eval Warning = 90, Critical = 95
+          </query>
         </search>
+        <option name="charting.axisTitleX.visibility">collapsed</option>
+        <option name="charting.chart">line</option>
+        <option name="charting.chart.nullValueMode">connect</option>
+        <option name="charting.chart.showDataLabels">none</option>
+        <option name="charting.drilldown">all</option>
+        <option name="charting.fieldColors">{"Warning": "0xf8be34", "Critical": "0xdc4e41"}</option>
+        <option name="charting.fieldDashStyles">{"Warning": "dash", "Critical": "dash"}</option>
+        <option name="charting.legend.labelStyle.overflowMode">ellipsisEnd</option>
+        <option name="charting.legend.mode">standard</option>
         <option name="charting.legend.placement">bottom</option>
-        <option name="charting.axisTitleX.text">Time</option>
+        <option name="height">275</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="trellis.enabled">1</option>
+        <option name="trellis.splitBy">hostname</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Disk Latency</title>
+      <chart>
+        <search base="base_search">
+          <query>
+            | spath path="nodes{}.hostname" output=hostname
+            | spath input=_raw path="nodes{}.metrics{}.entries{}.values{}" output=metric_values
+            | mvexpand metric_values
+            | spath input=metric_values path=name output=metric_name
+            | where metric_name LIKE "%disk_latency_milliseconds"
+            | eval {metric_name} = spath(metric_values, "value")
+            | fillnull value="N/A" disk_latency
+            | stats values(policy_disk_latency_milliseconds) AS "Policy Disk Latency", values(traffic_disk_latency_milliseconds) AS "Traffic Disk Latency" BY _time hostname
+            | eval Warning = 300, Critical = 800
+          </query>
+        </search>
+        <option name="charting.axisTitleX.visibility">collapsed</option>
+        <option name="charting.chart">line</option>
+        <option name="charting.chart.nullValueMode">zero</option>
+        <option name="charting.chart.showDataLabels">none</option>
+        <option name="charting.drilldown">all</option>
+        <option name="charting.fieldColors">{"Warning": "0xf8be34", "Critical": "0xdc4e41"}</option>
+        <option name="charting.fieldDashStyles">{"Warning": "dash", "Critical": "dash"}</option>
+        <option name="charting.legend.labelStyle.overflowMode">ellipsisEnd</option>
+        <option name="charting.legend.mode">standard</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="height">275</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="trellis.enabled">1</option>
+        <option name="trellis.splitBy">hostname</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <chart>
+        <title>VEN Latency (Average)</title>
+        <search base="base_search">
+          <query>
+            | spath "groups{}.components{}.contents{}.cluster{}.metrics{}.entries{}.values{}" output=values
+            | eval ven_heartbeat_average_latency_seconds = mvindex(values, mvfind(values, ".+name\":\s*\"ven_heartbeat_average_latency_seconds"))
+            | spath input=ven_heartbeat_average_latency_seconds path=value output=heartbeat_latency
+            | eval ven_policy_average_latency_seconds = mvindex(values, mvfind(values, ".+name\":\s*\"ven_policy_average_latency_seconds"))
+            | spath input=ven_policy_average_latency_seconds path=value output=policy_latency
+            | timechart limit=0 eval(round(avg(heartbeat_latency),4)) AS "Heartbeat Latency", eval(round(avg(policy_latency),4)) AS "Policy Latency" useother=f usenull=f
+          </query>
+        </search>
+        <option name="charting.axisTitleX.visibility">collapsed</option>
+        <option name="charting.legend.placement">bottom</option>
         <option name="charting.axisTitleY.text">Seconds</option>
         <option name="charting.chart">line</option>
         <option name="charting.chart.nullValueMode">connect</option>
         <option name="refresh.display">progressbar</option>
         <option name="charting.drilldown">all</option>
         <drilldown>
-          <link target="_blank">search?earliest=$earliest$&amp;latest=$latest$&amp;q=| tstats `summariesonly` avg(Illumio.ven_heartbeat_average_latency_seconds) as ven_heartbeat_average_latency_seconds from datamodel=Illumio where nodename=Illumio.Illumio_PCE.Illumio_PCE_Policy Illumio.pce_fqdn="$fqdn$" $tstats_leader_fqdn$ Illumio.pce_hostname=$click.name2$ by _time, Illumio.pce_hostname  span=1ms | table _time, Illumio.pce_hostname, ven_heartbeat_average_latency_seconds | rename  Illumio.pce_hostname as "PCE Hostname", ven_heartbeat_average_latency_seconds as "VEN Average Heartbeat Latency (in seconds)"</link>
+          <link target="_blank">search?q=%60illumio_get_index%60%20sourcetype%3D%22illumio%3Apce%3Ahealth%22%20pce_fqdn%3D%22$pce_tok$%22%20%0A%7C%20spath%20%22groups%7B%7D.components%7B%7D.contents%7B%7D.cluster%7B%7D.metrics%7B%7D.entries%7B%7D.values%7B%7D%22%20output%3Dvalues%20%0A%7C%20mvexpand%20values%0A%7C%20rename%20status%20AS%20_status%0A%7C%20spath%20input%3Dvalues%0A%7C%20search%20name%3Dven_heartbeat*%0A%7C%20eval%20value%20%3D%20value%20.%20%22%20%22%20.%20unit%20.%20if(isnull(frequency)%2C%20%22%22%2C%20%22%2F%22%20.%20frequency)%0A%7C%20table%20_time%20pce_fqdn%20name%20status%20value&amp;earliest=$earliest$&amp;latest=$latest$</link>
         </drilldown>
       </chart>
     </panel>
-    <panel depends="$ven_policy_latency$">
+    <panel>
       <chart>
-        <title>VEN Policy Latency (Average)</title>
-        <search base="ven_search">
+        <title>Traffic Flow Ingestion Rate (Average)</title>
+        <search base="base_search">
           <query>
-            | $ven_policy_latency$ search $selected_pce_hostname$
-            | timechart limit=0 eval(round(avg(ven_policy_average_latency_seconds),4)) by pce_hostname useother=f usenull=f</query>
-        </search>
-        <option name="charting.legend.placement">bottom</option>
-        <option name="charting.axisTitleX.text">Time</option>
-        <option name="charting.axisTitleY.text">Seconds</option>
-        <option name="charting.chart">line</option>
-        <option name="charting.chart.nullValueMode">connect</option>
-        <option name="refresh.display">progressbar</option>
-        <option name="charting.drilldown">all</option>
-        <drilldown>
-          <link target="_blank">search?earliest=$earliest$&amp;latest=$latest$&amp;q=| tstats `summariesonly` avg(Illumio.ven_policy_average_latency_seconds) as ven_policy_average_latency_seconds from datamodel=Illumio where nodename=Illumio.Illumio_PCE.Illumio_PCE_Policy Illumio.pce_fqdn="$fqdn$" $tstats_leader_fqdn$ Illumio.pce_hostname=$click.name2$ by _time, Illumio.pce_hostname  span=1ms | table _time, Illumio.pce_hostname, ven_policy_average_latency_seconds | rename  Illumio.pce_hostname as "PCE Hostname", ven_policy_average_latency_seconds as "VEN Average Policy Latency (in seconds)"</link>
-        </drilldown>
-      </chart>
-    </panel>
-    <panel depends="$collector$">
-      <chart>
-        <title>Collector Flow Rate (Average)</title>
-        <search base="collector_summaries_search">
-          <query>
-            | $collector$ search $selected_pce_syslog_hostname$
-            | timechart limit=0 eval(round(avg(collector_summaries_per_second),4)) by pce_hostname useother=f usenull=f
+            | spath "groups{}.components{}.contents{}.cluster{}.metrics{}.entries{}.values{}" output=values
+            | eval collector_summaries_per_second = mvindex(values, mvfind(values, ".+name\":\s*\"collector_summaries_per_second"))
+            | spath input=collector_summaries_per_second path=value output=collector_rate
+            | eval traffic_summaries_per_second = mvindex(values, mvfind(values, ".+name\":\s*\"traffic_summaries_per_second"))
+            | spath input=traffic_summaries_per_second path=value output=traffic_rate
+            | timechart limit=0 eval(round(avg(collector_rate),4)) AS "Collector Summary Rate" eval(round(avg(traffic_rate),4)) AS "Traffic Summary Rate" useother=f usenull=f
           </query>
         </search>
+        <option name="charting.axisTitleX.visibility">collapsed</option>
         <option name="charting.legend.placement">bottom</option>
-        <option name="charting.axisTitleX.text">Time</option>
-        <option name="charting.axisTitleY.text">flows/second</option>
+        <option name="charting.axisTitleY.text">Summaries / Second</option>
         <option name="charting.chart">line</option>
         <option name="charting.chart.nullValueMode">connect</option>
         <option name="refresh.display">progressbar</option>
         <option name="charting.drilldown">all</option>
         <drilldown>
-          <link target="_blank">search?earliest=$earliest$&amp;latest=$latest$&amp;q=| tstats `summariesonly` avg(Illumio.collector_summaries_per_second) as collector_summaries_per_second from datamodel=Illumio where nodename=Illumio.Illumio_PCE.Illumio_PCE_Syslog_Collector Illumio.pce_fqdn=$fqdn$ $tstats_leader_fqdn$ Illumio.pce_hostname=$click.name2$ by _time, Illumio.pce_hostname span=1ms | table _time, Illumio.pce_hostname, collector_summaries_per_second | rename  Illumio.pce_hostname as "PCE Hostname", collector_summaries_per_second as "Collector Average Flow Rate (per second)"</link>
-        </drilldown>
-      </chart>
-    </panel>
-    <panel depends="$traffic$">
-      <chart>
-        <title>Traffic Ingest Rate (Average)</title>
-        <search base="traffic_summaries_search">
-          <query>
-            | $traffic$ search $selected_pce_syslog_hostname$
-            | timechart limit=0 eval(round(avg(traffic_summaries_per_second),4)) by pce_hostname useother=f usenull=f</query>
-        </search>
-        <option name="charting.legend.placement">bottom</option>
-        <option name="charting.axisTitleX.text">Time</option>
-        <option name="charting.axisTitleY.text">flows/second</option>
-        <option name="charting.chart">line</option>
-        <option name="charting.chart.nullValueMode">connect</option>
-        <option name="refresh.display">progressbar</option>
-        <option name="charting.drilldown">all</option>
-        <drilldown>
-          <link target="_blank">search?earliest=$earliest$&amp;latest=$latest$&amp;q=| tstats `summariesonly` avg(Illumio.traffic_summaries_per_second) as traffic_summaries_per_second from datamodel=Illumio where nodename=Illumio.Illumio_PCE.Illumio_PCE_Traffic Illumio.pce_fqdn=$fqdn$ $tstats_leader_fqdn$ Illumio.pce_hostname=$click.name2$ by _time, Illumio.pce_hostname  span=1ms | table _time, Illumio.pce_hostname, traffic_summaries_per_second | rename  Illumio.pce_hostname as "PCE Hostname", traffic_summaries_per_second as "Traffic Average Ingest Rate (per second)"</link>
+          <link target="_blank">search?q=%60illumio_get_index%60%20sourcetype%3D%22illumio%3Apce%3Ahealth%22%20pce_fqdn%3D%22$pce_tok$%22%20%0A%7C%20spath%20%22groups%7B%7D.components%7B%7D.contents%7B%7D.cluster%7B%7D.metrics%7B%7D.entries%7B%7D.values%7B%7D%22%20output%3Dvalues%20%0A%7C%20mvexpand%20values%20%0A%7C%20rename%20status%20AS%20_status%20%0A%7C%20spath%20input%3Dvalues%20%0A%7C%20search%20name%3Dcollector_*%20%0A%7C%20eval%20value%20%3D%20value%20.%20%22%20%22%20.%20unit%20.%20if(isnull(frequency)%2C%20%22%22%2C%20%22%2F%22%20.%20frequency)%20%0A%7C%20table%20_time%20pce_fqdn%20name%20status%20value&amp;earliest=$earliest$&amp;latest=$latest$</link>
         </drilldown>
       </chart>
     </panel>
   </row>
   <row>
-    <panel>
+    <panel depends="$access$">
       <table>
         <title>Data Ingestion Volume In The Last Day</title>
         <search>
-          <query>index=_internal source=*license_usage.log type="Usage" st=illumio*
-| eval Index = if(len(idx)=0 OR isnull(idx),"(UNKNOWN)",idx)
-| bin _time span=1d 
-| stats sum(b) as b by _time, pool, Index, st
-| eval GB=round(b/1024/1024/1024, 3)
-| fields _time, Index, st, GB
-| rename _time as Time st as "Source Type"
-| fieldformat Time = strftime(Time, "%Y-%m-%d")
-| addcoltotals GB</query>
+          <query>
+            index=_internal source=*license_usage.log type="Usage" st=illumio*
+            | eval Index = if(len(idx)=0 OR isnull(idx),"(UNKNOWN)",idx)
+            | bin _time span=1d
+            | stats sum(b) as b by _time, pool, Index, st
+            | eval GB=round(b/1024/1024/1024, 3)
+            | fields _time, Index, st, GB
+            | rename _time as Date st as "Source Type"
+            | fieldformat Date = strftime(Date, "%Y-%m-%d")
+            | addcoltotals GB
+          </query>
           <earliest>-d@d</earliest>
           <latest>@d</latest>
         </search>
         <option name="drilldown">none</option>
       </table>
     </panel>
-    <panel>
+    <panel depends="$access$">
       <table>
         <title>Data Ingestion Volume In The Last 30 Days</title>
         <search>
-          <query>index=_internal source=*license_usage.log type="Usage" st=illumio*
-| eval Index = if(len(idx)=0 OR isnull(idx),"(UNKNOWN)",idx)
-| bin _time span=30d 
-| stats sum(b) as b by _time, pool, Index, st
-| eval GB=round(b/1024/1024/1024, 3)
-| fields _time, Index, st, GB
-| rename _time as Time st as "Source Type"
-| fieldformat Time = strftime(Time, "%Y-%m-%d")
-| addcoltotals GB</query>
+          <query>
+            index=_internal source=*license_usage.log type="Usage" st=illumio*
+            | eval Index = if(len(idx)=0 OR isnull(idx),"(UNKNOWN)",idx)
+            | bin _time span=30d
+            | stats sum(b) as b by _time, pool, Index, st
+            | eval GB=round(b/1024/1024/1024, 3)
+            | fields _time, Index, st, GB
+            | rename _time as Date st as "Source Type"
+            | fieldformat Date = strftime(Date, "%Y-%m-%d")
+            | addcoltotals GB
+          </query>
           <earliest>-30d@d</earliest>
           <latest>@d</latest>
         </search>

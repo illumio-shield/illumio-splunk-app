@@ -1,0 +1,49 @@
+<dashboard version="1.1" stylesheet="quarantine_button.css">
+  <label>Firewall Tampering Host</label>
+  <description>Hostname lookup may result in multiple records. Please select the hostname to investigate or quarantine.</description>
+  <row>
+    <panel>
+      <table id="quarantineHost">
+        <search>
+          <query>
+            | savedsearch Illumio_Firewall_Tampering
+            | eval Timestamp = strftime(_time, "%Y-%m-%d %H:%M:%S %Z")
+            | lookup illumio_workloads_lookup ven.href AS ven_href OUTPUTNEW href AS workload_href, labels AS Labels
+                ```Map workload label HREFs to key:value pairs for display```
+            | lookup illumio_labels_lookup href AS Labels, pce_fqdn, org_id OUTPUT key AS label_key, value AS label_value
+            | eval Labels = mvzip(label_key, label_value, ":")
+            | fields - label_key label_value
+                ```Check that the user has the illumio_quarantine_workload role```
+            | appendcols
+                [| rest splunk_server=local /services/authentication/current-context
+                    | eval show_quarantine=if(roles="illumio_quarantine_workload", 1, 0)
+                    | table show_quarantine]
+            | filldown show_quarantine
+            | eval Quarantine = if(show_quarantine=1, "Quarantine Workload", "")
+            | table Timestamp, pce_fqdn, org_id, Labels, workload_hostname, Quarantine, workload_href
+            | rename pce_fqdn AS PCE, org_id AS "Org ID", workload_hostname AS Hostname
+          </query>
+          <earliest>$earliest$</earliest>
+          <latest>$latest$</latest>
+        </search>
+        <fields>Timestamp PCE "Org ID" Labels Hostname Quarantine</fields>
+        <option name="count">10</option>
+        <option name="drilldown">row</option>
+        <format type="color" field="Quarantine">
+          <colorPalette type="map">{"Quarantine Workload": #007abd}</colorPalette>
+        </format>
+        <drilldown>
+          <condition match="'click.name2'=&quot;Quarantine&quot; AND 'click.value2'!=&quot;&quot;">
+            <link target="_blank">search?q=%7C%20makeresults%201%20%7C%20sendalert%20illumio_quarantine%20param.workload_href%3D%22$row.workload_href$%22%20param.pce_fqdn%3D%22$row.PCE$%22%20param.org_id%3D$row.Org ID$&amp;earliest=$earliest$&amp;latest=$latest$</link>
+          </condition>
+          <condition match="'click.name2'=&quot;Quarantine&quot;">
+            <!-- for consistent behaviour, if the user clicks the Quarantine cell and quarantine is disabled, ignore the click -->
+          </condition>
+          <condition>
+            <link target="_blank">workload_investigation?form.pce_tok=$row.PCE$&amp;form.org_id_tok=$row.Org ID$&amp;form.host_ip=$row.Hostname$&amp;form.time_range.earliest=$earliest$&amp;form.time_range.latest=$latest$</link>
+          </condition>
+        </drilldown>
+      </table>
+    </panel>
+  </row>
+</dashboard>

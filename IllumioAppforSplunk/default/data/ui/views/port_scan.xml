@@ -1,15 +1,55 @@
-<dashboard version="1.1" script="invoke_ar_action.js" stylesheet="custom_ar_button.css">
+<dashboard version="1.1" stylesheet="quarantine_button.css">
   <label>Port Scan</label>
   <row>
     <panel>
       <table id="quarantineHost">
-        <search id="quarantineSearch">
-          <query>`illumio_portscan_index` search_name="Illumio_PortScan" | rename orig_host as host, fqdn as pce_fqdn   | search $fqdn$ $leader_fqdn$ | eval src_workload_uuid=REPLACE('Illumio.src_href',"/orgs/\d+/workloads/",""), dst_workload_uuid=REPLACE('Illumio.dst_href',"/orgs/\d+/workloads/","") | eval workload_uuid=if(src_workload_uuid="-", dst_workload_uuid, src_workload_uuid) | eval Quarantine=workload_uuid + ","+ pce_fqdn,data_file=1 | lookup illumio_workload_mapping_lookup workload_uuid as src_workload_uuid OUTPUT type_label as "Source Label" | lookup illumio_workload_mapping_lookup workload_uuid as dst_workload_uuid OUTPUT type_label as "Destination Label" | lookup illumio_hostname_ip_mapping_lookup fqdn as pce_fqdn ip as Illumio.src_ip OUTPUT hostname as src_hostname | lookup illumio_hostname_ip_mapping_lookup fqdn as pce_fqdn ip as Illumio.dst_ip OUTPUT hostname as dst_hostname | rename src_hostname as Source, Illumio.src_ip as "Source IP", dst_hostname as Destination, Illumio.dst_ip as "Destination IP" | join [ | rest splunk_server=local /services/authentication/current-context | eval show_quarantine=if(roles="illumio_quarantine_workload",1,0),data_file=1 | table show_quarantine, data_file ] | eval show_quarantine = if(show_quarantine = 1 AND 'Illumio.src_href'!="-", 1,0) | eval Quarantine=Quarantine +","+ show_quarantine, Investigate='Source IP', Time= strftime(time, "%Y-%m-%d %H:%M:%S %Z") | fillnull value="-" | table Time, "Source IP", Source, "Destination IP", Destination, "Source Label", "Destination Label", Quarantine, Investigate</query>
+        <search>
+          <query>
+            | savedsearch Illumio_PortScan pce_fqdn=$pce_fqdn$ org_id=$org_id$
+                ```Convert timestamp here because _time gets lost in the mvcombine call later```
+            | eval Timestamp = strftime(_time, "%Y-%m-%d %H:%M:%S %Z")
+                ```Look up labels and map them to key:value pairs using illumio_labels_lookup```
+            | foreach *_href [lookup illumio_workloads_lookup href AS &lt;&lt;FIELD&gt;&gt; OUTPUTNEW labels AS &lt;&lt;MATCHSTR&gt;&gt;_labels
+                | lookup illumio_labels_lookup href AS &lt;&lt;MATCHSTR&gt;&gt;_labels, pce_fqdn, org_id OUTPUT key AS label_key, value AS label_value
+                | eval &lt;&lt;MATCHSTR&gt;&gt;_labels = mvzip(label_key, label_value, ":")
+                | fields - label_key label_value]
+            | fillnull value="-" src_host src_href dest_host dest_href src_labels dest_labels
+                ```Check that the user has the illumio_quarantine_workload role```
+            | appendcols
+                [| rest splunk_server=local /services/authentication/current-context
+                    | eval show_quarantine=if(roles="illumio_quarantine_workload", 1, 0)
+                    | table show_quarantine]
+            | filldown show_quarantine
+                ```For quarantine, we only care about internal workloads performing scanning```
+            | eval show_quarantine = if(show_quarantine=1 AND src_href!="-", 1, 0)
+            | eval workload_href = if(src_href="-", dest_href, src_href)
+            | eval Quarantine = if(show_quarantine=1, "Quarantine Workload", "")
+            | table Timestamp, pce_fqdn, org_id, src_ip, src_host, src_labels, dest_ip, dest_host, dest_labels, Quarantine, workload_href
+            | rename pce_fqdn AS PCE, org_id AS "Org ID", src_host AS Source, src_ip AS "Source IP", src_labels AS "Source Labels", dest_host AS Destination, dest_ip AS "Destination IP", dest_labels AS "Destination Labels"
+          </query>
           <earliest>$earliest$</earliest>
           <latest>$latest$</latest>
         </search>
+        <fields>Timestamp PCE "Org ID" "Source IP" Source "Source Labels" "Destination IP" Destination "Destination Labels" Quarantine</fields>
         <option name="count">10</option>
-        <option name="drilldown">none</option>
+        <option name="drilldown">row</option>
+        <format type="color" field="Quarantine">
+          <colorPalette type="map">{"Quarantine Workload": #007abd}</colorPalette>
+        </format>
+        <drilldown>
+          <condition match="'click.name2'=&quot;Quarantine&quot; AND 'click.value2'!=&quot;&quot;">
+            <link target="_blank">search?q=%7C%20makeresults%201%20%7C%20sendalert%20illumio_quarantine%20param.workload_href%3D%22$row.workload_href$%22%20param.pce_fqdn%3D%22$row.PCE$%22%20param.org_id%3D$row.Org ID$&amp;earliest=$earliest$&amp;latest=$latest$</link>
+          </condition>
+          <condition match="'click.name2'=&quot;Quarantine&quot;">
+            <!-- for consistent behaviour, if the user clicks the Quarantine cell and quarantine is disabled, ignore the click -->
+          </condition>
+          <condition match="row.Source!='-'">
+            <link target="_blank">workload_investigation?form.pce_tok=$row.PCE$&amp;form.org_id_tok=$row.Org ID$&amp;form.host_ip=$row.Source$&amp;form.time_range.earliest=$earliest$&amp;form.time_range.latest=$latest$</link>
+          </condition>
+          <condition>
+            <link target="_blank">workload_investigation?form.pce_tok=$row.PCE$&amp;form.org_id_tok=$row.Org ID$&amp;form.host_ip=$row.Destination$&amp;form.time_range.earliest=$earliest$&amp;form.time_range.latest=$latest$</link>
+          </condition>
+        </drilldown>
       </table>
     </panel>
   </row>

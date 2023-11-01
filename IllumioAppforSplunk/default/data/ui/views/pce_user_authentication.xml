@@ -1,6 +1,14 @@
-<form version="1.1" script="multiselect_input.js">
+<form version="1.1">
   <label>PCE Authentication Events</label>
-  <fieldset submitButton="false">
+  <search id="audit_base_search">
+    <query>
+      | tstats `summariesonly` values(Audit.timestamp) AS Timestamp, values(Audit.src_user) AS src_user, values(Audit.user) AS user, values(Audit.src_ip) AS src_ip FROM datamodel=Illumio.Audit WHERE Audit.pce_fqdn=$pce_tok|s$ Audit.org_id=$org_id_tok|s$ (Audit.user=$user_tok|s$ OR Audit.src_user=$user_tok|s$) (Audit.category="auditable" OR Audit.category="system_events") Audit.event_type="user.*" BY _time Audit.pce_fqdn Audit.href Audit.event_type Audit.status Audit.severity Audit.notification_type
+      | rename Audit.pce_fqdn AS PCE, Audit.event_type AS event_type, Audit.notification_type AS notification_type, Audit.severity AS severity, Audit.status AS status, Audit.href AS event_href
+    </query>
+    <earliest>$time_range.earliest$</earliest>
+    <latest>$time_range.latest$</latest>
+  </search>
+  <fieldset submitButton="true" autoRun="true">
     <input type="time" token="time_range">
       <label>Time Range</label>
       <default>
@@ -8,134 +16,83 @@
         <latest>now</latest>
       </default>
     </input>
-    <input depends="$supercluster$" type="dropdown" token="is_supercluster" searchWhenChanged="true">
-      <label>Supercluster Leader</label>
-      <fieldForLabel>leader_fqdn</fieldForLabel>
-      <fieldForValue>leader_fqdn</fieldForValue>
-      <search>
-        <query>| inputlookup illumio_host_details_lookup | dedup leader_fqdn | table leader_fqdn</query>
-        <earliest>1</earliest>
-        <latest>now</latest>
-      </search>
-      <choice value="*">Not Configured</choice>
-      <prefix>( leader_fqdn="</prefix>
-      <suffix>" )</suffix>
-      <change>
-        <condition label="Not Configured">
-          <set token="leader_fqdn"></set>
-          <set token="form.fqdn">*</set>
-          <set token="leader_values"></set>
-        </condition>
-        <condition>
-          <set token="leader_fqdn">$is_supercluster$</set>
-          <set token="form.fqdn">*</set>
-          <set token="leader_values">values(Illumio.leader_fqdn) as leader_fqdn,</set>
-        </condition>
-      </change>
-      <default>*</default>
-      <initialValue>*</initialValue>
-    </input>
-    <input type="multiselect" token="fqdn" searchWhenChanged="true">
+    <input type="dropdown" token="pce_tok">
       <label>PCE</label>
       <search>
-        <query>| inputlookup illumio_host_details_lookup 
-| fillnull value="-" leader_fqdn 
-| search $leader_fqdn$
-| dedup fqdn 
-| table fqdn</query>
-        <earliest>1</earliest>
-        <latest>now</latest>
+        <query>| tstats `summariesonly` count from datamodel=Illumio.Audit BY Audit.pce_fqdn</query>
+        <earliest>$time_range.earliest$</earliest>
+        <latest>$time_range.latest$</latest>
       </search>
-      <fieldForLabel>fqdn</fieldForLabel>
-      <fieldForValue>fqdn</fieldForValue>
+      <fieldForLabel>Audit.pce_fqdn</fieldForLabel>
+      <fieldForValue>Audit.pce_fqdn</fieldForValue>
       <choice value="*">All</choice>
       <default>*</default>
-      <initialValue>*</initialValue>
-      <valuePrefix>pce_fqdn="</valuePrefix>
-      <valueSuffix>"</valueSuffix>
-      <delimiter> OR </delimiter>
-      <prefix>( </prefix>
-      <suffix> )</suffix>
-      <change>
-        <set token="form.event_type_include">*</set>
-        <set token="form.event_type_exclude">none</set>
-        <set token="form.audit_status">*</set>
-        <set token="form.audit_severity">*</set>
-        <set token="form.audit_notification_type">*</set>
-      </change>
+    </input>
+    <input type="dropdown" token="org_id_tok">
+      <label>Org ID</label>
+      <search>
+        <query>| tstats `summariesonly` count FROM datamodel=Illumio.Audit WHERE Audit.pce_fqdn=$pce_tok|s$ BY Audit.org_id</query>
+        <earliest>$time_range.earliest$</earliest>
+        <latest>$time_range.latest$</latest>
+      </search>
+      <fieldForLabel>Audit.org_id</fieldForLabel>
+      <fieldForValue>Audit.org_id</fieldForValue>
+      <choice value="*">All</choice>
+      <default>*</default>
+    </input>
+    <input type="dropdown" token="user_tok">
+      <label>User</label>
+      <search>
+        <query>
+          | tstats `summariesonly` count FROM datamodel=Illumio.Audit WHERE Audit.pce_fqdn=$pce_tok|s$ Audit.org_id=$org_id_tok|s$ BY Audit.user
+        </query>
+        <earliest>$time_range.earliest$</earliest>
+        <latest>$time_range.latest$</latest>
+      </search>
+      <fieldForLabel>Audit.user</fieldForLabel>
+      <fieldForValue>Audit.user</fieldForValue>
+      <default>*</default>
+      <choice value="*">All</choice>
     </input>
   </fieldset>
-  <row depends="$hidden$">
-    <panel>
-      <table>
-        <search>
-          <done>
-            <condition match="$result.count$&gt;0">
-              <set token="supercluster"></set>
-              <set token="leader_fqdn"></set>
-              <set token="leader_values"></set>
-            </condition>
-            <condition>
-              <unset token="supercluster"></unset>
-              <set token="leader_fqdn"></set>
-              <set token="leader_values"></set>
-            </condition>
-          </done>
-          <query>| inputlookup illumio_host_details_lookup | stats count by leader_fqdn</query>
-          <earliest>1</earliest>
-          <latest>now</latest>
-        </search>
-        <option name="drilldown">none</option>
-        <option name="refresh.display">progressbar</option>
-      </table>
-    </panel>
-  </row>
   <row>
     <panel>
       <title>PCE Authentication</title>
-      <input type="multiselect" token="event_type_include" searchWhenChanged="true">
+      <input type="multiselect" token="event_type_include">
         <label>Include Event Type</label>
-        <choice value="*">All</choice>
-        <search>
-          <query>| tstats `summariesonly` values(Illumio.category) as category, values(Illumio.event_type) as event_type, $leader_values$ values(Illumio.pce_fqdn) as pce_fqdn from datamodel=Illumio where nodename=Illumio.Illumio_PCE by Illumio.timestamp 
-| rename Illumio.timestamp as timestamp 
-| search timestamp!="none" (category="auditable" OR category="system_events") $leader_fqdn$ $fqdn$ (event_type=user.*)
-| stats count by event_type 
+        <search base="audit_base_search">
+          <query>
+            | stats count BY event_type
           </query>
-          <earliest>$time_range.earliest$</earliest>
-          <latest>$time_range.latest$</latest>
         </search>
         <delimiter> OR </delimiter>
         <fieldForLabel>event_type</fieldForLabel>
         <fieldForValue>event_type</fieldForValue>
         <prefix>(</prefix>
         <suffix>)</suffix>
-        <valuePrefix>event_type=</valuePrefix>
-        <default>*</default>
-        <initialValue>*</initialValue>
+        <valuePrefix>event_type="</valuePrefix>
+        <valueSuffix>"</valueSuffix>
+        <default>user.*</default>
+        <choice value="user.*">All</choice>
       </input>
       <input type="multiselect" token="event_type_exclude">
         <label>Exclude Event Type</label>
         <prefix>(</prefix>
         <suffix>)</suffix>
-        <valuePrefix>event_type!=</valuePrefix>
+        <valuePrefix>event_type!="</valuePrefix>
+        <valueSuffix>"</valueSuffix>
         <delimiter> AND </delimiter>
         <fieldForLabel>event_type</fieldForLabel>
         <fieldForValue>event_type</fieldForValue>
-        <search>
-          <query>| tstats `summariesonly` values(Illumio.category) as category, values(Illumio.event_type) as event_type, $leader_values$ values(Illumio.pce_fqdn) as pce_fqdn from datamodel=Illumio where nodename=Illumio.Illumio_PCE by Illumio.timestamp 
-| rename Illumio.timestamp as timestamp 
-| search timestamp!="none" (category="auditable" OR category="system_events") $leader_fqdn$ $fqdn$ (event_type=user.*)
-| stats count by event_type 
+        <search base="audit_base_search">
+          <query>
+            | stats count BY event_type
           </query>
-          <earliest>$time_range.earliest$</earliest>
-          <latest>$time_range.latest$</latest>
         </search>
         <choice value="none">None</choice>
         <default>none</default>
-        <initialValue>none</initialValue>
       </input>
-      <input type="multiselect" token="audit_status" searchWhenChanged="true">
+      <input type="multiselect" token="status_filter">
         <label>Status</label>
         <fieldForLabel>status</fieldForLabel>
         <fieldForValue>status</fieldForValue>
@@ -143,18 +100,16 @@
         <suffix>)</suffix>
         <valuePrefix>status=</valuePrefix>
         <default>*</default>
-        <initialValue>*</initialValue>
         <choice value="*">All</choice>
-        <search>
-          <query>| tstats `summariesonly` values(Illumio.event_type) as event_type, values(Illumio.notification_type) as notification_type, values(Illumio.severity) as severity, values(Illumio.status) as status, $leader_values$ values(Illumio.pce_fqdn) as pce_fqdn from datamodel=Illumio where nodename=Illumio.Illumio_PCE by Illumio.timestamp 
-| search $event_type_include$ $event_type_exclude$ $audit_severity$ $audit_notification_type$ (notification_type=user.*) (event_type=user.*) $leader_fqdn$ $fqdn$
-| stats count by status</query>
-          <earliest>$time_range.earliest$</earliest>
-          <latest>$time_range.latest$</latest>
+        <search base="audit_base_search">
+          <query>
+            | search $event_type_include$ $event_type_exclude$ $severity_filter$ $notification_type_filter$
+            | stats count BY status
+          </query>
         </search>
         <delimiter> OR </delimiter>
       </input>
-      <input type="multiselect" token="audit_severity" searchWhenChanged="true">
+      <input type="multiselect" token="severity_filter">
         <label>Severity</label>
         <fieldForLabel>severity</fieldForLabel>
         <fieldForValue>severity</fieldForValue>
@@ -162,18 +117,16 @@
         <suffix>)</suffix>
         <valuePrefix>severity=</valuePrefix>
         <default>*</default>
-        <initialValue>*</initialValue>
         <choice value="*">All</choice>
-        <search>
-          <query>| tstats `summariesonly` values(Illumio.event_type) as event_type, values(Illumio.notification_type) as notification_type, values(Illumio.severity) as severity, values(Illumio.status) as status, $leader_values$ values(Illumio.pce_fqdn) as pce_fqdn from datamodel=Illumio where nodename=Illumio.Illumio_PCE by Illumio.timestamp 
-| search $event_type_include$ $event_type_exclude$ $audit_status$ $audit_notification_type$ (notification_type=user.*) (event_type=user.*) $leader_fqdn$ $fqdn$
-| stats count by severity</query>
-          <earliest>$time_range.earliest$</earliest>
-          <latest>$time_range.latest$</latest>
+        <search base="audit_base_search">
+          <query>
+            | search $event_type_include$ $event_type_exclude$ $status_filter$ $notification_type_filter$
+            | stats count BY severity
+          </query>
         </search>
         <delimiter> OR </delimiter>
       </input>
-      <input type="multiselect" token="audit_notification_type" searchWhenChanged="true">
+      <input type="multiselect" token="notification_type_filter">
         <label>Notification Type</label>
         <fieldForLabel>notification_type</fieldForLabel>
         <fieldForValue>notification_type</fieldForValue>
@@ -181,14 +134,12 @@
         <suffix>)</suffix>
         <valuePrefix>notification_type=</valuePrefix>
         <default>*</default>
-        <initialValue>*</initialValue>
         <choice value="*">All</choice>
-        <search>
-          <query>| tstats `summariesonly` values(Illumio.event_type) as event_type, values(Illumio.notification_type) as notification_type, values(Illumio.severity) as severity, values(Illumio.status) as status, $leader_values$ values(Illumio.pce_fqdn) as pce_fqdn from datamodel=Illumio where nodename=Illumio.Illumio_PCE by Illumio.timestamp 
-| search $event_type_include$ $event_type_exclude$ $audit_status$ $audit_severity$ (notification_type=user.*) (event_type=user.*) $leader_fqdn$ $fqdn$
-| stats count by notification_type</query>
-          <earliest>$time_range.earliest$</earliest>
-          <latest>$time_range.latest$</latest>
+        <search base="audit_base_search">
+          <query>
+            | search $event_type_include$ $event_type_exclude$ $status_filter$ $severity_filter$
+            | stats count BY notification_type
+          </query>
         </search>
         <delimiter> OR </delimiter>
       </input>
@@ -198,25 +149,24 @@
     <panel>
       <title>PCE Authentication Events</title>
       <table>
-        <search>
-          <query>| tstats `summariesonly` values(Illumio.category) as category, values(Illumio.combined_key_value) as combined_key_value, values(Illumio.event_type) as event_type, $leader_values$ values(Illumio.pce_fqdn) as pce_fqdn, values(Illumio.src_ip) as src_ip, values(Illumio.hostname) as created_hostname, values(Illumio.notification_type) as notification_type, values(Illumio.severity) as severity, values(Illumio.status) as status from datamodel=Illumio where nodename=Illumio.Illumio_PCE by Illumio.timestamp 
-| rename Illumio.timestamp as timestamp 
-| search timestamp!="none" (category="auditable" OR category="system_events") $event_type_include$ $event_type_exclude$ $audit_status$ $audit_severity$ $audit_notification_type$ $leader_fqdn$ $fqdn$ (notification_type=user.*) (event_type=user.*)
-| table timestamp, event_type, src_ip, notification_type, severity, status, pce_fqdn 
-| rename timestamp AS "Timestamp" event_type AS "Event Type" src_ip AS "Source IP" notification_type as "Notification Type" severity AS "Severity" status AS "Status" pce_fqdn AS "PCE" 
-| fillnull value="-" "Source IP" "Notification Type" 
-| eval Timestamp=strptime('Timestamp',"%Y-%m-%dT%H:%M:%S.%3N") 
-| fieldformat "Timestamp"=strftime('Timestamp',"%+") 
-| sort 0 -Timestamp</query>
-          <earliest>$time_range.earliest$</earliest>
-          <latest>$time_range.latest$</latest>
+        <search base="audit_base_search">
+          <query>
+            | fillnull value="-"
+            | search $event_type_include$ $event_type_exclude$ $status_filter$ $severity_filter$ $notification_type_filter$
+            | table event_href, Timestamp, PCE, event_type, src_user, user, src_ip, notification_type, severity, status
+            | rename event_type AS "Event Type", src_user AS "Initiating User", user AS "Target User", src_ip AS "Source IP", notification_type AS "Notification Type", severity AS "Severity", status AS "Status"
+            | eval Timestamp = strptime('Timestamp', "%Y-%m-%dT%H:%M:%S.%f%Z")
+            | fieldformat "Timestamp" = strftime('Timestamp', "%+")
+            | sort -Timestamp
+          </query>
           <sampleRatio>1</sampleRatio>
         </search>
+        <fields>Timestamp PCE "Event Type" "Initiating User" "Target User" "Source IP" "Notification Type" "Severity" Status</fields>
         <option name="count">10</option>
         <option name="drilldown">row</option>
         <option name="refresh.display">progressbar</option>
         <drilldown>
-          <link target="_blank">search?q=%60illumio_get_index%60%20sourcetype%3D%22illumio%3Apce%22%20timestamp!%3D%22none%22%20(category%3D%22auditable%22%20OR%20category%3D%22system_events%22)%20%7C%20eval%20timestamp%3Dstrptime('timestamp'%2C%22%25Y-%25m-%25dT%25H%3A%25M%3A%25S%22)%20%7C%20eval%20time%3Dstrptime(%22$row.Timestamp$%22%2C%22%25a%20%25B%20%25d%20%25H%3A%25M%3A%25S%20%25Z%20%25Y%22)%20%7C%20fillnull%20value%3D%22-%22%20src_ip%20notification_type%20%7C%20search%20event_type%3D%22$row.Event Type$%22%20src_ip%3D%22$row.Source IP$%22%20notification_type%3D%22$row.Notification Type$%22%20severity%3D%22$row.Severity$%22%20status%3D%22$row.Status$%22%20pce_fqdn%3D%22$row.PCE$%22%20%7C%20where%20timestamp%3Dtime&amp;earliest=$time_range.earliest$&amp;latest=$time_range.latest$</link>
+          <link target="_blank">search?q=%60illumio_get_index%60%20sourcetype%3D%22illumio%3Apce%22%20href%3D%22$row.event_href$%22&amp;earliest=$time_range.earliest$&amp;latest=$time_range.latest$</link>
         </drilldown>
       </table>
     </panel>

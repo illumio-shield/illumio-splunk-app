@@ -1,0 +1,199 @@
+<form version="1.1">
+  <label>Security Operations</label>
+  <search id="traffic_base_search">
+    <query>
+      | tstats `summariesonly` sum(Traffic.count) AS flows, values(Traffic.src_host) AS src_host, values(Traffic.dest_host) AS dest_host FROM datamodel=Illumio.Traffic WHERE Traffic.pce_fqdn=$pce_tok|s$ Traffic.action=$action_tok|s$ Traffic.org_id=$org_id_tok|s$ BY _time Traffic.src_ip Traffic.dest_ip Traffic.dest_port Traffic.transport Traffic.action
+      | rename Traffic.src_ip AS src_ip, Traffic.dest_ip AS dest_ip, Traffic.dest_port AS dest_port, Traffic.transport AS transport, Traffic.action AS action
+    </query>
+    <earliest>$time_range.earliest$</earliest>
+    <latest>$time_range.latest$</latest>
+    <sampleRatio>1</sampleRatio>
+    <refresh>10m</refresh>
+    <refreshType>delay</refreshType>
+  </search>
+  <fieldset submitButton="true" autoRun="true">
+    <input type="time" token="time_range">
+      <label>Time Range</label>
+      <default>
+        <earliest>-60m@m</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="dropdown" token="pce_tok">
+      <label>PCE</label>
+      <search>
+        <query>| tstats `summariesonly` count FROM datamodel=Illumio.Audit BY Audit.pce_fqdn</query>
+        <earliest>$time_range.earliest$</earliest>
+        <latest>$time_range.latest$</latest>
+      </search>
+      <selectFirstChoice>true</selectFirstChoice>
+      <fieldForLabel>Audit.pce_fqdn</fieldForLabel>
+      <fieldForValue>Audit.pce_fqdn</fieldForValue>
+    </input>
+    <input type="dropdown" token="org_id_tok">
+      <label>Org ID</label>
+      <search>
+        <query>| tstats `summariesonly` count FROM datamodel=Illumio.Audit WHERE Audit.pce_fqdn=$pce_tok|s$ BY Audit.org_id</query>
+        <earliest>$time_range.earliest$</earliest>
+        <latest>$time_range.latest$</latest>
+      </search>
+      <fieldForLabel>Audit.org_id</fieldForLabel>
+      <fieldForValue>Audit.org_id</fieldForValue>
+      <choice value="*">All</choice>
+      <default>*</default>
+    </input>
+    <input type="dropdown" token="action_tok">
+      <label>Policy Decision</label>
+      <fieldForLabel>label</fieldForLabel>
+      <fieldForValue>value</fieldForValue>
+      <choice value="*">All</choice>
+      <choice value="allowed">Allowed</choice>
+      <choice value="blocked">Blocked</choice>
+      <choice value="potentially-blocked">Potentially Blocked</choice>
+      <choice value="unknown">Unknown</choice>
+      <default>*</default>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <title>Audit Events</title>
+      <single>
+        <search>
+          <query>| savedsearch Illumio_Auditable_Events | search pce_fqdn=$pce_tok|s$ org_id=$org_id_tok|s$ | stats count</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+        <drilldown>
+          <link target="_blank">search?q=| savedsearch Illumio_Auditable_Events | search pce_fqdn=$pce_tok|s$ org_id=$org_id_tok|s$ | stats count values(object) AS object values(object_id) AS object_id values(user) AS user BY pce_fqdn org_id event_type&amp;earliest=$time_range.earliest$&amp;latest=$time_range.latest$</link>
+        </drilldown>
+        <option name="useColors">0</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Port Scan Events</title>
+      <single>
+        <search>
+          <query>| savedsearch Illumio_PortScan pce_fqdn=$pce_tok$ org_id=$org_id_tok$ | stats count</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+        <option name="rangeColors">["0x53a051","0xf8be34","0xdc4e41"]</option>
+        <option name="rangeValues">[0,10]</option>
+        <option name="useColors">1</option>
+        <drilldown>
+          <link target="_blank">port_scan?&amp;pce_fqdn=$pce_tok|s$&amp;org_id=$org_id_tok|s$&amp;earliest=$time_range.earliest$&amp;latest=$time_range.latest$</link>
+        </drilldown>
+      </single>
+    </panel>
+    <panel>
+      <title>Firewall Tampering Events</title>
+      <single>
+        <search>
+          <query>| savedsearch Illumio_Firewall_Tampering | search pce_fqdn=$pce_tok|s$ org_id=$org_id_tok|s$ | stats count</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+        <option name="rangeColors">["0x53a051","0xf8be34","0xdc4e41"]</option>
+        <option name="rangeValues">[0,10]</option>
+        <option name="useColors">1</option>
+        <drilldown>
+          <link target="_blank">firewall_tampering_host?&amp;pce_fqdn=$pce_tok|s$&amp;org_id=$org_id_tok|s$&amp;earliest=$time_range.earliest$&amp;latest=$time_range.latest$</link>
+        </drilldown>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Most Trafficked Workloads</title>
+      <input type="dropdown" token="topN_workloads" searchWhenChanged="true">
+        <label>Display</label>
+        <fieldForLabel>label</fieldForLabel>
+        <fieldForValue>value</fieldForValue>
+        <choice value="3">3 Workloads</choice>
+        <choice value="5">5 Workloads</choice>
+        <choice value="10">10 Workloads</choice>
+        <choice value="1000000">All Workloads</choice>
+        <default>10</default>
+      </input>
+      <chart>
+        <search base="traffic_base_search">
+          <query>
+            | eval Workload = if(isnull(src_host), dest_host, src_host)
+            | eval outbound_flows = if(isnotnull(src_host), flows, null())
+            | eval inbound_flows = if(isnotnull(dest_host), flows, null())
+            | stats sum(inbound_flows) AS "Inbound Flows", sum(outbound_flows) AS "Outbound Flows" BY Workload
+            | addtotals | sort -Total | head $topN_workloads$ | fields - Total
+          </query>
+        </search>
+        <drilldown>
+          <!-- click.value won't have a value if the user clicked the legend -->
+          <condition match="isnotnull('click.value')">
+            <link target="_blank">search?q=%60illumio_get_index%60%20sourcetype%3D%22illumio%3Apce%3Acollector%22%20pce_fqdn%3D$pce_tok|s$%20org_id%3D$org_id_tok|s$%20action%3D$action_tok|s$%20(src_href%3D*%20OR%20dest_href%3D*)%0A%7C%20eval%20workload%20%3D%20if($click.name2|s$%20%3D%20%22Inbound%20Flows%22%2C%20dest_host%2C%20src_host)%0A%7C%20search%20workload%20%3D%20$click.value|s$&amp;earliest=$time_range.earliest$&amp;latest=$time_range.latest$</link>
+          </condition>
+          <condition>
+            <link target="_blank">search?q=%60illumio_get_index%60%20sourcetype%3D%22illumio%3Apce%3Acollector%22%20pce_fqdn%3D$pce_tok|s$%20org_id%3D$org_id_tok|s$%20action%3D$action_tok|s$%20(src_href%3D*%20OR%20dest_href%3D*)%0A%7C%20eval%20workload%20%3D%20if($click.name2|s$%20%3D%20%22Inbound%20Flows%22%2C%20dest_host%2C%20src_host)%0A%7C%20search%20workload%20%3D%20*&amp;earliest=$time_range.earliest$&amp;latest=$time_range.latest$</link>
+          </condition>
+        </drilldown>
+        <option name="charting.chart">bar</option>
+        <option name="charting.chart.stackMode">stacked</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="charting.axisTitleY.text">Flow Count</option>
+        <option name="charting.chart.nullValueMode">zero</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Most Trafficked Services</title>
+      <input type="dropdown" token="topN_services" searchWhenChanged="true">
+        <label>Display</label>
+        <fieldForLabel>label</fieldForLabel>
+        <fieldForValue>value</fieldForValue>
+        <choice value="3">3 Services</choice>
+        <choice value="5">5 Services</choice>
+        <choice value="10">10 Services</choice>
+        <choice value="1000000">All Services</choice>
+        <default>10</default>
+      </input>
+      <chart>
+        <search base="traffic_base_search">
+          <query>
+            ```Don't prefix the port for e.g. ICMP/ICMPv6 traffic```
+            | eval Service = if(dest_port&lt;=0, upper(transport), dest_port . " " . upper(transport))
+            | stats sum(flows) AS Count BY Service
+            | sort -Count | head $topN_services$
+          </query>
+        </search>
+        <drilldown>
+          <link target="_blank">search?q=%60illumio_get_index%60%20sourcetype%3D%22illumio%3Apce%3Acollector%22%20pce_fqdn%3D$pce_tok|s$%20org_id%3D$org_id_tok|s$%20action%3D$action_tok|s$%0A%7C%20eval%20port_proto%20%3D%20split($click.value|s$%2C%20%22%20%22)%0A%7C%20where%20dest_port%20%3D%20tonumber(mvindex(port_proto%2C%200))%20AND%20transport%20%3D%20lower(mvindex(port_proto%2C%201))&amp;earliest=$time_range.earliest$&amp;latest=$time_range.latest$</link>
+        </drilldown>
+        <option name="charting.chart">bar</option>
+        <option name="charting.chart.showDataLabels">all</option>
+        <option name="charting.legend.placement">none</option>
+        <option name="charting.axisTitleY.text">Flow Count</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Traffic Flows</title>
+      <chart>
+        <search base="traffic_base_search">
+          <query>
+            | timechart sum(flows) AS flows BY action
+            | fillnull
+          </query>
+        </search>
+        <option name="charting.chart">area</option>
+        <option name="charting.chart.nullValueMode">zero</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="charting.axisTitleX.text">Time</option>
+        <option name="charting.axisTitleY.text">Total</option>
+        <option name="charting.drilldown">all</option>
+        <drilldown>
+          <link target="_blank">search?q=%60illumio_get_index%60%20sourcetype%3D%22illumio%3Apce%3Acollector%22%20pce_fqdn%3D$pce_tok|s$%20org_id%3D$org_id_tok|s$%20action%3D$click.name2|s$&amp;earliest=$earliest$&amp;latest=$latest$</link>
+        </drilldown>
+      </chart>
+    </panel>
+  </row>
+</form>

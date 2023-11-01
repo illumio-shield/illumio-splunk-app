@@ -1,0 +1,7 @@
+#quarantineHost table tbody tr td.color-formatted {
+    border-radius: 4px;
+    margin: 12px;
+    padding: 12px;
+    display: flex;
+    justify-content: center;
+}
