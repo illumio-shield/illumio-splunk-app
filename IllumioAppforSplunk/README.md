@@ -25,7 +25,7 @@ The Illumio App for Splunk integrates with the Illumio Policy Compute Engine (PC
 
 With improved visibility of east-west traffic, Security Operations Center (SOC) staff can detect unauthorized activity and potential attacks from traffic blocked by Illumio segmentation policy on workloads in "Enforcement" mode. Additionally, the Illumio App for Splunk provides visibility into potentially blocked traffic for workloads in "Test" mode. SOC staff can quickly pinpoint potential attacks and identify workloads with a significant number of blocked flows.  
 
-### Version - 4.0.0  
+### Version - 4.0.1  
 
 **Supported Splunk versions**  
 
@@ -112,7 +112,7 @@ tar zxf /path/to/IllumioAppforSplunk.spl -C $SPLUNK_HOME/etc/apps/
 1. Navigate to Settings -> Indexes
 2. Click the **New Index** button in the top-right
 3. Enter an index name and select **Illumio App for Splunk** from the App dropdown menu
-4. Set the other index parameters based 
+4. Set the other index parameters based on your expected event volume and retention policy
 5. Click **Save**
 
 > [!NOTE]
@@ -247,13 +247,13 @@ The model provides the following objects:
 Illumio data model nodes can be referenced using the [**tstats** command](https://docs.splunk.com/Documentation/Splunk/9.1.1/SearchReference/Tstats). For example, the following search uses the **Traffic** node to sum flow counts from a given PCE over time by source/destination IP:
 
 ```
-| tstats sum(Traffic.count) AS flows FROM datamodel=Illumio.Traffic WHERE Traffic.pce_fqdn="my.pce.com" BY _time, Traffic.src_ip, Traffic.dest_ip
+| tstats sum(Traffic.count) AS flows FROM datamodel=Illumio.Traffic WHERE Traffic.pce_fqdn="my.pce.com" BY Traffic.timestamp, Traffic.src_ip, Traffic.dest_ip
 ```
 
 ### Data Model Acceleration  
 
 > [!NOTE]
-> Enabling/disabling acceleration for the Illumio data model requires the `accelerate_datamodel` capabiility
+> Enabling/disabling acceleration for the Illumio data model requires the `accelerate_datamodel` capability
 
 To enable acceleration:
 
@@ -265,7 +265,7 @@ To enable acceleration:
 6. Click **Save**. It may take quite a bit of time to build the summary for the accelerated model - the progress can be seen under the **ACCELERATION** section after clicking the caret to the left of the model name
 
 > [!NOTE]
-> If using a distributed search head cluster, see the Splunk documentation on [sharing data model acceleration summaries](https://docs.splunk.com/Documentation/Splunk/latest/Knowledge/Sharedatamodelsummaries) to aviod rebuilding the summary on each search head in the cluster
+> If using a distributed search head cluster, see the Splunk documentation on [sharing data model acceleration summaries](https://docs.splunk.com/Documentation/Splunk/latest/Knowledge/Sharedatamodelsummaries) to avoid rebuilding the summary on each search head in the cluster
 
 **Rebuilding the Data Model**  
 
@@ -307,7 +307,7 @@ If dashboards or visualizations appear to load incorrectly or behave in unexpect
 If dashboard visualizations are slow to load or searches are delayed:  
 
 * Try reducing the time range of the search
-* Enable acceleration for the `Illumio` datamodel (see [Data Model Acceleration](#data-model-acceleration) above)
+* Enable acceleration for the `Illumio` data model (see [Data Model Acceleration](#data-model-acceleration) above)
 * Check if searches are lagging or being delayed due to other jobs or processes running in the background
 * Check if the time range your search is being run in accesses cold buckets in your index
     * If your daily data volume is high, you may need to increase the `maxWarmDBCount` in `indexes.conf` to delay the roll-over from warm to cold
@@ -323,6 +323,13 @@ To uninstall the Illumio App for Splunk, follow these steps:
 4. Restart Splunk
 
 ## Release Notes  
+
+### Version 4.0.1  
+
+* Removed `illumio_quarantine` role definition - it has been moved to TA-Illumio in v4.0.1
+* Fixed overly-broad bucketing for some visualizations using accelerated tstats searches
+* Removed **Managed Workloads by Enforcement Mode** panel from the Workload Operations dashboard as it duplicated the **Policy Enforcement Mode** panel on the Workload Investigation dashboard
+* Updated the **Flows by Policy Decision** panel on the Traffic Explorer dashboard to show both port and protocol. Drilldown now sets both filters on click
 
 ### Version 4.0.0  
 
