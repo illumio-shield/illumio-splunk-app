@@ -2,7 +2,7 @@
   <label>Traffic Explorer</label>
   <search id="traffic_base_search">
     <query>
-        | tstats `summariesonly` sum(Traffic.count) AS flows, values(Traffic.src_host) AS src_host, values(Traffic.dest_host) AS dest_host, values(Traffic.direction) AS direction, values(Traffic.transport) AS transport, values(Traffic.src_label_pairs) AS src_labels, values(Traffic.dest_label_pairs) AS dest_labels FROM datamodel=Illumio.Traffic WHERE Traffic.pce_fqdn=$pce_tok|s$ Traffic.org_id=$org_id_tok|s$ (Traffic.src_ip=$src_host_ip|s$ OR Traffic.src_host=$src_host_ip|s$) (Traffic.dest_ip=$dest_host_ip|s$ OR Traffic.dest_host=$dest_host_ip|s$) ($src_label_filter$ OR $dest_label_filter$) Traffic.transport=$protocol_tok|s$ Traffic.dest_port IN $port_filter$ Traffic.action IN $action_filter$ BY _time Traffic.pce_fqdn Traffic.src_ip Traffic.dest_ip Traffic.dest_port Traffic.action
+        | tstats `summariesonly` sum(Traffic.count) AS flows, values(Traffic.src_host) AS src_host, values(Traffic.dest_host) AS dest_host, values(Traffic.direction) AS direction, values(Traffic.transport) AS transport, values(Traffic.src_label_pairs) AS src_labels, values(Traffic.dest_label_pairs) AS dest_labels FROM datamodel=Illumio.Traffic WHERE Traffic.pce_fqdn=$pce_tok|s$ Traffic.org_id=$org_id_tok|s$ (Traffic.src_ip=$src_host_ip|s$ OR Traffic.src_host=$src_host_ip|s$) (Traffic.dest_ip=$dest_host_ip|s$ OR Traffic.dest_host=$dest_host_ip|s$) ($src_label_filter$ OR $dest_label_filter$) Traffic.transport=$protocol_tok|s$ Traffic.dest_port IN $port_filter$ Traffic.action IN $action_filter$ BY _time Traffic.timestamp Traffic.pce_fqdn Traffic.src_ip Traffic.dest_ip Traffic.dest_port Traffic.action
     </query>
     <earliest>$time_range.earliest$</earliest>
     <latest>$time_range.latest$</latest>
@@ -175,11 +175,13 @@
       <table id="resubmit_on_click_1">
         <search base="traffic_base_search">
           <query>
-            | stats sum(flows) AS Flows BY Traffic.dest_port
-            | rename Traffic.dest_port AS Port
+            | rename Traffic.dest_port AS port
+            | eval Port = if(port &gt; 0, port . " ", "") . upper(transport)
+            | stats sum(flows) AS Flows, values(port) AS port, values(transport) AS transport BY Port
             | sort -Flows
           </query>
         </search>
+        <fields>Port Flows</fields>
         <option name="count">5</option>
         <option name="drilldown">row</option>
         <option name="refresh.display">progressbar</option>
@@ -190,7 +192,8 @@
           <scale type="minMidMax"></scale>
         </format>
         <drilldown>
-          <set token="form.port_filter">$click.value$</set>
+          <set token="form.port_filter">$row.port$</set>
+          <set token="form.protocol_tok">$row.transport$</set>
         </drilldown>
       </table>
     </panel>
@@ -254,9 +257,10 @@
           <query>
             | eval Source = if(isnotnull(src_host), src_host, 'Traffic.src_ip')
             | eval Destination = if(isnotnull(dest_host), dest_host, 'Traffic.dest_ip')
-            | table _time, Traffic.pce_fqdn, Source, direction, Destination, Traffic.dest_port, transport, flows, Traffic.action, src_labels, dest_labels
-            | rename _time AS Timestamp, Traffic.pce_fqdn AS "PCE", direction AS Direction, Traffic.dest_port AS "Port", transport AS Protocol, flows AS Flows, Traffic.action AS "Policy Decision", src_labels AS "Source Labels", dest_labels AS "Destination Labels"
+            | table Traffic.timestamp, Traffic.pce_fqdn, Source, direction, Destination, Traffic.dest_port, transport, flows, Traffic.action, src_labels, dest_labels
+            | rename Traffic.timestamp AS Timestamp, Traffic.pce_fqdn AS "PCE", direction AS Direction, Traffic.dest_port AS "Port", transport AS Protocol, flows AS Flows, Traffic.action AS "Policy Decision", src_labels AS "Source Labels", dest_labels AS "Destination Labels"
             | fillnull value="-" "Source Labels" "Destination Labels"
+            | eval Timestamp = strptime(Timestamp, "%Y-%m-%dT%H:%M:%S%Z")
             | fieldformat Timestamp = strftime(Timestamp, "%+")
             | sort -Timestamp
           </query>

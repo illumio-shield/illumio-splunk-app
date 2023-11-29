@@ -2,7 +2,7 @@
   <label>PCE Authentication Events</label>
   <search id="audit_base_search">
     <query>
-      | tstats `summariesonly` values(Audit.timestamp) AS Timestamp, values(Audit.src_user) AS src_user, values(Audit.user) AS user, values(Audit.src_ip) AS src_ip FROM datamodel=Illumio.Audit WHERE Audit.pce_fqdn=$pce_tok|s$ Audit.org_id=$org_id_tok|s$ (Audit.user=$user_tok|s$ OR Audit.src_user=$user_tok|s$) (Audit.category="auditable" OR Audit.category="system_events") Audit.event_type="user.*" BY _time Audit.pce_fqdn Audit.href Audit.event_type Audit.status Audit.severity Audit.notification_type
+      | tstats `summariesonly` values(Audit.timestamp) AS Timestamp, values(Audit.src_user) AS src_user, values(Audit.user) AS user, values(Audit.src_ip) AS src_ip FROM datamodel=Illumio.Audit WHERE Audit.pce_fqdn=$pce_tok|s$ Audit.org_id=$org_id_tok|s$ (Audit.user=$user_tok|s$ OR Audit.src_user=$user_tok|s$) (Audit.category="auditable" OR Audit.category="system_events") Audit.event_type="user.*" BY _time Audit.timestamp Audit.pce_fqdn Audit.href Audit.event_type Audit.status Audit.severity Audit.notification_type
       | rename Audit.pce_fqdn AS PCE, Audit.event_type AS event_type, Audit.notification_type AS notification_type, Audit.severity AS severity, Audit.status AS status, Audit.href AS event_href
     </query>
     <earliest>$time_range.earliest$</earliest>
