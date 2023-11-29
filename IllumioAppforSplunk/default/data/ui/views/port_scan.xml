@@ -6,8 +6,6 @@
         <search>
           <query>
             | savedsearch Illumio_PortScan pce_fqdn=$pce_fqdn$ org_id=$org_id$
-                ```Convert timestamp here because _time gets lost in the mvcombine call later```
-            | eval Timestamp = strftime(_time, "%Y-%m-%d %H:%M:%S %Z")
                 ```Look up labels and map them to key:value pairs using illumio_labels_lookup```
             | foreach *_href [lookup illumio_workloads_lookup href AS &lt;&lt;FIELD&gt;&gt; OUTPUTNEW labels AS &lt;&lt;MATCHSTR&gt;&gt;_labels
                 | lookup illumio_labels_lookup href AS &lt;&lt;MATCHSTR&gt;&gt;_labels, pce_fqdn, org_id OUTPUT key AS label_key, value AS label_value
@@ -26,6 +24,9 @@
             | eval Quarantine = if(show_quarantine=1, "Quarantine Workload", "")
             | table Timestamp, pce_fqdn, org_id, src_ip, src_host, src_labels, dest_ip, dest_host, dest_labels, Quarantine, workload_href
             | rename pce_fqdn AS PCE, org_id AS "Org ID", src_host AS Source, src_ip AS "Source IP", src_labels AS "Source Labels", dest_host AS Destination, dest_ip AS "Destination IP", dest_labels AS "Destination Labels"
+            | eval Timestamp = strptime(Timestamp, "%Y-%m-%dT%H:%M:%S%Z")
+            | fieldformat Timestamp = strftime(Timestamp, "%+")
+            | sort -Timestamp
           </query>
           <earliest>$earliest$</earliest>
           <latest>$latest$</latest>

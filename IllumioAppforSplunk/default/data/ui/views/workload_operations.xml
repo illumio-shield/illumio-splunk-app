@@ -9,7 +9,7 @@
   </search>
   <search id="audit_base_search">
     <query>
-      | tstats `summariesonly` values(Audit.src_user) AS src_user, values(Audit.user) AS user, values(Audit.src_ip) AS src_ip, values(Audit.notification_type) AS notification_type, values(Audit.severity) AS severity, values(Audit.status) AS status, values(Audit.pce_fqdn) AS pce_fqdn, values(Audit.event_type) AS event_type, values(Audit.object_id) AS object_id FROM datamodel=Illumio.Audit WHERE Audit.pce_fqdn=$pce_tok|s$ Audit.org_id=$org_id_tok|s$ BY _time Audit.href
+      | tstats `summariesonly` values(Audit.src_user) AS src_user, values(Audit.user) AS user, values(Audit.src_ip) AS src_ip, values(Audit.notification_type) AS notification_type, values(Audit.severity) AS severity, values(Audit.status) AS status, values(Audit.pce_fqdn) AS pce_fqdn, values(Audit.event_type) AS event_type, values(Audit.object_id) AS object_id FROM datamodel=Illumio.Audit WHERE Audit.pce_fqdn=$pce_tok|s$ Audit.org_id=$org_id_tok|s$ BY _time Audit.timestamp Audit.href
     </query>
     <earliest>$time_range.earliest$</earliest>
     <latest>$time_range.latest$</latest>
@@ -99,25 +99,6 @@
         <option name="refresh.display">progressbar</option>
         <drilldown>
           <link target="_blank">search?q=%7C%20inputlookup%20illumio_workloads_lookup%20WHERE%20managed%3D1%20ven.version%3D$click.value$%20pce_fqdn=$pce_tok|s$%20org_id=$org_id_tok|s$%20deleted%3D0</link>
-        </drilldown>
-      </chart>
-    </panel>
-    <panel>
-      <title>Managed Workloads by Enforcement Mode</title>
-      <chart>
-        <search base="workload_lookup_base_search">
-          <query>
-            | search managed=1
-            | chart dc(href) AS "VEN Count" BY enforcement_mode
-            | rename enforcement_mode AS "Enforcement Mode"
-          </query>
-        </search>
-        <option name="charting.chart">pie</option>
-        <option name="charting.drilldown">all</option>
-        <option name="charting.fieldColors">{Count:0x70c580}</option>
-        <option name="refresh.display">progressbar</option>
-        <drilldown>
-          <link target="_blank">search?q=%7C%20inputlookup%20illumio_workloads_lookup%20WHERE%20managed%3D1%20enforcement_mode%3D$click.value$%20pce_fqdn=$pce_tok|s$%20org_id=$org_id_tok|s$%20deleted%3D0</link>
         </drilldown>
       </chart>
     </panel>

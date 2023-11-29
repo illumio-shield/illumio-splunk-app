@@ -3,7 +3,7 @@
   <description>View recent changes made on connected Illumio PCEs</description>
   <search id="audit_base_search">
     <query>
-      | tstats `summariesonly` count FROM datamodel=Illumio.Audit WHERE Audit.category="auditable" (Audit.action="created" OR Audit.action="updated" OR Audit.action="deleted") Audit.pce_fqdn=$pce_tok|s$ Audit.org_id=$org_id_tok|s$ (Audit.user=$user_tok|s$ OR Audit.src_user=$user_tok|s$) Audit.object_category=$resource_type_tok|s$ BY _time Audit.action Audit.object_category Audit.user
+      | tstats `summariesonly` count FROM datamodel=Illumio.Audit WHERE Audit.category="auditable" (Audit.action="created" OR Audit.action="updated" OR Audit.action="deleted") Audit.pce_fqdn=$pce_tok|s$ Audit.org_id=$org_id_tok|s$ (Audit.user=$user_tok|s$ OR Audit.src_user=$user_tok|s$) Audit.object_category=$resource_type_tok|s$ BY _time Audit.timestamp Audit.action Audit.object_category Audit.user
     </query>
     <earliest>$time_range.earliest$</earliest>
     <latest>$time_range.latest$</latest>

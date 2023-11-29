@@ -7,7 +7,6 @@
         <search>
           <query>
             | savedsearch Illumio_Firewall_Tampering
-            | eval Timestamp = strftime(_time, "%Y-%m-%d %H:%M:%S %Z")
             | lookup illumio_workloads_lookup ven.href AS ven_href OUTPUTNEW href AS workload_href, labels AS Labels
                 ```Map workload label HREFs to key:value pairs for display```
             | lookup illumio_labels_lookup href AS Labels, pce_fqdn, org_id OUTPUT key AS label_key, value AS label_value
@@ -22,6 +21,9 @@
             | eval Quarantine = if(show_quarantine=1, "Quarantine Workload", "")
             | table Timestamp, pce_fqdn, org_id, Labels, workload_hostname, Quarantine, workload_href
             | rename pce_fqdn AS PCE, org_id AS "Org ID", workload_hostname AS Hostname
+            | eval Timestamp = strptime(Timestamp, "%Y-%m-%dT%H:%M:%S%Z")
+            | fieldformat Timestamp = strftime(Timestamp, "%+")
+            | sort -Timestamp
           </query>
           <earliest>$earliest$</earliest>
           <latest>$latest$</latest>

@@ -10,7 +10,7 @@
   </search>
   <search id="audit_base_search">
     <query>
-      | tstats `summariesonly` values(Audit.src_user) AS src_user, values(Audit.user) AS user, values(Audit.src_ip) AS src_ip, values(Audit.notification_type) AS notification_type, values(Audit.severity) AS severity, values(Audit.status) AS status, values(Audit.pce_fqdn) AS pce_fqdn, values(Audit.event_type) AS event_type, values(Audit.object_id) AS object_id FROM datamodel=Illumio.Audit WHERE Audit.pce_fqdn=$pce_tok|s$ Audit.org_id=$org_id_tok|s$ (Audit.event_type="agent.*" OR Audit.event_type="workload.*" OR Audit.event_type="workloads.*") Audit.event_type!="*.create" Audit.event_type!="*.update" Audit.event_type!="*.delete" BY _time Audit.href
+      | tstats `summariesonly` values(Audit.src_user) AS src_user, values(Audit.user) AS user, values(Audit.src_ip) AS src_ip, values(Audit.notification_type) AS notification_type, values(Audit.severity) AS severity, values(Audit.status) AS status, values(Audit.pce_fqdn) AS pce_fqdn, values(Audit.event_type) AS event_type, values(Audit.object_id) AS object_id FROM datamodel=Illumio.Audit WHERE Audit.pce_fqdn=$pce_tok|s$ Audit.org_id=$org_id_tok|s$ (Audit.event_type="agent.*" OR Audit.event_type="workload.*" OR Audit.event_type="workloads.*") Audit.event_type!="*.create" Audit.event_type!="*.update" Audit.event_type!="*.delete" BY _time Audit.timestamp Audit.href
       | lookup illumio_workloads_lookup href AS object_id OUTPUTNEW href AS workload_href, name, hostname, public_ip, labels
       | lookup illumio_workloads_lookup ven.href AS object_id OUTPUTNEW href AS workload_href, name, hostname, public_ip, labels
       | search $label_filter$ (hostname=$host_ip|s$ OR public_ip=$host_ip|s$)
@@ -79,8 +79,8 @@
       <chart>
         <search base="workload_lookup_base_search">
           <query>
-            | search agent.status.status=*
-            | rename agent.status.status AS Status
+            | search ven.status=*
+            | rename ven.status AS Status
             | stats count BY Status
           </query>
         </search>
@@ -89,7 +89,7 @@
         <option name="charting.legend.placement">none</option>
         <option name="refresh.display">progressbar</option>
         <drilldown>
-          <link target="_blank">search?q=%7C%20inputlookup%20illumio_workloads_lookup%20WHERE%20agent.status.status%3D$click.value$%20pce_fqdn%3D$pce_tok|s$%20org_id=$org_id_tok|s$%20deleted%3D0%20(hostname%3D$host_ip|s$%20OR%20public_ip%3D$host_ip|s$)%0A%7C%20search%20$label_filter$&amp;earliest=$earliest$&amp;latest=$latest$</link>
+          <link target="_blank">search?q=%7C%20inputlookup%20illumio_workloads_lookup%20WHERE%20ven.status%3D$click.value$%20pce_fqdn%3D$pce_tok|s$%20org_id=$org_id_tok|s$%20deleted%3D0%20(hostname%3D$host_ip|s$%20OR%20public_ip%3D$host_ip|s$)%0A%7C%20search%20$label_filter$&amp;earliest=$earliest$&amp;latest=$latest$</link>
         </drilldown>
       </chart>
     </panel>
@@ -207,11 +207,13 @@
         <search base="audit_base_search">
           <query>
             | search event_type=$event_type_tok|s$ severity=$severity_tok|s$ status=$status_tok|s$
+            | rename Audit.timestamp AS Timestamp
             | lookup illumio_labels_lookup pce_fqdn href AS labels OUTPUT key AS label_key value AS label_value
             | eval Labels = mvzip(label_key, label_value, ":")
             | fillnull value="-" notification_type Labels
-            | table _time pce_fqdn Workload Labels event_type notification_type severity status href
-            | rename _time AS Timestamp, pce_fqdn AS PCE, event_type AS "Event Type", notification_type AS "Notification Type", severity AS Severity, status AS Status
+            | table Timestamp pce_fqdn Workload Labels event_type notification_type severity status href
+            | rename pce_fqdn AS PCE, event_type AS "Event Type", notification_type AS "Notification Type", severity AS Severity, status AS Status
+            | eval Timestamp = strptime(Timestamp, "%Y-%m-%dT%H:%M:%S%Z")
             | fieldformat Timestamp = strftime(Timestamp, "%+")
             | sort -Timestamp
           </query>

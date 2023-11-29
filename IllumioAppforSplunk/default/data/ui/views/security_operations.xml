@@ -2,7 +2,7 @@
   <label>Security Operations</label>
   <search id="traffic_base_search">
     <query>
-      | tstats `summariesonly` sum(Traffic.count) AS flows, values(Traffic.src_host) AS src_host, values(Traffic.dest_host) AS dest_host FROM datamodel=Illumio.Traffic WHERE Traffic.pce_fqdn=$pce_tok|s$ Traffic.action=$action_tok|s$ Traffic.org_id=$org_id_tok|s$ BY _time Traffic.src_ip Traffic.dest_ip Traffic.dest_port Traffic.transport Traffic.action
+      | tstats `summariesonly` sum(Traffic.count) AS flows, values(Traffic.src_host) AS src_host, values(Traffic.dest_host) AS dest_host FROM datamodel=Illumio.Traffic WHERE Traffic.pce_fqdn=$pce_tok|s$ Traffic.action=$action_tok|s$ Traffic.org_id=$org_id_tok|s$ BY _time Traffic.timestamp Traffic.src_ip Traffic.dest_ip Traffic.dest_port Traffic.transport Traffic.action
       | rename Traffic.src_ip AS src_ip, Traffic.dest_ip AS dest_ip, Traffic.dest_port AS dest_port, Traffic.transport AS transport, Traffic.action AS action
     </query>
     <earliest>$time_range.earliest$</earliest>
