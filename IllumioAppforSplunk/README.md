@@ -138,7 +138,7 @@ The **Traffic Explorer** dashboard renders traffic flows using the [Sankey diagr
 
 After upgrading the app through the Splunk UI or manually by following the steps above, follow any additional steps below for the updated version.  
 
-### v3.2.x to v4.0.0  
+### v3.2.x to >= v4.0.0  
 
 > [!IMPORTANT]
 > Make sure that the [**TA-Illumio**](https://splunkbase.splunk.com/app/3657) add-on is installed and upgraded to v4.0.0 before upgrading the app.
