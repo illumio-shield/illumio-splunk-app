@@ -21,7 +21,7 @@
             | eval Quarantine = if(show_quarantine=1, "Quarantine Workload", "")
             | table Timestamp, pce_fqdn, org_id, Labels, workload_hostname, Quarantine, workload_href
             | rename pce_fqdn AS PCE, org_id AS "Org ID", workload_hostname AS Hostname
-            | eval Timestamp = strptime(Timestamp, "%Y-%m-%dT%H:%M:%S%Z")
+            | eval Timestamp = strptime(Timestamp, "%FT%T.%3N%Z")
             | fieldformat Timestamp = strftime(Timestamp, "%+")
             | sort -Timestamp
           </query>

@@ -155,7 +155,7 @@
             | search $event_type_include$ $event_type_exclude$ $status_filter$ $severity_filter$ $notification_type_filter$
             | table event_href, Timestamp, PCE, event_type, src_user, user, src_ip, notification_type, severity, status
             | rename event_type AS "Event Type", src_user AS "Initiating User", user AS "Target User", src_ip AS "Source IP", notification_type AS "Notification Type", severity AS "Severity", status AS "Status"
-            | eval Timestamp = strptime('Timestamp', "%Y-%m-%dT%H:%M:%S.%f%Z")
+            | eval Timestamp = strptime('Timestamp', "%FT%T.%3N%Z")
             | fieldformat "Timestamp" = strftime('Timestamp', "%+")
             | sort -Timestamp
           </query>

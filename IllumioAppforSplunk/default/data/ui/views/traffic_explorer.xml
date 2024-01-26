@@ -260,7 +260,7 @@
             | table Traffic.timestamp, Traffic.pce_fqdn, Source, direction, Destination, Traffic.dest_port, transport, flows, Traffic.action, src_labels, dest_labels
             | rename Traffic.timestamp AS Timestamp, Traffic.pce_fqdn AS "PCE", direction AS Direction, Traffic.dest_port AS "Port", transport AS Protocol, flows AS Flows, Traffic.action AS "Policy Decision", src_labels AS "Source Labels", dest_labels AS "Destination Labels"
             | fillnull value="-" "Source Labels" "Destination Labels"
-            | eval Timestamp = strptime(Timestamp, "%Y-%m-%dT%H:%M:%S%Z")
+            | eval Timestamp = strptime(Timestamp, "%FT%T%Z")
             | fieldformat Timestamp = strftime(Timestamp, "%+")
             | sort -Timestamp
           </query>
