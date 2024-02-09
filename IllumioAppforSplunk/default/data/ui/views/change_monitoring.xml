@@ -92,7 +92,7 @@
             | fillnull value="-"
             | table timestamp, pce_fqdn, Username, policy_version, workloads_affected, commit_message, modifications, href
             | rename timestamp AS Timestamp, pce_fqdn AS "PCE", policy_version AS "Policy Version", workloads_affected AS "Workloads Affected", commit_message AS "Commit Message", modifications AS "Modified Objects", href AS "Event HREF"
-            | eval Timestamp=strptime('Timestamp',"%Y-%m-%dT%H:%M:%S.%f%Z")
+            | eval Timestamp=strptime('Timestamp',"%FT%T.%3N%Z")
             | fieldformat "Timestamp"=strftime('Timestamp',"%+")
             | sort - Timestamp
           </query>
@@ -186,7 +186,7 @@
             | fillnull value="-"
             | table timestamp, event_type, pce_fqdn, Username, properties, href
             | rename timestamp AS Timestamp, event_type AS "Event Type", pce_fqdn AS "PCE", properties AS "Resource Details", href AS "Event HREF"
-            | eval Timestamp=strptime('Timestamp',"%Y-%m-%dT%H:%M:%S.%f%Z")
+            | eval Timestamp=strptime('Timestamp',"%FT%T.%3N%Z")
             | fieldformat "Timestamp"=strftime('Timestamp',"%+")
             | sort - Timestamp
           </query>

@@ -24,7 +24,6 @@
             | eval Quarantine = if(show_quarantine=1, "Quarantine Workload", "")
             | table Timestamp, pce_fqdn, org_id, src_ip, src_host, src_labels, dest_ip, dest_host, dest_labels, Quarantine, workload_href
             | rename pce_fqdn AS PCE, org_id AS "Org ID", src_host AS Source, src_ip AS "Source IP", src_labels AS "Source Labels", dest_host AS Destination, dest_ip AS "Destination IP", dest_labels AS "Destination Labels"
-            | eval Timestamp = strptime(Timestamp, "%Y-%m-%dT%H:%M:%S%Z")
             | fieldformat Timestamp = strftime(Timestamp, "%+")
             | sort -Timestamp
           </query>
