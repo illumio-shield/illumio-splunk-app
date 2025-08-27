@@ -22,3 +22,7 @@ logs/
 
 # Dynamically generated pickle files
 *.pickle
+
+pyvenv.cfg
+bin/
+lib/

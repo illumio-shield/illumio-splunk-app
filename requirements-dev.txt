@@ -5,3 +5,6 @@ pytest-cov
 mock
 black>=23.3.0
 pre-commit>=3.3.3
+pyupgrade
+splunk-appinspect
+splunk-packaging-toolkit

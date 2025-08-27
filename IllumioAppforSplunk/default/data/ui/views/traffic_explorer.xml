@@ -1,5 +1,5 @@
 <form version="1.1" script="resubmit_click_handler.js">
-  <label>Traffic Explorer</label>
+  <label>Traffic Explorer (Classic)</label>
   <search id="traffic_base_search">
     <query>
         | tstats `summariesonly` sum(Traffic.count) AS flows, values(Traffic.src_host) AS src_host, values(Traffic.dest_host) AS dest_host, values(Traffic.direction) AS direction, values(Traffic.transport) AS transport, values(Traffic.src_label_pairs) AS src_labels, values(Traffic.dest_label_pairs) AS dest_labels FROM datamodel=Illumio.Traffic WHERE Traffic.pce_fqdn=$pce_tok|s$ Traffic.org_id=$org_id_tok|s$ (Traffic.src_ip=$src_host_ip|s$ OR Traffic.src_host=$src_host_ip|s$) (Traffic.dest_ip=$dest_host_ip|s$ OR Traffic.dest_host=$dest_host_ip|s$) ($src_label_filter$ OR $dest_label_filter$) Traffic.transport=$protocol_tok|s$ Traffic.dest_port IN $port_filter$ Traffic.action IN $action_filter$ BY _time Traffic.timestamp Traffic.pce_fqdn Traffic.src_ip Traffic.dest_ip Traffic.dest_port Traffic.action

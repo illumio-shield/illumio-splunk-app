@@ -1,0 +1,722 @@
+<dashboard version="2" theme="light">
+    <label>Traffic Explorer (Dashboard Studio)</label>
+    <description>Migrated from classic dashboard</description>
+    <definition><![CDATA[
+        {
+            "title": "Traffic Explorer (Dashboard Studio)",
+            "description": "Recently migrated to dashboard studio",
+            "inputs": {
+                "input_7ealhIhg": {
+                    "options": {
+                        "backgroundColor": "#ffffff",
+                        "defaultValue": "50",
+                        "items": [
+                            {
+                                "label": "10",
+                                "value": "10"
+                            },
+                            {
+                                "label": "20",
+                                "value": "20"
+                            },
+                            {
+                                "label": "30",
+                                "value": "30"
+                            },
+                            {
+                                "label": "50",
+                                "value": "50"
+                            },
+                            {
+                                "label": "100",
+                                "value": "100"
+                            },
+                            {
+                                "label": "All",
+                                "value": "100000000"
+                            }
+                        ],
+                        "token": "nflows"
+                    },
+                    "title": "Number of links to chart",
+                    "type": "input.dropdown"
+                },
+                "input_8Lw3Ou8x": {
+                    "options": {
+                        "defaultValue": "-60m@m,now",
+                        "token": "time_range"
+                    },
+                    "title": "Time Range",
+                    "type": "input.timerange"
+                },
+                "input_CXrzBaXj": {
+                    "context": {
+                        "formattedConfig": {
+                            "number": {
+                                "prefix": ""
+                            }
+                        },
+                        "formattedStatics": "> statics | formatByType(formattedConfig)",
+                        "label": "> primary | seriesByName(\"Traffic.action\") | renameSeries(\"label\") | formatByType(formattedConfig)",
+                        "statics": [
+                            [
+                                "All"
+                            ],
+                            [
+                                "*"
+                            ]
+                        ],
+                        "value": "> primary | seriesByName(\"Traffic.action\") | renameSeries(\"value\") | formatByType(formattedConfig)"
+                    },
+                    "dataSources": {
+                        "primary": "ds_AhWaAOEt"
+                    },
+                    "options": {
+                        "defaultValue": "*",
+                        "items": "> frame(label, value) | prepend(formattedStatics) | objects()",
+                        "token": "action_filter"
+                    },
+                    "title": "Policy Decision",
+                    "type": "input.multiselect"
+                },
+                "input_GxtdFpbY": {
+                    "options": {
+                        "defaultValue": "*",
+                        "token": "dest_host_ip"
+                    },
+                    "title": "Destination Hostname/IP",
+                    "type": "input.text"
+                },
+                "input_HmDw7Jg2": {
+                    "context": {
+                        "formattedConfig": {
+                            "number": {
+                                "prefix": ""
+                            }
+                        },
+                        "formattedStatics": "> statics | formatByType(formattedConfig)",
+                        "label": "> primary | seriesByName(\"dest_label_pairs\") | renameSeries(\"label\") | formatByType(formattedConfig)",
+                        "statics": [
+                            [
+                                "All"
+                            ],
+                            [
+                                "*"
+                            ]
+                        ],
+                        "value": "> primary | seriesByName(\"dest_label_pairs\") | renameSeries(\"value\") | formatByType(formattedConfig)"
+                    },
+                    "dataSources": {
+                        "primary": "ds_rVgGtFsY"
+                    },
+                    "options": {
+                        "defaultValue": "*",
+                        "items": "> frame(label, value) | prepend(formattedStatics) | objects()",
+                        "token": "dest_label_filter"
+                    },
+                    "title": "Destination Labels",
+                    "type": "input.multiselect"
+                },
+                "input_SoCD4Ouo": {
+                    "context": {
+                        "formattedConfig": {
+                            "number": {
+                                "prefix": ""
+                            }
+                        },
+                        "formattedStatics": "> statics | formatByType(formattedConfig)",
+                        "label": "> primary | seriesByName(\"Traffic.pce_fqdn\") | renameSeries(\"label\") | formatByType(formattedConfig)",
+                        "statics": [],
+                        "value": "> primary | seriesByName(\"Traffic.pce_fqdn\") | renameSeries(\"value\") | formatByType(formattedConfig)"
+                    },
+                    "dataSources": {
+                        "primary": "ds_Y2b3H6Rq"
+                    },
+                    "options": {
+                        "items": "> frame(label, value) | prepend(formattedStatics) | objects()",
+                        "selectFirstSearchResult": true,
+                        "token": "pce_tok"
+                    },
+                    "title": "PCE",
+                    "type": "input.dropdown"
+                },
+                "input_YzBOIiCX": {
+                    "context": {
+                        "formattedConfig": {
+                            "number": {
+                                "prefix": ""
+                            }
+                        },
+                        "formattedStatics": "> statics | formatByType(formattedConfig)",
+                        "label": "> primary | seriesByName(\"Traffic.org_id\") | renameSeries(\"label\") | formatByType(formattedConfig)",
+                        "statics": [
+                            [
+                                "All"
+                            ],
+                            [
+                                "*"
+                            ]
+                        ],
+                        "value": "> primary | seriesByName(\"Traffic.org_id\") | renameSeries(\"value\") | formatByType(formattedConfig)"
+                    },
+                    "dataSources": {
+                        "primary": "ds_swQoz1ta"
+                    },
+                    "options": {
+                        "defaultValue": "*",
+                        "items": "> frame(label, value) | prepend(formattedStatics) | objects()",
+                        "token": "org_id_tok"
+                    },
+                    "title": "Org ID",
+                    "type": "input.dropdown"
+                },
+                "input_cLJCEymX": {
+                    "context": {
+                        "formattedConfig": {
+                            "number": {
+                                "prefix": ""
+                            }
+                        },
+                        "formattedStatics": "> statics | formatByType(formattedConfig)",
+                        "label": "> primary | seriesByName(\"src_label_pairs\") | renameSeries(\"label\") | formatByType(formattedConfig)",
+                        "statics": [
+                            [
+                                "All"
+                            ],
+                            [
+                                "*"
+                            ]
+                        ],
+                        "value": "> primary | seriesByName(\"src_label_pairs\") | renameSeries(\"value\") | formatByType(formattedConfig)"
+                    },
+                    "dataSources": {
+                        "primary": "ds_s4HQQjcm"
+                    },
+                    "options": {
+                        "defaultValue": "*",
+                        "items": "> frame(label, value) | prepend(formattedStatics) | objects()",
+                        "token": "src_label_filter"
+                    },
+                    "title": "Source Labels",
+                    "type": "input.multiselect"
+                },
+                "input_dvzZpnKc": {
+                    "context": {
+                        "formattedConfig": {
+                            "number": {
+                                "prefix": ""
+                            }
+                        },
+                        "formattedStatics": "> statics | formatByType(formattedConfig)",
+                        "label": "> primary | seriesByName(\"Traffic.transport\") | renameSeries(\"label\") | formatByType(formattedConfig)",
+                        "statics": [
+                            [
+                                "All"
+                            ],
+                            [
+                                "*"
+                            ]
+                        ],
+                        "value": "> primary | seriesByName(\"Traffic.transport\") | renameSeries(\"value\") | formatByType(formattedConfig)"
+                    },
+                    "dataSources": {
+                        "primary": "ds_CGtZjosC"
+                    },
+                    "options": {
+                        "defaultValue": "*",
+                        "items": "> frame(label, value) | prepend(formattedStatics) | objects()",
+                        "token": "protocol_tok"
+                    },
+                    "title": "Protocol",
+                    "type": "input.dropdown"
+                },
+                "input_fLYjmOtm": {
+                    "options": {
+                        "defaultValue": "*",
+                        "token": "src_host_ip"
+                    },
+                    "title": "Source Hostname/IP",
+                    "type": "input.text"
+                },
+                "input_haZ0ZFGw": {
+                    "context": {
+                        "formattedConfig": {
+                            "number": {
+                                "prefix": ""
+                            }
+                        },
+                        "formattedStatics": "> statics | formatByType(formattedConfig)",
+                        "label": "> primary | seriesByName(\"Traffic.dest_port\") | renameSeries(\"label\") | formatByType(formattedConfig)",
+                        "statics": [
+                            [
+                                "All"
+                            ],
+                            [
+                                "*"
+                            ]
+                        ],
+                        "value": "> primary | seriesByName(\"Traffic.dest_port\") | renameSeries(\"value\") | formatByType(formattedConfig)"
+                    },
+                    "dataSources": {
+                        "primary": "ds_CE0iWBCw"
+                    },
+                    "options": {
+                        "defaultValue": "*",
+                        "items": "> frame(label, value) | prepend(formattedStatics) | objects()",
+                        "token": "port_filter"
+                    },
+                    "title": "Port",
+                    "type": "input.multiselect"
+                }
+            },
+            "defaults": {
+                "dataSources": {
+                    "ds.search": {
+                        "options": {
+                            "queryParameters": {}
+                        }
+                    }
+                },
+                "visualizations": {
+                    "global": {
+                        "showProgressBar": true
+                    }
+                }
+            },
+            "visualizations": {
+                "viz_8fCHNylC": {
+                    "context": {
+                        "Policy_DecisionColumnColorConfig": [
+                            {
+                                "match": "allowed",
+                                "value": "#53A051"
+                            },
+                            {
+                                "match": "potentially-blocked",
+                                "value": "#F8BE34"
+                            },
+                            {
+                                "match": "blocked",
+                                "value": "#DC4E41"
+                            },
+                            {
+                                "match": "unknown",
+                                "value": "#808080"
+                            }
+                        ]
+                    },
+                    "dataSources": {
+                        "primary": "ds_T9HApKkD"
+                    },
+                    "eventHandlers": [
+                        {
+                            "options": {
+                                "earliest": "$time_range.earliest$",
+                                "latest": "$time_range.latest$",
+                                "newTab": true,
+                                "query": "`illumio_get_index` sourcetype=\"illumio:pce:collector\" (src_host=$row.Source|s$ OR src_ip=$row.Source|s$) (dest_ip=$row.Destination|s$ OR dest_host=$row.Destination|s$) dest_port=$row.Port|s$ transport=$row.Protocol|s$",
+                                "type": "custom"
+                            },
+                            "type": "drilldown.linkToSearch"
+                        }
+                    ],
+                    "options": {
+                        "columnFormat": {
+                            "Policy Decision": {
+                                "rowBackgroundColors": "> table | seriesByName(\"Policy Decision\") | matchValue(Policy_DecisionColumnColorConfig)"
+                            }
+                        },
+                        "count": 20,
+                        "drilldown": "row",
+                        "showInternalFields": false
+                    },
+                    "title": "Traffic Events",
+                    "type": "splunk.table"
+                },
+                "viz_ADaOgeCF": {
+                    "dataSources": {
+                        "primary": "ds_mzgMeDyW"
+                    },
+                    "options": {
+                        "colorMode": "categorical"
+                    },
+                    "showProgressBar": true,
+                    "title": "Communications Map between Labeled Workloads",
+                    "type": "splunk.sankey"
+                },
+                "viz_PSpyu4Kc": {
+                    "options": {
+                        "markdown": "Please specify either hostname(s) or scope labels. If both hostname and scope labels are specified, then the filter uses AND condition."
+                    },
+                    "type": "splunk.markdown"
+                },
+                "viz_dhhCPeCp": {
+                    "options": {
+                        "fillColor": "transparent",
+                        "strokeColor": "transparent"
+                    },
+                    "type": "splunk.rectangle"
+                },
+                "viz_eIbjJEYE": {
+                    "options": {
+                        "fillColor": "transparent",
+                        "strokeColor": "transparent"
+                    },
+                    "type": "splunk.rectangle"
+                },
+                "viz_resubmit_on_click_0": {
+                    "dataSources": {
+                        "primary": "ds_qJNwBE6G"
+                    },
+                    "eventHandlers": [
+                        {
+                            "options": {
+                                "newTab": false,
+                                "type": "auto"
+                            },
+                            "type": "drilldown.linkToSearch"
+                        }
+                    ],
+                    "options": {
+                        "seriesColorsByField": {}
+                    },
+                    "showProgressBar": true,
+                    "title": "Flows by Policy Decision",
+                    "type": "splunk.pie"
+                },
+                "viz_resubmit_on_click_1": {
+                    "context": {
+                        "FlowsColumnColorConfig": {
+                            "colors": [
+                                "#FFFFFF",
+                                "#006D9C"
+                            ]
+                        }
+                    },
+                    "dataSources": {
+                        "primary": "ds_drnHezfl"
+                    },
+                    "eventHandlers": [
+                        {
+                            "options": {
+                                "tokens": [
+                                    {
+                                        "key": "row.port.value",
+                                        "token": "form.port_filter"
+                                    },
+                                    {
+                                        "key": "row.transport.value",
+                                        "token": "form.protocol_tok"
+                                    }
+                                ]
+                            },
+                            "type": "drilldown.setToken"
+                        }
+                    ],
+                    "options": {
+                        "columnFormat": {
+                            "Flows": {
+                                "rowBackgroundColors": "> table | seriesByName(\"Flows\") | gradient(FlowsColumnColorConfig)"
+                            }
+                        },
+                        "count": 5,
+                        "drilldown": "row",
+                        "showInternalFields": false,
+                        "showRowNumbers": false
+                    },
+                    "showProgressBar": true,
+                    "title": "Flows by Port",
+                    "type": "splunk.table"
+                }
+            },
+            "dataSources": {
+                "ds_AhWaAOEt": {
+                    "name": "Policy Decision search",
+                    "options": {
+                        "query": "| tstats `summariesonly` count FROM datamodel=Illumio.Traffic WHERE Traffic.pce_fqdn=$pce_tok|s$ Traffic.org_id=$org_id_tok|s$ (Traffic.src_ip=$src_host_ip|s$ OR Traffic.src_host=$src_host_ip|s$) (Traffic.dest_ip=$dest_host_ip|s$ OR Traffic.dest_host=$dest_host_ip|s$) BY Traffic.action",
+                        "queryParameters": {
+                            "earliest": "$time_range.earliest$",
+                            "latest": "$time_range.latest$"
+                        }
+                    },
+                    "type": "ds.search"
+                },
+                "ds_CE0iWBCw": {
+                    "name": "Port search",
+                    "options": {
+                        "query": "| tstats `summariesonly` count FROM datamodel=Illumio.Traffic WHERE Traffic.pce_fqdn=$pce_tok|s$ Traffic.org_id=$org_id_tok|s$ (Traffic.src_ip=$src_host_ip|s$ OR Traffic.src_host=$src_host_ip|s$) (Traffic.dest_ip=$dest_host_ip|s$ OR Traffic.dest_host=$dest_host_ip|s$) BY Traffic.dest_port\n            | sort +Traffic.dest_port",
+                        "queryParameters": {
+                            "earliest": "$time_range.earliest$",
+                            "latest": "$time_range.latest$"
+                        }
+                    },
+                    "type": "ds.search"
+                },
+                "ds_CGtZjosC": {
+                    "name": "Protocol search",
+                    "options": {
+                        "query": "| tstats `summariesonly` count FROM datamodel=Illumio.Traffic WHERE Traffic.pce_fqdn=$pce_tok|s$ Traffic.org_id=$org_id_tok|s$ (Traffic.src_ip=$src_host_ip|s$ OR Traffic.src_host=$src_host_ip|s$) (Traffic.dest_ip=$dest_host_ip|s$ OR Traffic.dest_host=$dest_host_ip|s$) BY Traffic.transport",
+                        "queryParameters": {
+                            "earliest": "$time_range.earliest$",
+                            "latest": "$time_range.latest$"
+                        }
+                    },
+                    "type": "ds.search"
+                },
+                "ds_T9HApKkD": {
+                    "name": "Traffic Events - Table search",
+                    "options": {
+                        "extend": "ds_traffic_base_search",
+                        "query": "| eval Source = if(isnotnull(src_host), src_host, 'Traffic.src_ip')\n            | eval Destination = if(isnotnull(dest_host), dest_host, 'Traffic.dest_ip')\n            | table Traffic.timestamp, Traffic.pce_fqdn, Source, direction, Destination, Traffic.dest_port, transport, flows, Traffic.action, src_labels, dest_labels\n            | rename Traffic.timestamp AS Timestamp, Traffic.pce_fqdn AS \"PCE\", direction AS Direction, Traffic.dest_port AS \"Port\", transport AS Protocol, flows AS Flows, Traffic.action AS \"Policy Decision\", src_labels AS \"Source Labels\", dest_labels AS \"Destination Labels\"\n            | fillnull value=\"-\" \"Source Labels\" \"Destination Labels\"\n            | eval Timestamp = strptime(Timestamp, \"%Y-%m-%dT%H:%M:%S%Z\")\n            | fieldformat Timestamp = strftime(Timestamp, \"%+\")\n            | sort -Timestamp"
+                    },
+                    "type": "ds.chain"
+                },
+                "ds_Y2b3H6Rq": {
+                    "name": "PCE search",
+                    "options": {
+                        "query": "| tstats `summariesonly` count FROM datamodel=Illumio.Traffic BY Traffic.pce_fqdn",
+                        "queryParameters": {
+                            "earliest": "$time_range.earliest$",
+                            "latest": "$time_range.latest$"
+                        }
+                    },
+                    "type": "ds.search"
+                },
+                "ds_drnHezfl": {
+                    "name": "Flows by Port - Table search",
+                    "options": {
+                        "extend": "ds_traffic_base_search",
+                        "query": "| rename Traffic.dest_port AS port\n            | eval Port = if(port > 0, port . \" \", \"\") . upper(transport)\n            | stats sum(flows) AS Flows, values(port) AS port, values(transport) AS transport BY Port\n            | sort -Flows"
+                    },
+                    "type": "ds.chain"
+                },
+                "ds_mzgMeDyW": {
+                    "name": "Communications Map between Labeled Workloads - Sankey diagram search",
+                    "options": {
+                        "extend": "ds_traffic_base_search",
+                        "query": "| eval Source = if(isnotnull(src_host), src_host, 'Traffic.src_ip')\n            | eval Destination = if(isnotnull(dest_host), dest_host, 'Traffic.dest_ip')\n            | rename Traffic.dest_port as Port\n            | stats sum(flows) AS Flows BY Source Destination Port\n            | table Source Destination Flows Port\n            | sort -Flows\n            | head $nflows$"
+                    },
+                    "type": "ds.chain"
+                },
+                "ds_qJNwBE6G": {
+                    "name": "Flows by Policy Decision - Pie chart search",
+                    "options": {
+                        "extend": "ds_traffic_base_search",
+                        "query": "| stats sum(flows) as Flows by Traffic.action | rename Traffic.action AS \"Policy Decision\""
+                    },
+                    "type": "ds.chain"
+                },
+                "ds_rVgGtFsY": {
+                    "name": "Destination Labels search",
+                    "options": {
+                        "query": "| tstats `summariesonly` values(Traffic.dest_label_pairs) AS dest_label_pairs FROM datamodel=Illumio.Traffic WHERE Traffic.pce_fqdn=$pce_tok|s$ Traffic.org_id=$org_id_tok|s$ (Traffic.src_ip=$src_host_ip|s$ OR Traffic.src_host=$src_host_ip|s$) (Traffic.dest_ip=$dest_host_ip|s$ OR Traffic.dest_host=$dest_host_ip|s$)\n            | mvexpand dest_label_pairs\n            | where dest_label_pairs != \"\" AND isnotnull(dest_label_pairs)\n            | fields dest_label_pairs",
+                        "queryParameters": {
+                            "earliest": "$time_range.earliest$",
+                            "latest": "$time_range.latest$"
+                        }
+                    },
+                    "type": "ds.search"
+                },
+                "ds_s4HQQjcm": {
+                    "name": "Source Labels search",
+                    "options": {
+                        "query": "| tstats `summariesonly` values(Traffic.src_label_pairs) AS src_label_pairs FROM datamodel=Illumio.Traffic WHERE Traffic.pce_fqdn=$pce_tok|s$ Traffic.org_id=$org_id_tok|s$ (Traffic.src_ip=$src_host_ip|s$ OR Traffic.src_host=$src_host_ip|s$) (Traffic.dest_ip=$dest_host_ip|s$ OR Traffic.dest_host=$dest_host_ip|s$)\n            | mvexpand src_label_pairs\n            | where src_label_pairs != \"\" AND isnotnull(src_label_pairs)\n            | fields src_label_pairs",
+                        "queryParameters": {
+                            "earliest": "$time_range.earliest$",
+                            "latest": "$time_range.latest$"
+                        }
+                    },
+                    "type": "ds.search"
+                },
+                "ds_swQoz1ta": {
+                    "name": "Org ID search",
+                    "options": {
+                        "query": "| tstats `summariesonly` count FROM datamodel=Illumio.Traffic WHERE Traffic.pce_fqdn=$pce_tok|s$ BY Traffic.org_id",
+                        "queryParameters": {
+                            "earliest": "$time_range.earliest$",
+                            "latest": "$time_range.latest$"
+                        }
+                    },
+                    "type": "ds.search"
+                },
+                "ds_traffic_base_search": {
+                    "name": "ds_traffic_base_search",
+                    "options": {
+                        "query": "| tstats `summariesonly` sum(Traffic.count) AS flows, values(Traffic.src_host) AS src_host, values(Traffic.dest_host) AS dest_host, values(Traffic.direction) AS direction, values(Traffic.transport) AS transport, values(Traffic.src_label_pairs) AS src_labels, values(Traffic.dest_label_pairs) AS dest_labels FROM datamodel=Illumio.Traffic WHERE Traffic.pce_fqdn=$pce_tok|s$ Traffic.org_id=$org_id_tok|s$ (Traffic.src_ip=$src_host_ip|s$ OR Traffic.src_host=$src_host_ip|s$) (Traffic.dest_ip=$dest_host_ip|s$ OR Traffic.dest_host=$dest_host_ip|s$) (Traffic.src_label_pairs=$src_label_filter|s$ AND Traffic.dest_label_pairs=$src_label_filter|s$) Traffic.transport=$protocol_tok|s$ Traffic.dest_port IN ($port_filter$) Traffic.action IN ($action_filter$) BY _time Traffic.timestamp Traffic.pce_fqdn Traffic.src_ip Traffic.dest_ip Traffic.dest_port Traffic.action",
+                        "queryParameters": {
+                            "earliest": "$time_range.earliest$",
+                            "latest": "$time_range.latest$"
+                        }
+                    },
+                    "type": "ds.search"
+                }
+            },
+            "layout": {
+                "globalInputs": [
+                    "input_8Lw3Ou8x",
+                    "input_SoCD4Ouo",
+                    "input_YzBOIiCX",
+                    "input_fLYjmOtm",
+                    "input_GxtdFpbY"
+                ],
+                "layoutDefinitions": {
+                    "layout_1": {
+                        "options": {
+                            "height": 1430,
+                            "width": 1440
+                        },
+                        "structure": [
+                            {
+                                "item": "input_7ealhIhg",
+                                "position": {
+                                    "h": 250,
+                                    "w": 198,
+                                    "x": 0,
+                                    "y": 404
+                                },
+                                "type": "input"
+                            },
+                            {
+                                "item": "viz_8fCHNylC",
+                                "position": {
+                                    "h": 225,
+                                    "w": 1440,
+                                    "x": 0,
+                                    "y": 654
+                                },
+                                "type": "block"
+                            },
+                            {
+                                "item": "viz_ADaOgeCF",
+                                "position": {
+                                    "h": 250,
+                                    "w": 1242,
+                                    "x": 198,
+                                    "y": 404
+                                },
+                                "type": "block"
+                            },
+                            {
+                                "item": "input_cLJCEymX",
+                                "position": {
+                                    "h": 90,
+                                    "w": 198,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                "type": "input"
+                            },
+                            {
+                                "item": "viz_PSpyu4Kc",
+                                "position": {
+                                    "h": 64,
+                                    "w": 1440,
+                                    "x": 0,
+                                    "y": 90
+                                },
+                                "type": "block"
+                            },
+                            {
+                                "item": "viz_resubmit_on_click_0",
+                                "position": {
+                                    "h": 250,
+                                    "w": 720,
+                                    "x": 0,
+                                    "y": 154
+                                },
+                                "type": "block"
+                            },
+                            {
+                                "item": "input_HmDw7Jg2",
+                                "position": {
+                                    "h": 90,
+                                    "w": 198,
+                                    "x": 198,
+                                    "y": 0
+                                },
+                                "type": "input"
+                            },
+                            {
+                                "item": "input_CXrzBaXj",
+                                "position": {
+                                    "h": 90,
+                                    "w": 198,
+                                    "x": 396,
+                                    "y": 0
+                                },
+                                "type": "input"
+                            },
+                            {
+                                "item": "input_haZ0ZFGw",
+                                "position": {
+                                    "h": 90,
+                                    "w": 198,
+                                    "x": 594,
+                                    "y": 0
+                                },
+                                "type": "input"
+                            },
+                            {
+                                "item": "viz_resubmit_on_click_1",
+                                "position": {
+                                    "h": 250,
+                                    "w": 720,
+                                    "x": 720,
+                                    "y": 154
+                                },
+                                "type": "block"
+                            },
+                            {
+                                "item": "input_dvzZpnKc",
+                                "position": {
+                                    "h": 90,
+                                    "w": 198,
+                                    "x": 792,
+                                    "y": 0
+                                },
+                                "type": "input"
+                            },
+                            {
+                                "item": "viz_dhhCPeCp",
+                                "position": {
+                                    "h": 90,
+                                    "w": 225,
+                                    "x": 990,
+                                    "y": 0
+                                },
+                                "type": "block"
+                            },
+                            {
+                                "item": "viz_eIbjJEYE",
+                                "position": {
+                                    "h": 90,
+                                    "w": 225,
+                                    "x": 1215,
+                                    "y": 0
+                                },
+                                "type": "block"
+                            }
+                        ],
+                        "type": "grid"
+                    }
+                },
+                "options": {
+                    "submitOnDashboardLoad": false
+                },
+                "tabs": {
+                    "items": [
+                        {
+                            "label": "Secondary FIlters",
+                            "layoutId": "layout_1"
+                        }
+                    ]
+                }
+            },
+            "applicationProperties": {
+                "hideEdit": false,
+                "hideExport": false
+            }
+        }
+    ]]></definition>
+    <assets><![CDATA[{}]]></assets>
+</dashboard>
