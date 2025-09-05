@@ -1,10 +1,10 @@
 <dashboard version="2" theme="light">
-    <label>Traffic Explorer (Dashboard Studio)</label>
-    <description>Migrated from classic dashboard</description>
+    <label>Traffic Explorer</label>
+    <description>Visualize traffic events of PCE</description>
     <definition><![CDATA[
         {
-            "title": "Traffic Explorer (Dashboard Studio)",
-            "description": "Recently migrated to dashboard studio",
+            "title": "Traffic Explorer",
+            "description": "Visualize traffic events of PCE",
             "inputs": {
                 "input_7ealhIhg": {
                     "options": {
