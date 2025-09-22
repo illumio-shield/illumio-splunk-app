@@ -8,7 +8,7 @@
     <view name="workload_operations" />
     <view name="workload_investigation" />
   </collection>
-  <view name="traffic_explorer" />
+  <view name="traffic_explorer_ds" />
   <view name="change_monitoring" />
   <view name="search" />
 </nav>
