@@ -80,7 +80,7 @@
       <fieldForLabel>labels</fieldForLabel>
       <fieldForValue>labels</fieldForValue>
       <search>
-        <query>`illumio_get_index`  sourcetype="illumio:pce" $pce_tok$ $org_id_tok$ event_type IN ("workloads.update","agent.tampering","workloads.set_labels","agent.activate","agent.deactivate","workload_interfaces.update","agent.request_upgrade","agent.upgrade_time_out","agent.upgrade_successful","agent.suspend","agent.unsuspend","system_task.agent_missed_heartbeats_check","system_task.agent_offline_check","workload.online","agent.goodbye","workload.offline_after_ven_goodbye","agent.update","workload.update","workload.create","workload.delete","agent.remote_action","label_mapping_rules_run.assign_labels","workloads.bulk_create","workloads.bulk_import","workloads.bulk_delete","workloads.bulk_update",,"workloads.unpair","agents.unpair","support_report_request.create","support_report.upload","lost_agent.found") $eventtype$ $exclude_eventtype$
+        <query>`illumio_get_index`  sourcetype="illumio:pce" $pce_tok$ $org_id_tok$ event_type IN ("workloads.update","agent.tampering","workloads.set_labels","agent.activate","agent.deactivate","workload_interfaces.update","agent.request_upgrade","agent.upgrade_time_out","agent.upgrade_successful","agent.suspend","agent.unsuspend","system_task.agent_missed_heartbeats_check","system_task.agent_offline_check","workload.online","agent.goodbye","workload.offline_after_ven_goodbye","agent.update","workload.update","workload.create","workload.delete","agent.remote_action","label_mapping_rules_run.assign_labels","workloads.bulk_create","workloads.bulk_import","workloads.bulk_delete","workloads.bulk_update",,"workloads.unpair","agents.unpair","support_report_request.create","support_report.upload","lost_agent.found","system_task.inactive_ven_cleanup") $eventtype$ $exclude_eventtype$
 | rename notifications{}.notification_type as notif_type, notifications{}.info.agent_info_id as ven_agent_id
 | eval ven_agent_id="/orgs/".org_id."/agents/".ven_agent_id	
 | eval object_id=if(event_type="agent.request_upgrade",'notifications{}.info.successes.hrefs{}',object_id)
@@ -115,7 +115,7 @@
       <fieldForLabel>Workload</fieldForLabel>
       <fieldForValue>Workload</fieldForValue>
       <search>
-        <query>`illumio_get_index`  sourcetype="illumio:pce" $pce_tok$ $org_id_tok$ event_type IN ("workloads.update","agent.tampering","workloads.set_labels","agent.activate","agent.deactivate","workload_interfaces.update","agent.request_upgrade","agent.upgrade_time_out","agent.upgrade_successful","agent.suspend","agent.unsuspend","system_task.agent_missed_heartbeats_check","system_task.agent_offline_check","workload.online","agent.goodbye","workload.offline_after_ven_goodbye","agent.update","workload.update","workload.create","workload.delete","agent.remote_action","label_mapping_rules_run.assign_labels","workloads.bulk_create","workloads.bulk_import","workloads.bulk_delete","workloads.bulk_update","workloads.unpair","agents.unpair","support_report_request.create","support_report.upload","lost_agent.found") $eventtype$ $exclude_eventtype$
+        <query>`illumio_get_index`  sourcetype="illumio:pce" $pce_tok$ $org_id_tok$ event_type IN ("workloads.update","agent.tampering","workloads.set_labels","agent.activate","agent.deactivate","workload_interfaces.update","agent.request_upgrade","agent.upgrade_time_out","agent.upgrade_successful","agent.suspend","agent.unsuspend","system_task.agent_missed_heartbeats_check","system_task.agent_offline_check","workload.online","agent.goodbye","workload.offline_after_ven_goodbye","agent.update","workload.update","workload.create","workload.delete","agent.remote_action","label_mapping_rules_run.assign_labels","workloads.bulk_create","workloads.bulk_import","workloads.bulk_delete","workloads.bulk_update","workloads.unpair","agents.unpair","support_report_request.create","support_report.upload","lost_agent.found","system_task.inactive_ven_cleanup") $eventtype$ $exclude_eventtype$
 | rename notifications{}.notification_type as notif_type, notifications{}.info.agent_info_id as ven_agent_id
 | eval ven_agent_id="/orgs/".org_id."/agents/".ven_agent_id	
 | eval object_id=if(event_type="agent.request_upgrade",'notifications{}.info.successes.hrefs{}',object_id)
@@ -157,7 +157,7 @@
       <fieldForLabel>Event Type</fieldForLabel>
       <fieldForValue>event_type</fieldForValue>
       <search>
-        <query>`illumio_get_index`  sourcetype="illumio:pce" $pce_tok$ $org_id_tok$ event_type IN ("workloads.update","agent.tampering","workloads.set_labels","agent.activate","agent.deactivate","workload_interfaces.update","agent.request_upgrade","agent.upgrade_time_out","agent.upgrade_successful","agent.suspend","agent.unsuspend","system_task.agent_missed_heartbeats_check","system_task.agent_offline_check","workload.online","agent.goodbye","workload.offline_after_ven_goodbye","agent.update","workload.update","workload.create","workload.delete","agent.remote_action","label_mapping_rules_run.assign_labels","workloads.bulk_create","workloads.bulk_import","workloads.bulk_delete","workloads.bulk_update","workloads.unpair","agents.unpair","support_report_request.create","support_report.upload","lost_agent.found") $exclude_eventtype$
+        <query>`illumio_get_index`  sourcetype="illumio:pce" $pce_tok$ $org_id_tok$ event_type IN ("workloads.update","agent.tampering","workloads.set_labels","agent.activate","agent.deactivate","workload_interfaces.update","agent.request_upgrade","agent.upgrade_time_out","agent.upgrade_successful","agent.suspend","agent.unsuspend","system_task.agent_missed_heartbeats_check","system_task.agent_offline_check","workload.online","agent.goodbye","workload.offline_after_ven_goodbye","agent.update","workload.update","workload.create","workload.delete","agent.remote_action","label_mapping_rules_run.assign_labels","workloads.bulk_create","workloads.bulk_import","workloads.bulk_delete","workloads.bulk_update","workloads.unpair","agents.unpair","support_report_request.create","support_report.upload","lost_agent.found","system_task.inactive_ven_cleanup") $exclude_eventtype$
 | rename notifications{}.notification_type as notif_type, notifications{}.info.agent_info_id as ven_agent_id
 | eval ven_agent_id="/orgs/".org_id."/agents/".ven_agent_id	
 | eval object_id=if(event_type="agent.request_upgrade",'notifications{}.info.successes.hrefs{}',object_id)
@@ -188,7 +188,7 @@
       <fieldForLabel>Event Type</fieldForLabel>
       <fieldForValue>event_type</fieldForValue>
       <search>
-        <query>`illumio_get_index`  sourcetype="illumio:pce" $pce_tok$ $org_id_tok$ event_type IN ("workloads.update","agent.tampering","workloads.set_labels","agent.activate","agent.deactivate","workload_interfaces.update","agent.request_upgrade","agent.upgrade_time_out","agent.upgrade_successful","agent.suspend","agent.unsuspend","system_task.agent_missed_heartbeats_check","system_task.agent_offline_check","workload.online","agent.goodbye","workload.offline_after_ven_goodbye","agent.update","workload.update","workload.create","workload.delete","agent.remote_action","label_mapping_rules_run.assign_labels","workloads.bulk_create","workloads.bulk_import","workloads.bulk_delete","workloads.bulk_update","workloads.unpair","agents.unpair","support_report_request.create","support_report.upload","lost_agent.found")
+        <query>`illumio_get_index`  sourcetype="illumio:pce" $pce_tok$ $org_id_tok$ event_type IN ("workloads.update","agent.tampering","workloads.set_labels","agent.activate","agent.deactivate","workload_interfaces.update","agent.request_upgrade","agent.upgrade_time_out","agent.upgrade_successful","agent.suspend","agent.unsuspend","system_task.agent_missed_heartbeats_check","system_task.agent_offline_check","workload.online","agent.goodbye","workload.offline_after_ven_goodbye","agent.update","workload.update","workload.create","workload.delete","agent.remote_action","label_mapping_rules_run.assign_labels","workloads.bulk_create","workloads.bulk_import","workloads.bulk_delete","workloads.bulk_update","workloads.unpair","agents.unpair","support_report_request.create","support_report.upload","lost_agent.found","system_task.inactive_ven_cleanup")
 | rename notifications{}.info.agent_info_id as ven_agent_id
 | eval ven_agent_id="/orgs/".org_id."/agents/".ven_agent_id
 | eval object_id=if(event_type="agent.request_upgrade",'notifications{}.info.successes.hrefs{}',object_id)
@@ -256,13 +256,14 @@
       <title>Timeline of Illumio Workload(s) events</title>
       <viz type="timeline_app.timeline">
         <search>
-          <query>`illumio_get_index` sourcetype="illumio:pce" $pce_tok$ $org_id_tok$ event_type IN ("workloads.update","agent.tampering","workloads.set_labels","agent.activate","agent.deactivate","workload_interfaces.update","agent.request_upgrade","agent.upgrade_time_out","agent.upgrade_successful","agent.suspend","agent.unsuspend","system_task.agent_missed_heartbeats_check","system_task.agent_offline_check","workload.online","agent.goodbye","workload.offline_after_ven_goodbye","agent.update","workload.update","workload.create","workload.delete","agent.remote_action","label_mapping_rules_run.assign_labels","workloads.bulk_create","workloads.bulk_import","workloads.bulk_delete","workloads.bulk_update","workloads.unpair","agents.unpair","support_report_request.create","support_report.upload","lost_agent.found") $eventtype$ $exclude_eventtype$
+          <query>`illumio_get_index` sourcetype="illumio:pce" $pce_tok$ $org_id_tok$ event_type IN ("workloads.update","agent.tampering","workloads.set_labels","agent.activate","agent.deactivate","workload_interfaces.update","agent.request_upgrade","agent.upgrade_time_out","agent.upgrade_successful","agent.suspend","agent.unsuspend","system_task.agent_missed_heartbeats_check","system_task.agent_offline_check","workload.online","agent.goodbye","workload.offline_after_ven_goodbye","agent.update","workload.update","workload.create","workload.delete","agent.remote_action","label_mapping_rules_run.assign_labels","workloads.bulk_create","workloads.bulk_import","workloads.bulk_delete","workloads.bulk_update","workloads.unpair","agents.unpair","support_report_request.create","support_report.upload","lost_agent.found","system_task.inactive_ven_cleanup") $eventtype$ $exclude_eventtype$
 ``` ONLY COVERING A SPECIFIC SET OF EVENTS. MORE CAN BE ADDED LATER ON ```
 | rename resource_changes{}.changes.enforcement_mode.before as enf_before, resource_changes{}.changes.enforcement_mode.after as enf_after 
 | rename resource_changes{}.changes.labels.created{}.value as lab_created_value
 | rename resource_changes{}.changes.labels.deleted{}.value as lab_deleted_value 
 | rename notifications{}.info.desired_version as desired_ver 
 | rename notifications{}.info.previous_version as ven_prev, notifications{}.info.current_version as ven_curr 
+| rename "resource_changes{}.change_type" as change_type
 | rename resource_changes{}.changes.status.before as v_chg_before, resource_changes{}.changes.status.after as v_chg_after
 | rename resource_changes{}.changes.workload_interfaces.created{}.address as umw_ip_created, resource_changes{}.changes.workload_interfaces.deleted{}.address as umw_ip_deleted
 | rename resource_changes{}.changes.workload_interfaces.updated{}.changes.address.before as umw_ip_before, resource_changes{}.changes.workload_interfaces.updated{}.changes.address.after as umw_ip_after
@@ -303,29 +304,29 @@
 | eval enforcement_info="Enforcement changed from ".enf_before." to ".enf_after
 ``` CASE FOR PREPARING WORKLOAD.UPDATE ON Unmanaged Workload ```
 | eval wkld_update_UMW_info=case(
-    event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(umw_ip_created) AND isnull(umw_ip_deleted) AND isnull(umw_ip_after) AND mvcount(lab_created_value)>0 AND isnull(lab_deleted_value), label_created_info.". ".ip_added_info.".".actor_info_mul,
-    event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(umw_ip_deleted) AND isnull(umw_ip_created) AND isnull(umw_ip_after) AND mvcount(lab_created_value)>0 AND isnull(lab_deleted_value), label_created_info.". ".ip_deleted_info.".".actor_info_mul,
-    event_type IN ("workload.update","workloads.bulk_update") AND isnull(umw_ip_created) AND isnull(umw_ip_deleted) AND isnotnull(umw_ip_after) AND mvcount(lab_created_value)>0 AND isnull(lab_deleted_value), label_created_info.". ".ip_updated_info.".".actor_info_mul,
-    event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(umw_ip_created) AND isnotnull(umw_ip_deleted) AND isnotnull(umw_ip_after) AND mvcount(lab_created_value)>0 AND isnull(lab_deleted_value), label_created_info.". ".ip_all_info.".".actor_info_mul,
-    event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(umw_ip_created) AND isnotnull(umw_ip_deleted) AND isnull(umw_ip_after) AND mvcount(lab_created_value)>0 AND isnull(lab_deleted_value), label_created_info.". ".ip_add_del_info.".".actor_info_mul,
-    event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(umw_ip_created) AND isnull(umw_ip_deleted) AND isnotnull(umw_ip_after) AND mvcount(lab_created_value)>0 AND isnull(lab_deleted_value), label_created_info.". ".ip_add_upd_info.".".actor_info_mul,
-    event_type IN ("workload.update","workloads.bulk_update") AND isnull(umw_ip_created) AND isnotnull(umw_ip_deleted) AND isnotnull(umw_ip_after) AND mvcount(lab_created_value)>0 AND isnull(lab_deleted_value), label_created_info.". ".ip_del_upd_info.".".actor_info_mul,
+    event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(umw_ip_created) AND isnull(umw_ip_deleted) AND isnull(umw_ip_after) AND mvcount(lab_created_value)&gt;0 AND isnull(lab_deleted_value), label_created_info.". ".ip_added_info.".".actor_info_mul,
+    event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(umw_ip_deleted) AND isnull(umw_ip_created) AND isnull(umw_ip_after) AND mvcount(lab_created_value)&gt;0 AND isnull(lab_deleted_value), label_created_info.". ".ip_deleted_info.".".actor_info_mul,
+    event_type IN ("workload.update","workloads.bulk_update") AND isnull(umw_ip_created) AND isnull(umw_ip_deleted) AND isnotnull(umw_ip_after) AND mvcount(lab_created_value)&gt;0 AND isnull(lab_deleted_value), label_created_info.". ".ip_updated_info.".".actor_info_mul,
+    event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(umw_ip_created) AND isnotnull(umw_ip_deleted) AND isnotnull(umw_ip_after) AND mvcount(lab_created_value)&gt;0 AND isnull(lab_deleted_value), label_created_info.". ".ip_all_info.".".actor_info_mul,
+    event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(umw_ip_created) AND isnotnull(umw_ip_deleted) AND isnull(umw_ip_after) AND mvcount(lab_created_value)&gt;0 AND isnull(lab_deleted_value), label_created_info.". ".ip_add_del_info.".".actor_info_mul,
+    event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(umw_ip_created) AND isnull(umw_ip_deleted) AND isnotnull(umw_ip_after) AND mvcount(lab_created_value)&gt;0 AND isnull(lab_deleted_value), label_created_info.". ".ip_add_upd_info.".".actor_info_mul,
+    event_type IN ("workload.update","workloads.bulk_update") AND isnull(umw_ip_created) AND isnotnull(umw_ip_deleted) AND isnotnull(umw_ip_after) AND mvcount(lab_created_value)&gt;0 AND isnull(lab_deleted_value), label_created_info.". ".ip_del_upd_info.".".actor_info_mul,
     
-    event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(umw_ip_created) AND isnull(umw_ip_deleted) AND isnull(umw_ip_after) AND isnull(lab_created_value) AND mvcount(lab_deleted_value)>0, label_deleted_info.". ".ip_added_info.".".actor_info_mul,
-    event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(umw_ip_deleted) AND isnull(umw_ip_created) AND isnull(umw_ip_after) AND isnull(lab_created_value) AND mvcount(lab_deleted_value)>0, label_deleted_info.". ".ip_deleted_info.".".actor_info_mul,
-    event_type IN ("workload.update","workloads.bulk_update") AND isnull(umw_ip_created) AND isnull(umw_ip_deleted) AND isnotnull(umw_ip_after) AND isnull(lab_created_value) AND mvcount(lab_deleted_value)>0, label_deleted_info.". ".ip_updated_info.".".actor_info_mul,
-    event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(umw_ip_created) AND isnotnull(umw_ip_deleted) AND isnotnull(umw_ip_after) AND isnull(lab_created_value) AND mvcount(lab_deleted_value)>0, label_deleted_info.". ".ip_all_info.".".actor_info_mul,
-    event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(umw_ip_created) AND isnotnull(umw_ip_deleted) AND isnull(umw_ip_after) AND isnull(lab_created_value) AND mvcount(lab_deleted_value)>0, label_deleted_info.". ".ip_add_del_info.".".actor_info_mul,
-    event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(umw_ip_created) AND isnull(umw_ip_deleted) AND isnotnull(umw_ip_after) AND isnull(lab_created_value) AND mvcount(lab_deleted_value)>0, label_deleted_info.". ".ip_add_upd_info.".".actor_info_mul,
-    event_type IN ("workload.update","workloads.bulk_update") AND isnull(umw_ip_created) AND isnotnull(umw_ip_deleted) AND isnotnull(umw_ip_after) AND isnull(lab_created_value) AND mvcount(lab_deleted_value)>0, label_deleted_info.". ".ip_del_upd_info.".".actor_info_mul,
+    event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(umw_ip_created) AND isnull(umw_ip_deleted) AND isnull(umw_ip_after) AND isnull(lab_created_value) AND mvcount(lab_deleted_value)&gt;0, label_deleted_info.". ".ip_added_info.".".actor_info_mul,
+    event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(umw_ip_deleted) AND isnull(umw_ip_created) AND isnull(umw_ip_after) AND isnull(lab_created_value) AND mvcount(lab_deleted_value)&gt;0, label_deleted_info.". ".ip_deleted_info.".".actor_info_mul,
+    event_type IN ("workload.update","workloads.bulk_update") AND isnull(umw_ip_created) AND isnull(umw_ip_deleted) AND isnotnull(umw_ip_after) AND isnull(lab_created_value) AND mvcount(lab_deleted_value)&gt;0, label_deleted_info.". ".ip_updated_info.".".actor_info_mul,
+    event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(umw_ip_created) AND isnotnull(umw_ip_deleted) AND isnotnull(umw_ip_after) AND isnull(lab_created_value) AND mvcount(lab_deleted_value)&gt;0, label_deleted_info.". ".ip_all_info.".".actor_info_mul,
+    event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(umw_ip_created) AND isnotnull(umw_ip_deleted) AND isnull(umw_ip_after) AND isnull(lab_created_value) AND mvcount(lab_deleted_value)&gt;0, label_deleted_info.". ".ip_add_del_info.".".actor_info_mul,
+    event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(umw_ip_created) AND isnull(umw_ip_deleted) AND isnotnull(umw_ip_after) AND isnull(lab_created_value) AND mvcount(lab_deleted_value)&gt;0, label_deleted_info.". ".ip_add_upd_info.".".actor_info_mul,
+    event_type IN ("workload.update","workloads.bulk_update") AND isnull(umw_ip_created) AND isnotnull(umw_ip_deleted) AND isnotnull(umw_ip_after) AND isnull(lab_created_value) AND mvcount(lab_deleted_value)&gt;0, label_deleted_info.". ".ip_del_upd_info.".".actor_info_mul,
     
-    event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(umw_ip_created) AND isnull(umw_ip_deleted) AND isnull(umw_ip_after) AND mvcount(lab_created_value)>0 AND mvcount(lab_deleted_value)>0, label_both_info.". ".ip_added_info.".".actor_info_mul,
-    event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(umw_ip_deleted) AND isnull(umw_ip_created) AND isnull(umw_ip_after) AND mvcount(lab_created_value)>0 AND mvcount(lab_deleted_value)>0, label_both_info.". ".ip_deleted_info.".".actor_info_mul,
-    event_type IN ("workload.update","workloads.bulk_update") AND isnull(umw_ip_created) AND isnull(umw_ip_deleted) AND isnotnull(umw_ip_after) AND mvcount(lab_created_value)>0 AND mvcount(lab_deleted_value)>0, label_both_info.". ".ip_updated_info.".".actor_info_mul,
-    event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(umw_ip_created) AND isnotnull(umw_ip_deleted) AND isnotnull(umw_ip_after) AND mvcount(lab_created_value)>0 AND mvcount(lab_deleted_value)>0, label_both_info.". ".ip_all_info.".".actor_info_mul,
-    event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(umw_ip_created) AND isnotnull(umw_ip_deleted) AND isnull(umw_ip_after) AND mvcount(lab_created_value)>0 AND mvcount(lab_deleted_value)>0, label_both_info.". ".ip_add_del_info.".".actor_info_mul,
-    event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(umw_ip_created) AND isnull(umw_ip_deleted) AND isnotnull(umw_ip_after) AND mvcount(lab_created_value)>0 AND mvcount(lab_deleted_value)>0, label_both_info.". ".ip_add_upd_info.".".actor_info_mul,
-    event_type IN ("workload.update","workloads.bulk_update") AND isnull(umw_ip_created) AND isnotnull(umw_ip_deleted) AND isnotnull(umw_ip_after) AND mvcount(lab_created_value)>0 AND mvcount(lab_deleted_value)>0, label_both_info.". ".ip_del_upd_info.".".actor_info_mul,
+    event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(umw_ip_created) AND isnull(umw_ip_deleted) AND isnull(umw_ip_after) AND mvcount(lab_created_value)&gt;0 AND mvcount(lab_deleted_value)&gt;0, label_both_info.". ".ip_added_info.".".actor_info_mul,
+    event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(umw_ip_deleted) AND isnull(umw_ip_created) AND isnull(umw_ip_after) AND mvcount(lab_created_value)&gt;0 AND mvcount(lab_deleted_value)&gt;0, label_both_info.". ".ip_deleted_info.".".actor_info_mul,
+    event_type IN ("workload.update","workloads.bulk_update") AND isnull(umw_ip_created) AND isnull(umw_ip_deleted) AND isnotnull(umw_ip_after) AND mvcount(lab_created_value)&gt;0 AND mvcount(lab_deleted_value)&gt;0, label_both_info.". ".ip_updated_info.".".actor_info_mul,
+    event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(umw_ip_created) AND isnotnull(umw_ip_deleted) AND isnotnull(umw_ip_after) AND mvcount(lab_created_value)&gt;0 AND mvcount(lab_deleted_value)&gt;0, label_both_info.". ".ip_all_info.".".actor_info_mul,
+    event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(umw_ip_created) AND isnotnull(umw_ip_deleted) AND isnull(umw_ip_after) AND mvcount(lab_created_value)&gt;0 AND mvcount(lab_deleted_value)&gt;0, label_both_info.". ".ip_add_del_info.".".actor_info_mul,
+    event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(umw_ip_created) AND isnull(umw_ip_deleted) AND isnotnull(umw_ip_after) AND mvcount(lab_created_value)&gt;0 AND mvcount(lab_deleted_value)&gt;0, label_both_info.". ".ip_add_upd_info.".".actor_info_mul,
+    event_type IN ("workload.update","workloads.bulk_update") AND isnull(umw_ip_created) AND isnotnull(umw_ip_deleted) AND isnotnull(umw_ip_after) AND mvcount(lab_created_value)&gt;0 AND mvcount(lab_deleted_value)&gt;0, label_both_info.". ".ip_del_upd_info.".".actor_info_mul,
     
     event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(umw_ip_created) AND isnull(umw_ip_deleted) AND isnull(umw_ip_after) AND isnull(lab_created_value) AND isnull(lab_deleted_value), ip_added_info.".".actor_info_mul,
     event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(umw_ip_deleted) AND isnull(umw_ip_created) AND isnull(umw_ip_after) AND isnull(lab_created_value) AND isnull(lab_deleted_value), ip_deleted_info.".".actor_info_mul,
@@ -335,9 +336,9 @@
     event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(umw_ip_created) AND isnull(umw_ip_deleted) AND isnotnull(umw_ip_after) AND isnull(lab_created_value) AND isnull(lab_deleted_value), ip_add_upd_info.".".actor_info_mul,
     event_type IN ("workload.update","workloads.bulk_update") AND isnull(umw_ip_created) AND isnotnull(umw_ip_deleted) AND isnotnull(umw_ip_after) AND isnull(lab_created_value) AND isnull(lab_deleted_value), ip_del_upd_info.".".actor_info_mul,
     
-    event_type IN ("workload.update","workloads.bulk_update") AND isnull(umw_ip_created) AND isnull(umw_ip_deleted) AND isnull(umw_ip_after) AND mvcount(lab_created_value)>0 AND isnull(lab_deleted_value), label_created_info.".".actor_info,
-    event_type IN ("workload.update","workloads.bulk_update") AND isnull(umw_ip_created) AND isnull(umw_ip_deleted) AND isnull(umw_ip_after) AND isnull(lab_created_value) AND mvcount(lab_deleted_value)>0, label_deleted_info.".".actor_info,
-    event_type IN ("workload.update","workloads.bulk_update") AND isnull(umw_ip_created) AND isnull(umw_ip_deleted )AND mvcount(lab_created_value)>0 AND mvcount(lab_deleted_value)>0, label_both_info.".".actor_info_mul
+    event_type IN ("workload.update","workloads.bulk_update") AND isnull(umw_ip_created) AND isnull(umw_ip_deleted) AND isnull(umw_ip_after) AND mvcount(lab_created_value)&gt;0 AND isnull(lab_deleted_value), label_created_info.".".actor_info,
+    event_type IN ("workload.update","workloads.bulk_update") AND isnull(umw_ip_created) AND isnull(umw_ip_deleted) AND isnull(umw_ip_after) AND isnull(lab_created_value) AND mvcount(lab_deleted_value)&gt;0, label_deleted_info.".".actor_info,
+    event_type IN ("workload.update","workloads.bulk_update") AND isnull(umw_ip_created) AND isnull(umw_ip_deleted )AND mvcount(lab_created_value)&gt;0 AND mvcount(lab_deleted_value)&gt;0, label_both_info.".".actor_info_mul
 )
 ``` CASE FOR DETAILS ON VEN INTERFACE CHANGES ```
 | eval ven_interface_change_details=case(
@@ -352,20 +353,20 @@
 
 ``` CASE FOR PREPARING WORKLOAD.UPDATE ON VEN ```
 | eval wkld_update_VEN_info=case(
-    event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(enf_after) AND mvcount(lab_created_value)>0 AND mvcount(lab_deleted_value)>0, enforcement_info.". ".label_both_info.".".actor_info_mul,
-    event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(enf_after) AND mvcount(lab_created_value)>0 AND isnull(lab_deleted_value), enforcement_info.". ".label_created_info.".".actor_info_mul,
-    event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(enf_after) AND isnull(lab_created_value) AND mvcount(lab_deleted_value)>0, enforcement_info.". ".label_delete_info.".".actor_info_mul,
-    event_type IN ("workload.update","workloads.bulk_update") AND isnull(enf_after) AND mvcount(lab_created_value)>0 AND isnull(lab_deleted_value), label_created_info.actor_info,
-    event_type IN ("workload.update","workloads.bulk_update") AND isnull(enf_after) AND isnull(lab_created_value) AND mvcount(lab_deleted_value)>0, label_delete_info.actor_info,
-    event_type IN ("workload.update","workloads.bulk_update") AND isnull(enf_after) AND mvcount(lab_created_value)>0 AND mvcount(lab_deleted_value)>0, label_both_info.actor_info,
+    event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(enf_after) AND mvcount(lab_created_value)&gt;0 AND mvcount(lab_deleted_value)&gt;0, enforcement_info.". ".label_both_info.".".actor_info_mul,
+    event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(enf_after) AND mvcount(lab_created_value)&gt;0 AND isnull(lab_deleted_value), enforcement_info.". ".label_created_info.".".actor_info_mul,
+    event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(enf_after) AND isnull(lab_created_value) AND mvcount(lab_deleted_value)&gt;0, enforcement_info.". ".label_delete_info.".".actor_info_mul,
+    event_type IN ("workload.update","workloads.bulk_update") AND isnull(enf_after) AND mvcount(lab_created_value)&gt;0 AND isnull(lab_deleted_value), label_created_info.actor_info,
+    event_type IN ("workload.update","workloads.bulk_update") AND isnull(enf_after) AND isnull(lab_created_value) AND mvcount(lab_deleted_value)&gt;0, label_delete_info.actor_info,
+    event_type IN ("workload.update","workloads.bulk_update") AND isnull(enf_after) AND mvcount(lab_created_value)&gt;0 AND mvcount(lab_deleted_value)&gt;0, label_both_info.actor_info,
     event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(enf_after) AND isnull(lab_created_value) AND isnull(lab_deleted_value), enforcement_info.actor_info
 )
 ``` CASE FOR EVENT DETAILS  ```
 | eval Event=case(
     event_type="workloads.update" AND isnotnull(enf_before) AND isnotnull(enf_after), enforcement_info.actor_info,
-    event_type IN ("workloads.set_labels","workloads.bulk_import") AND mvcount(lab_created_value)>0 AND isnull(lab_deleted_value), label_created_info.actor_info,
-    event_type IN ("workloads.set_labels","workloads.bulk_import") AND isnull(lab_created_value) AND mvcount(lab_deleted_value)>0, label_deleted_info.actor_info,
-    event_type IN ("workloads.set_labels","workloads.bulk_import") AND mvcount(lab_created_value)>0 AND mvcount(lab_deleted_value)>0, label_both_info.actor_info,
+    event_type IN ("workloads.set_labels","workloads.bulk_import") AND mvcount(lab_created_value)&gt;0 AND isnull(lab_deleted_value), label_created_info.actor_info,
+    event_type IN ("workloads.set_labels","workloads.bulk_import") AND isnull(lab_created_value) AND mvcount(lab_deleted_value)&gt;0, label_deleted_info.actor_info,
+    event_type IN ("workloads.set_labels","workloads.bulk_import") AND mvcount(lab_created_value)&gt;0 AND mvcount(lab_deleted_value)&gt;0, label_both_info.actor_info,
     event_type="agent.tampering", "OS firewall tampering",
     event_type="agent.activate", "VEN paired with PCE in enforcement: ".enf_after,
     event_type="agent.deactivate", "Unpaired/Deactivated from PCE",
@@ -390,7 +391,8 @@
     event_type IN ("agents.unpair","workloads.unpair"), "Unpair VEN request sent".actor_info,
     event_type="support_report_request.create" AND status="success", "Support Bundle Requested".actor_info,    
     event_type="support_report.upload" AND status="success", "VEN Support Bundle successfully uploaded to PCE",
-    event_type="lost_agent.found", "Unregistered VEN agent found attempting to connect to PCE"
+    event_type="lost_agent.found", "Unregistered VEN agent found attempting to connect to PCE",
+    event_type="system_task.inactive_ven_cleanup" AND change_type="delete" AND status="success", "VEN unpaired by inactivity VEN cleanup schedule"
 )
 | stats list(Label) as labels by _time Workload Event event_type
 | eval labels=if(isnull(labels),"No Labels Found",labels)
