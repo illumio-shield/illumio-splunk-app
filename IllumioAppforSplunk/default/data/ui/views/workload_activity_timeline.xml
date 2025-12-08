@@ -1,0 +1,477 @@
+<form version="1.1" theme="dark">
+  <label>Workloads Activity Timeline (New)</label>
+  <html>
+      <p>
+        This dashboard depends on <a href="https://classic.splunkbase.splunk.com/app/3120/">Splunk Timeline - Custom Visualization</a>. Please install if not already done.
+      </p>
+  </html>
+  <search id="definetoken">
+    <query>
+| makeresults
+| eval afterrex="$workload_traffic_rex$"
+| eval show=if(like(afterrex, "%*%"), "false", "true")
+  </query>
+    <finalized>
+      <set token="show_panel">$result.show$</set>
+    </finalized>
+  </search>
+  <search id="panel_control_search">
+    <query> 
+| makeresults
+| eval decision="$show_panel$"
+  </query>
+    <done>
+      <condition match="$result.decision$==&quot;true&quot;">
+        <set token="show_final">true</set>
+      </condition>
+      <condition match="$result.decision$==&quot;false&quot;">
+        <unset token="show_final"></unset>
+      </condition>
+    </done>
+  </search>
+  <fieldset submitButton="false" autoRun="true">
+    <input type="time" token="timepicker" searchWhenChanged="true">
+      <label>Time</label>
+      <default>
+        <earliest>-6h@m</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="multiselect" token="pce_tok">
+      <label>PCE</label>
+      <search>
+        <query>| tstats `summariesonly` count FROM datamodel=Illumio.Audit BY Audit.pce_fqdn</query>
+        <earliest>$timepicker.earliest$</earliest>
+        <latest>$timepicker.latest$</latest>
+      </search>
+      <fieldForLabel>Audit.pce_fqdn</fieldForLabel>
+      <fieldForValue>Audit.pce_fqdn</fieldForValue>
+      <choice value="*">All</choice>
+      <default>*</default>
+      <valuePrefix>pce_fqdn="</valuePrefix>
+      <valueSuffix>"</valueSuffix>
+      <delimiter> OR  </delimiter>
+      <change>
+        <eval token="pce_tok_audit">replace($pce_tok$, "pce_fqdn=", "Audit.pce_fqdn=")</eval>
+        <eval token="pce_tok_traffic">replace($pce_tok$, "pce_fqdn=", "Traffic.pce_fqdn=")</eval>
+      </change>
+    </input>
+    <input type="multiselect" token="org_id_tok">
+      <label>Org ID</label>
+      <search>
+        <query>| tstats `summariesonly` count FROM datamodel=Illumio.Audit WHERE $pce_tok_audit$ BY Audit.org_id</query>
+        <earliest>$timepicker.earliest$</earliest>
+        <latest>$timepicker.latest$</latest>
+      </search>
+      <fieldForLabel>Audit.org_id</fieldForLabel>
+      <fieldForValue>Audit.org_id</fieldForValue>
+      <choice value="*">All</choice>
+      <default>*</default>
+      <valuePrefix>org_id="</valuePrefix>
+      <valueSuffix>"</valueSuffix>
+      <delimiter> OR </delimiter>
+      <change>
+        <eval token="org_id_tok_audit">replace($org_id_tok$, "org_id=", "Audit.org_id=")</eval>
+        <eval token="org_id_tok_traffic">replace($org_id_tok$, "org_id=", "Traffic.org_id=")</eval>
+      </change>
+    </input>
+    <input type="multiselect" token="labels" searchWhenChanged="true">
+      <label>Labels</label>
+      <fieldForLabel>labels</fieldForLabel>
+      <fieldForValue>labels</fieldForValue>
+      <search>
+        <query>`illumio_get_index`  sourcetype="illumio:pce" $pce_tok$ $org_id_tok$ event_type IN ("workloads.update","agent.tampering","workloads.set_labels","agent.activate","agent.deactivate","workload_interfaces.update","agent.request_upgrade","agent.upgrade_time_out","agent.upgrade_successful","agent.suspend","agent.unsuspend","system_task.agent_missed_heartbeats_check","system_task.agent_offline_check","workload.online","agent.goodbye","workload.offline_after_ven_goodbye","agent.update","workload.update","workload.create","workload.delete","agent.remote_action","label_mapping_rules_run.assign_labels","workloads.bulk_create","workloads.bulk_import","workloads.bulk_delete","workloads.bulk_update",,"workloads.unpair","agents.unpair","support_report_request.create","support_report.upload","lost_agent.found","system_task.inactive_ven_cleanup") $eventtype$ $exclude_eventtype$
+| rename notifications{}.notification_type as notif_type, notifications{}.info.agent_info_id as ven_agent_id
+| eval ven_agent_id="/orgs/".org_id."/agents/".ven_agent_id	
+| eval object_id=if(event_type="agent.request_upgrade",'notifications{}.info.successes.hrefs{}',object_id)
+| mvexpand object_id
+| eval object_id=if(event_type="workloads.set_labels",'resource_changes{}.resource.workload.href',object_id)
+| eval object_id = replace(object_id, "vens", "workloads")
+| lookup illumio_workloads_lookup pce_fqdn org_id href as object_id OUTPUT name hostname labels
+| lookup illumio_workloads_lookup pce_fqdn org_id agent.href as ven_agent_id OUTPUT name hostname labels
+| lookup illumio_workloads_lookup pce_fqdn org_id agent.href as created_by.agent.href OUTPUT name hostname labels managed
+| eval hostname=if(hostname="",null(),hostname), Workload=coalesce('name','hostname') 
+| mvexpand labels
+| lookup illumio_labels_lookup pce_fqdn org_id href as labels OUTPUT key value
+| eval labels=key.":".value
+| eval labels=if(isnull(labels),"No Labels Found",labels)
+| stats list(Workload) as Workload by labels | eval Workload=mvdedup(Workload) 
+| search $workload$</query>
+        <earliest>$timepicker.earliest$</earliest>
+        <latest>$timepicker.latest$</latest>
+      </search>
+      <valuePrefix>labels="</valuePrefix>
+      <valueSuffix>"</valueSuffix>
+      <delimiter> OR </delimiter>
+      <change>
+        <eval token="src_label_pairs_tok">replace($labels$, "labels=", "src_label_pairs=")</eval>
+        <eval token="dest_label_pairs_tok">replace($labels$, "labels=", "dest_label_pairs=")</eval>
+      </change>
+      <choice value="*">All</choice>
+      <default>*</default>
+    </input>
+    <input type="multiselect" token="workload" searchWhenChanged="true">
+      <label>Workload</label>
+      <fieldForLabel>Workload</fieldForLabel>
+      <fieldForValue>Workload</fieldForValue>
+      <search>
+        <query>`illumio_get_index`  sourcetype="illumio:pce" $pce_tok$ $org_id_tok$ event_type IN ("workloads.update","agent.tampering","workloads.set_labels","agent.activate","agent.deactivate","workload_interfaces.update","agent.request_upgrade","agent.upgrade_time_out","agent.upgrade_successful","agent.suspend","agent.unsuspend","system_task.agent_missed_heartbeats_check","system_task.agent_offline_check","workload.online","agent.goodbye","workload.offline_after_ven_goodbye","agent.update","workload.update","workload.create","workload.delete","agent.remote_action","label_mapping_rules_run.assign_labels","workloads.bulk_create","workloads.bulk_import","workloads.bulk_delete","workloads.bulk_update","workloads.unpair","agents.unpair","support_report_request.create","support_report.upload","lost_agent.found","system_task.inactive_ven_cleanup") $eventtype$ $exclude_eventtype$
+| rename notifications{}.notification_type as notif_type, notifications{}.info.agent_info_id as ven_agent_id
+| eval ven_agent_id="/orgs/".org_id."/agents/".ven_agent_id	
+| eval object_id=if(event_type="agent.request_upgrade",'notifications{}.info.successes.hrefs{}',object_id)
+| mvexpand object_id
+| eval object_id=if(event_type="workloads.set_labels",'resource_changes{}.resource.workload.href',object_id)
+| eval object_id = replace(object_id, "vens", "workloads")
+| lookup illumio_workloads_lookup pce_fqdn org_id href as object_id OUTPUT name hostname labels
+| lookup illumio_workloads_lookup pce_fqdn org_id agent.href as ven_agent_id OUTPUT name hostname labels
+| lookup illumio_workloads_lookup pce_fqdn org_id agent.href as created_by.agent.href OUTPUT name hostname labels managed
+| eval hostname=if(hostname="",null(),hostname), Workload=coalesce('name','hostname') 
+| mvexpand labels
+| lookup illumio_labels_lookup pce_fqdn org_id href as labels OUTPUT key value
+| eval labels=key.":".value
+| stats list(labels) as labels by Workload | eval labels=if(isnull(labels),"No Labels Found",labels) 
+| eval labels=mvdedup(labels) 
+| search $labels$</query>
+        <earliest>$timepicker.earliest$</earliest>
+        <latest>$timepicker.latest$</latest>
+      </search>
+      <valuePrefix>Workload="</valuePrefix>
+      <valueSuffix>"</valueSuffix>
+      <delimiter> OR </delimiter>
+      <change>
+        <eval token="workload_traffic_just_values">replace($workload$, "Workload=", "")</eval>
+        <eval token="workload_traffic_rex">replace(workload_traffic_just_values, "(\\s*OR\\s*|\\s+|\\\")", "")</eval>
+      </change>
+      <initialValue>*</initialValue>
+      <choice value="*">All</choice>
+      <default>*</default>
+    </input>
+    <input type="multiselect" token="eventtype">
+      <label>Event Type</label>
+      <valuePrefix>event_type="</valuePrefix>
+      <valueSuffix>"</valueSuffix>
+      <delimiter> OR </delimiter>
+      <initialValue>*</initialValue>
+      <choice value="*">All</choice>
+      <default>*</default>
+      <fieldForLabel>Event Type</fieldForLabel>
+      <fieldForValue>event_type</fieldForValue>
+      <search>
+        <query>`illumio_get_index`  sourcetype="illumio:pce" $pce_tok$ $org_id_tok$ event_type IN ("workloads.update","agent.tampering","workloads.set_labels","agent.activate","agent.deactivate","workload_interfaces.update","agent.request_upgrade","agent.upgrade_time_out","agent.upgrade_successful","agent.suspend","agent.unsuspend","system_task.agent_missed_heartbeats_check","system_task.agent_offline_check","workload.online","agent.goodbye","workload.offline_after_ven_goodbye","agent.update","workload.update","workload.create","workload.delete","agent.remote_action","label_mapping_rules_run.assign_labels","workloads.bulk_create","workloads.bulk_import","workloads.bulk_delete","workloads.bulk_update","workloads.unpair","agents.unpair","support_report_request.create","support_report.upload","lost_agent.found","system_task.inactive_ven_cleanup") $exclude_eventtype$
+| rename notifications{}.notification_type as notif_type, notifications{}.info.agent_info_id as ven_agent_id
+| eval ven_agent_id="/orgs/".org_id."/agents/".ven_agent_id	
+| eval object_id=if(event_type="agent.request_upgrade",'notifications{}.info.successes.hrefs{}',object_id)
+| mvexpand object_id
+| eval object_id=if(event_type="workloads.set_labels",'resource_changes{}.resource.workload.href',object_id)
+| eval object_id = replace(object_id, "vens", "workloads")
+| lookup illumio_workloads_lookup pce_fqdn org_id href as object_id OUTPUT name hostname labels
+| lookup illumio_workloads_lookup pce_fqdn org_id agent.href as ven_agent_id OUTPUT name hostname labels
+| lookup illumio_workloads_lookup pce_fqdn org_id agent.href as created_by.agent.href OUTPUT name hostname labels managed
+| eval hostname=if(hostname="",null(),hostname), Workload=coalesce('name','hostname') 
+| mvexpand labels
+| lookup illumio_labels_lookup pce_fqdn org_id href as labels OUTPUT key value
+| eval labels=key.":".value
+| search $labels$ $workload$
+| stats count by event_type</query>
+        <earliest>$timepicker.earliest$</earliest>
+        <latest>$timepicker.latest$</latest>
+      </search>
+    </input>
+    <input type="multiselect" token="exclude_eventtype">
+      <label>Exclude Event Type</label>
+      <valuePrefix>event_type!="</valuePrefix>
+      <valueSuffix>"</valueSuffix>
+      <delimiter> OR </delimiter>
+      <initialValue>null</initialValue>
+      <choice value="null">None</choice>
+      <default>null</default>
+      <fieldForLabel>Event Type</fieldForLabel>
+      <fieldForValue>event_type</fieldForValue>
+      <search>
+        <query>`illumio_get_index`  sourcetype="illumio:pce" $pce_tok$ $org_id_tok$ event_type IN ("workloads.update","agent.tampering","workloads.set_labels","agent.activate","agent.deactivate","workload_interfaces.update","agent.request_upgrade","agent.upgrade_time_out","agent.upgrade_successful","agent.suspend","agent.unsuspend","system_task.agent_missed_heartbeats_check","system_task.agent_offline_check","workload.online","agent.goodbye","workload.offline_after_ven_goodbye","agent.update","workload.update","workload.create","workload.delete","agent.remote_action","label_mapping_rules_run.assign_labels","workloads.bulk_create","workloads.bulk_import","workloads.bulk_delete","workloads.bulk_update","workloads.unpair","agents.unpair","support_report_request.create","support_report.upload","lost_agent.found","system_task.inactive_ven_cleanup")
+| rename notifications{}.info.agent_info_id as ven_agent_id
+| eval ven_agent_id="/orgs/".org_id."/agents/".ven_agent_id
+| eval object_id=if(event_type="agent.request_upgrade",'notifications{}.info.successes.hrefs{}',object_id)
+| eval object_id=if(event_type="workloads.set_labels",'resource_changes{}.resource.workload.href',object_id)
+| eval object_id = replace(object_id, "vens", "workloads")
+| lookup illumio_workloads_lookup pce_fqdn org_id href as object_id OUTPUT name hostname labels
+| lookup illumio_workloads_lookup pce_fqdn org_id agent.href as ven_agent_id OUTPUT name hostname labels
+| lookup illumio_workloads_lookup pce_fqdn org_id agent.href as created_by.agent.href OUTPUT name hostname labels managed
+| eval hostname=if(hostname="",null(),hostname), Workload=coalesce('name','hostname')  
+| mvexpand labels
+| lookup illumio_labels_lookup pce_fqdn org_id href as labels OUTPUT key value
+| eval labels=key.":".value
+| search $labels$ $workload$
+| stats count by event_type</query>
+        <earliest>$timepicker.earliest$</earliest>
+        <latest>$timepicker.latest$</latest>
+      </search>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <title>List of current supported events on timeline:</title>
+      <html>
+  <div style="max-width: 1000px; height: 100px; padding: 10px;">
+    <div style="font-size: 12px; line-height: 1.4; margin-bottom: 10px;">
+    </div>
+    <div style="display: flex; justify-content: space-between; font-size: 12px; line-height: 1.6;">
+      <div style="width: 18%;">
+        • VEN Enforcement Changes<br/>
+        • VEN Graceful Shutdown<br/>
+        • VEN Missed Heartbeats
+      </div>
+      <div style="width: 18%;">
+        • VEN Offline / Online<br/>
+        • VEN Pairing / Unpairing<br/>
+        • VEN Suspend / Unsuspend
+      </div>
+      <div style="width: 18%;">
+        • VEN Upgrade Request<br/>
+        • VEN Upgrade Success<br/>
+        • VEN Upgrade Timeout
+      </div>
+      <div style="width: 18%;">
+        • VEN Tampering<br/>
+        • VEN Restart Requested<br/>
+        • Workload Interface Changes
+      </div>
+      <div style="width: 18%;">
+        • Workload Label Updates<br/>
+        • Workload Create (UMW)<br/>
+        • Workload Delete (UMW)
+      </div>
+      <div style="width: 18%;">
+        • Workload Bulk Events<br/>
+        • PCE Labelling Mapping Rules<br/>
+        • VEN Lost Agent Found
+      </div>
+    </div>
+  </div>
+</html>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Timeline of Illumio Workload(s) events</title>
+      <viz type="timeline_app.timeline">
+        <search>
+          <query>`illumio_get_index` sourcetype="illumio:pce" $pce_tok$ $org_id_tok$ event_type IN ("workloads.update","agent.tampering","workloads.set_labels","agent.activate","agent.deactivate","workload_interfaces.update","agent.request_upgrade","agent.upgrade_time_out","agent.upgrade_successful","agent.suspend","agent.unsuspend","system_task.agent_missed_heartbeats_check","system_task.agent_offline_check","workload.online","agent.goodbye","workload.offline_after_ven_goodbye","agent.update","workload.update","workload.create","workload.delete","agent.remote_action","label_mapping_rules_run.assign_labels","workloads.bulk_create","workloads.bulk_import","workloads.bulk_delete","workloads.bulk_update","workloads.unpair","agents.unpair","support_report_request.create","support_report.upload","lost_agent.found","system_task.inactive_ven_cleanup") $eventtype$ $exclude_eventtype$
+``` ONLY COVERING A SPECIFIC SET OF EVENTS. MORE CAN BE ADDED LATER ON ```
+| rename resource_changes{}.changes.enforcement_mode.before as enf_before, resource_changes{}.changes.enforcement_mode.after as enf_after 
+| rename resource_changes{}.changes.labels.created{}.value as lab_created_value
+| rename resource_changes{}.changes.labels.deleted{}.value as lab_deleted_value 
+| rename notifications{}.info.desired_version as desired_ver 
+| rename notifications{}.info.previous_version as ven_prev, notifications{}.info.current_version as ven_curr 
+| rename "resource_changes{}.change_type" as change_type
+| rename resource_changes{}.changes.status.before as v_chg_before, resource_changes{}.changes.status.after as v_chg_after
+| rename resource_changes{}.changes.workload_interfaces.created{}.address as umw_ip_created, resource_changes{}.changes.workload_interfaces.deleted{}.address as umw_ip_deleted
+| rename resource_changes{}.changes.workload_interfaces.updated{}.changes.address.before as umw_ip_before, resource_changes{}.changes.workload_interfaces.updated{}.changes.address.after as umw_ip_after
+| rename notifications{}.notification_type as notif_type, notifications{}.info.agent_info_id as ven_agent_id
+| rename created_by.service_account.name as sa_name
+| eval ven_agent_id="/orgs/".org_id."/agents/".ven_agent_id	
+| eval lab_created_value=mvdedup(lab_created_value), lab_deleted_value=mvdedup(lab_deleted_value) 
+| eval lab_created_value_joint = mvjoin(lab_created_value, ", "), lab_deleted_value_joint = mvjoin(lab_deleted_value, ", "), ip_created_value_joint = mvjoin(umw_ip_created, ", "),ip_deleted_value_joint = mvjoin(umw_ip_deleted, ", ")
+| eval enf_before=mvdedup(enf_before), enf_after=mvdedup(enf_after) 
+| eval enf_before=if(mvcount(enf_before)&gt;1,"various states",'enf_before') 
+| eval object_id=if(event_type="agent.request_upgrade",'notifications{}.info.successes.hrefs{}',object_id)
+| mvexpand object_id
+| eval object_id=if(event_type="workloads.set_labels",'resource_changes{}.resource.workload.href',object_id)
+| eval object_id = replace(object_id, "vens", "workloads")
+``` actor will reflect who made the Workload changes: by user or by Service Account ```
+| eval actor=case(isnotnull(sa_name),"ServiceAccount: ".sa_name,isnotnull(user),"User: ".user)
+| eval actor_info=" by ".actor
+| eval actor_info_mul=" Updated by ".actor
+``` Lookups to get Labels and managed status from href and also with ven agent id```
+| lookup illumio_workloads_lookup pce_fqdn org_id href as object_id OUTPUT name hostname labels managed
+| lookup illumio_workloads_lookup pce_fqdn org_id agent.href as ven_agent_id OUTPUT name hostname labels managed
+| lookup illumio_workloads_lookup pce_fqdn org_id agent.href as created_by.agent.href OUTPUT name hostname labels managed
+| eval hostname=if(hostname="",null(),hostname), Workload=coalesce('name','hostname') 
+| mvexpand labels
+| lookup illumio_labels_lookup pce_fqdn org_id href as labels OUTPUT key value
+| eval Label=key.":".value
+| eval label_created_info="Labels updated: ".lab_created_value_joint
+| eval label_deleted_info="Labels deleted: ".lab_deleted_value_joint
+| eval label_both_info="Labels updated: ".lab_created_value_joint." | Labels deleted: ".lab_deleted_value_joint
+``` workload.update and workloads.bulk_update scenarios are covering 7 IP changes scenarios for UMW: Added only, Deleted only, Updated only, Added-Deleted-Updated, Added-Deleted, Added-Updated, Deleted-Updated) ```
+| eval ip_added_info="IP added ".ip_created_value_joint
+| eval ip_deleted_info="IP deleted ".ip_deleted_value_joint
+| eval ip_updated_info="IP updated from ".umw_ip_before." to ".umw_ip_after
+| eval ip_add_del_info=ip_added_info." | ".ip_deleted_info
+| eval ip_add_upd_info=ip_added_info." | ".ip_updated_info
+| eval ip_del_upd_info=ip_deleted_info." | ".ip_updated_info
+| eval ip_all_info=ip_added_info." | ".ip_deleted_info." | ".ip_updated_info
+| eval enforcement_info="Enforcement changed from ".enf_before." to ".enf_after
+``` CASE FOR PREPARING WORKLOAD.UPDATE ON Unmanaged Workload ```
+| eval wkld_update_UMW_info=case(
+    event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(umw_ip_created) AND isnull(umw_ip_deleted) AND isnull(umw_ip_after) AND mvcount(lab_created_value)&gt;0 AND isnull(lab_deleted_value), label_created_info.". ".ip_added_info.".".actor_info_mul,
+    event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(umw_ip_deleted) AND isnull(umw_ip_created) AND isnull(umw_ip_after) AND mvcount(lab_created_value)&gt;0 AND isnull(lab_deleted_value), label_created_info.". ".ip_deleted_info.".".actor_info_mul,
+    event_type IN ("workload.update","workloads.bulk_update") AND isnull(umw_ip_created) AND isnull(umw_ip_deleted) AND isnotnull(umw_ip_after) AND mvcount(lab_created_value)&gt;0 AND isnull(lab_deleted_value), label_created_info.". ".ip_updated_info.".".actor_info_mul,
+    event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(umw_ip_created) AND isnotnull(umw_ip_deleted) AND isnotnull(umw_ip_after) AND mvcount(lab_created_value)&gt;0 AND isnull(lab_deleted_value), label_created_info.". ".ip_all_info.".".actor_info_mul,
+    event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(umw_ip_created) AND isnotnull(umw_ip_deleted) AND isnull(umw_ip_after) AND mvcount(lab_created_value)&gt;0 AND isnull(lab_deleted_value), label_created_info.". ".ip_add_del_info.".".actor_info_mul,
+    event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(umw_ip_created) AND isnull(umw_ip_deleted) AND isnotnull(umw_ip_after) AND mvcount(lab_created_value)&gt;0 AND isnull(lab_deleted_value), label_created_info.". ".ip_add_upd_info.".".actor_info_mul,
+    event_type IN ("workload.update","workloads.bulk_update") AND isnull(umw_ip_created) AND isnotnull(umw_ip_deleted) AND isnotnull(umw_ip_after) AND mvcount(lab_created_value)&gt;0 AND isnull(lab_deleted_value), label_created_info.". ".ip_del_upd_info.".".actor_info_mul,
+    
+    event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(umw_ip_created) AND isnull(umw_ip_deleted) AND isnull(umw_ip_after) AND isnull(lab_created_value) AND mvcount(lab_deleted_value)&gt;0, label_deleted_info.". ".ip_added_info.".".actor_info_mul,
+    event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(umw_ip_deleted) AND isnull(umw_ip_created) AND isnull(umw_ip_after) AND isnull(lab_created_value) AND mvcount(lab_deleted_value)&gt;0, label_deleted_info.". ".ip_deleted_info.".".actor_info_mul,
+    event_type IN ("workload.update","workloads.bulk_update") AND isnull(umw_ip_created) AND isnull(umw_ip_deleted) AND isnotnull(umw_ip_after) AND isnull(lab_created_value) AND mvcount(lab_deleted_value)&gt;0, label_deleted_info.". ".ip_updated_info.".".actor_info_mul,
+    event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(umw_ip_created) AND isnotnull(umw_ip_deleted) AND isnotnull(umw_ip_after) AND isnull(lab_created_value) AND mvcount(lab_deleted_value)&gt;0, label_deleted_info.". ".ip_all_info.".".actor_info_mul,
+    event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(umw_ip_created) AND isnotnull(umw_ip_deleted) AND isnull(umw_ip_after) AND isnull(lab_created_value) AND mvcount(lab_deleted_value)&gt;0, label_deleted_info.". ".ip_add_del_info.".".actor_info_mul,
+    event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(umw_ip_created) AND isnull(umw_ip_deleted) AND isnotnull(umw_ip_after) AND isnull(lab_created_value) AND mvcount(lab_deleted_value)&gt;0, label_deleted_info.". ".ip_add_upd_info.".".actor_info_mul,
+    event_type IN ("workload.update","workloads.bulk_update") AND isnull(umw_ip_created) AND isnotnull(umw_ip_deleted) AND isnotnull(umw_ip_after) AND isnull(lab_created_value) AND mvcount(lab_deleted_value)&gt;0, label_deleted_info.". ".ip_del_upd_info.".".actor_info_mul,
+    
+    event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(umw_ip_created) AND isnull(umw_ip_deleted) AND isnull(umw_ip_after) AND mvcount(lab_created_value)&gt;0 AND mvcount(lab_deleted_value)&gt;0, label_both_info.". ".ip_added_info.".".actor_info_mul,
+    event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(umw_ip_deleted) AND isnull(umw_ip_created) AND isnull(umw_ip_after) AND mvcount(lab_created_value)&gt;0 AND mvcount(lab_deleted_value)&gt;0, label_both_info.". ".ip_deleted_info.".".actor_info_mul,
+    event_type IN ("workload.update","workloads.bulk_update") AND isnull(umw_ip_created) AND isnull(umw_ip_deleted) AND isnotnull(umw_ip_after) AND mvcount(lab_created_value)&gt;0 AND mvcount(lab_deleted_value)&gt;0, label_both_info.". ".ip_updated_info.".".actor_info_mul,
+    event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(umw_ip_created) AND isnotnull(umw_ip_deleted) AND isnotnull(umw_ip_after) AND mvcount(lab_created_value)&gt;0 AND mvcount(lab_deleted_value)&gt;0, label_both_info.". ".ip_all_info.".".actor_info_mul,
+    event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(umw_ip_created) AND isnotnull(umw_ip_deleted) AND isnull(umw_ip_after) AND mvcount(lab_created_value)&gt;0 AND mvcount(lab_deleted_value)&gt;0, label_both_info.". ".ip_add_del_info.".".actor_info_mul,
+    event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(umw_ip_created) AND isnull(umw_ip_deleted) AND isnotnull(umw_ip_after) AND mvcount(lab_created_value)&gt;0 AND mvcount(lab_deleted_value)&gt;0, label_both_info.". ".ip_add_upd_info.".".actor_info_mul,
+    event_type IN ("workload.update","workloads.bulk_update") AND isnull(umw_ip_created) AND isnotnull(umw_ip_deleted) AND isnotnull(umw_ip_after) AND mvcount(lab_created_value)&gt;0 AND mvcount(lab_deleted_value)&gt;0, label_both_info.". ".ip_del_upd_info.".".actor_info_mul,
+    
+    event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(umw_ip_created) AND isnull(umw_ip_deleted) AND isnull(umw_ip_after) AND isnull(lab_created_value) AND isnull(lab_deleted_value), ip_added_info.".".actor_info_mul,
+    event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(umw_ip_deleted) AND isnull(umw_ip_created) AND isnull(umw_ip_after) AND isnull(lab_created_value) AND isnull(lab_deleted_value), ip_deleted_info.".".actor_info_mul,
+    event_type IN ("workload.update","workloads.bulk_update") AND isnull(umw_ip_created) AND isnull(umw_ip_deleted) AND isnotnull(umw_ip_after) AND isnull(lab_created_value) AND isnull(lab_deleted_value), ip_updated_info.".".actor_info_mul,
+    event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(umw_ip_created) AND isnotnull(umw_ip_deleted) AND isnotnull(umw_ip_after) AND isnull(lab_created_value) AND isnull(lab_deleted_value), ip_all_info.".".actor_info_mul,
+    event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(umw_ip_created) AND isnotnull(umw_ip_deleted) AND isnull(umw_ip_after) AND isnull(lab_created_value) AND isnull(lab_deleted_value), ip_add_del_info.".".actor_info_mul,
+    event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(umw_ip_created) AND isnull(umw_ip_deleted) AND isnotnull(umw_ip_after) AND isnull(lab_created_value) AND isnull(lab_deleted_value), ip_add_upd_info.".".actor_info_mul,
+    event_type IN ("workload.update","workloads.bulk_update") AND isnull(umw_ip_created) AND isnotnull(umw_ip_deleted) AND isnotnull(umw_ip_after) AND isnull(lab_created_value) AND isnull(lab_deleted_value), ip_del_upd_info.".".actor_info_mul,
+    
+    event_type IN ("workload.update","workloads.bulk_update") AND isnull(umw_ip_created) AND isnull(umw_ip_deleted) AND isnull(umw_ip_after) AND mvcount(lab_created_value)&gt;0 AND isnull(lab_deleted_value), label_created_info.".".actor_info,
+    event_type IN ("workload.update","workloads.bulk_update") AND isnull(umw_ip_created) AND isnull(umw_ip_deleted) AND isnull(umw_ip_after) AND isnull(lab_created_value) AND mvcount(lab_deleted_value)&gt;0, label_deleted_info.".".actor_info,
+    event_type IN ("workload.update","workloads.bulk_update") AND isnull(umw_ip_created) AND isnull(umw_ip_deleted )AND mvcount(lab_created_value)&gt;0 AND mvcount(lab_deleted_value)&gt;0, label_both_info.".".actor_info_mul
+)
+``` CASE FOR DETAILS ON VEN INTERFACE CHANGES ```
+| eval ven_interface_change_details=case(
+    event_type="workload_interfaces.update" AND isnotnull(umw_ip_created) AND isnull(umw_ip_deleted) AND isnull(umw_ip_after), ip_added_info,
+    event_type="workload_interfaces.update" AND isnotnull(umw_ip_deleted) AND isnull(umw_ip_created) AND isnull(umw_ip_after), ip_deleted_info,
+    event_type="workload_interfaces.update" AND isnull(umw_ip_created) AND isnull(umw_ip_deleted) AND isnotnull(umw_ip_after) , ip_updated_info,
+    event_type="workload_interfaces.update" AND isnotnull(umw_ip_created) AND isnotnull(umw_ip_deleted) AND isnotnull(umw_ip_after), ip_all_info,
+    event_type="workload_interfaces.update" AND isnotnull(umw_ip_created) AND isnotnull(umw_ip_deleted) AND isnull(umw_ip_after), ip_add_del_info,
+    event_type="workload_interfaces.update" AND isnotnull(umw_ip_created) AND isnull(umw_ip_deleted) AND isnotnull(umw_ip_after), ip_add_upd_info,
+    event_type="workload_interfaces.update" AND isnull(umw_ip_created) AND isnotnull(umw_ip_deleted) AND isnotnull(umw_ip_after), ip_del_upd_info
+)
+
+``` CASE FOR PREPARING WORKLOAD.UPDATE ON VEN ```
+| eval wkld_update_VEN_info=case(
+    event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(enf_after) AND mvcount(lab_created_value)&gt;0 AND mvcount(lab_deleted_value)&gt;0, enforcement_info.". ".label_both_info.".".actor_info_mul,
+    event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(enf_after) AND mvcount(lab_created_value)&gt;0 AND isnull(lab_deleted_value), enforcement_info.". ".label_created_info.".".actor_info_mul,
+    event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(enf_after) AND isnull(lab_created_value) AND mvcount(lab_deleted_value)&gt;0, enforcement_info.". ".label_delete_info.".".actor_info_mul,
+    event_type IN ("workload.update","workloads.bulk_update") AND isnull(enf_after) AND mvcount(lab_created_value)&gt;0 AND isnull(lab_deleted_value), label_created_info.actor_info,
+    event_type IN ("workload.update","workloads.bulk_update") AND isnull(enf_after) AND isnull(lab_created_value) AND mvcount(lab_deleted_value)&gt;0, label_delete_info.actor_info,
+    event_type IN ("workload.update","workloads.bulk_update") AND isnull(enf_after) AND mvcount(lab_created_value)&gt;0 AND mvcount(lab_deleted_value)&gt;0, label_both_info.actor_info,
+    event_type IN ("workload.update","workloads.bulk_update") AND isnotnull(enf_after) AND isnull(lab_created_value) AND isnull(lab_deleted_value), enforcement_info.actor_info
+)
+``` CASE FOR EVENT DETAILS  ```
+| eval Event=case(
+    event_type="workloads.update" AND isnotnull(enf_before) AND isnotnull(enf_after), enforcement_info.actor_info,
+    event_type IN ("workloads.set_labels","workloads.bulk_import") AND mvcount(lab_created_value)&gt;0 AND isnull(lab_deleted_value), label_created_info.actor_info,
+    event_type IN ("workloads.set_labels","workloads.bulk_import") AND isnull(lab_created_value) AND mvcount(lab_deleted_value)&gt;0, label_deleted_info.actor_info,
+    event_type IN ("workloads.set_labels","workloads.bulk_import") AND mvcount(lab_created_value)&gt;0 AND mvcount(lab_deleted_value)&gt;0, label_both_info.actor_info,
+    event_type="agent.tampering", "OS firewall tampering",
+    event_type="agent.activate", "VEN paired with PCE in enforcement: ".enf_after,
+    event_type="agent.deactivate", "Unpaired/Deactivated from PCE",
+    event_type="workload_interfaces.update", "VEN interface(s) change. ".ven_interface_change_details,
+    event_type="agent.request_upgrade" AND isnotnull(desired_ver), "VEN upgrade to ".desired_ver." requested".actor_info,
+    event_type="agent.upgrade_time_out" AND sev="ERROR", "VEN upgrade timed out",
+    event_type="agent.upgrade_successful", "VEN upgraded successfully from ".ven_prev." to ".ven_curr,
+    event_type="agent.update" AND v_chg_before="active" AND v_chg_after="suspended", "Marked as suspended from PCE UI".actor_info,
+    event_type="agent.update" AND v_chg_before="suspended" AND v_chg_after="active", "Marked as unsuspended from PCE UI".actor_info,
+    event_type="agent.suspend", "Suspended from VEN CLI",
+    event_type="agent.unsuspend", "Unsuspended from VEN CLI",
+    event_type="system_task.agent_missed_heartbeats_check", "Missed heartbeats",
+    event_type="system_task.agent_offline_check", "VEN(s) offline/disconnected",
+    event_type="workload.online", "VEN online",
+    event_type IN ("agent.goodbye", "workload.offline_after_ven_goodbye"), "Graceful shutdown",
+    event_type IN ("workload.create","workloads.bulk_create") AND isnotnull(umw_ip_created), "Unmanaged workload created - IP: ".ip_created_value_joint.actor_info,
+    event_type IN ("workload.delete","workloads.bulk_delete"), "Unmanaged workload deleted".actor_info,
+    event_type="agent.remote_action" AND notif_type="remote_action.restart_requested", "VEN restart from PCE".actor_info,
+    event_type="label_mapping_rules_run.assign_labels", "Labels updated by PCE labelling rules: ".lab_created_value_joint,
+    event_type IN ("workload.update","workloads.bulk_update") AND managed=1, wkld_update_VEN_info,
+    event_type IN ("workload.update","workloads.bulk_update") AND managed=0, wkld_update_UMW_info,
+    event_type IN ("agents.unpair","workloads.unpair"), "Unpair VEN request sent".actor_info,
+    event_type="support_report_request.create" AND status="success", "Support Bundle Requested".actor_info,    
+    event_type="support_report.upload" AND status="success", "VEN Support Bundle successfully uploaded to PCE",
+    event_type="lost_agent.found", "Unregistered VEN agent found attempting to connect to PCE",
+    event_type="system_task.inactive_ven_cleanup" AND change_type="delete" AND status="success", "VEN unpaired by inactivity VEN cleanup schedule"
+)
+| stats list(Label) as labels by _time Workload Event event_type
+| eval labels=if(isnull(labels),"No Labels Found",labels)
+| eval labels=mvdedup(labels)
+| bin _time span=30s
+| eval event_identifier = Workload. "::" . _time . "::" . event_type
+| stats list(event_identifier) as event_identifier, values(Event) as Event, values(event_type) as event_type, values(labels) as labels by _time Workload
+| eval has_pairing=mvfilter(match(event_identifier,"agent.activate")), has_int_chgd=mvfilter(match(event_identifier,"workload_interfaces.update"))
+| eval Event=if(isnotnull(has_pairing) AND isnotnull(has_int_chgd),mvfilter(match(Event,"VEN paired")), Event)
+| eval event_type=if(isnotnull(has_pairing) AND isnotnull(has_int_chgd),mvfilter(match(event_type,"agent.activate")), event_type)
+| fields _time Workload Event event_type labels
+| sort Workload
+| search ($labels$) ($workload$)</query>
+          <earliest>$timepicker.earliest$</earliest>
+          <latest>$timepicker.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="drilldown">all</option>
+        <option name="height">300</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="timeline_app.timeline.axisTimeFormat">DAYS</option>
+        <option name="timeline_app.timeline.colorMode">categorical</option>
+        <option name="timeline_app.timeline.maxColor">#2B83BA</option>
+        <option name="timeline_app.timeline.minColor">#D7191C</option>
+        <option name="timeline_app.timeline.numOfBins">9</option>
+        <option name="timeline_app.timeline.tooltipTimeFormat">MINUTES</option>
+        <option name="timeline_app.timeline.useColors">1</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+        <drilldown>
+          <set token="chosen_time">$click.value$</set>
+          <eval token="timepicker.earliest">$chosen_time$ - 1800</eval>
+          <eval token="timepicker.latest">$chosen_time$ + 1800</eval>
+          <eval token="form.timepicker.earliest">$chosen_time$ - 1800</eval>
+          <eval token="form.timepicker.latest">$chosen_time$ + 1800</eval>
+        </drilldown>
+      </viz>
+    </panel>
+  </row>
+  <row depends="$show_final$">
+    <panel>
+      <title>Blocked Traffic Flows</title>
+      <viz type="timeline_app.timeline">
+        <search>
+          <query>| tstats `summariesonly` values(Traffic.pce_fqdn) as pce_fqdn values(Traffic.org_id) as org_id values(Traffic.src_label_pairs) as src_label_pairs values(Traffic.dest_label_pairs) as dest_label_pairs values(Traffic.direction) as direction values(Traffic.timestamp) as timestamp 
+FROM datamodel=Illumio.Traffic WHERE $pce_tok_traffic$ $org_id_tok_traffic$ Traffic.action="blocked" BY _time Traffic.src_href Traffic.dest_href 
+| lookup illumio_workloads_lookup pce_fqdn org_id href as Traffic.src_href OUTPUT name as name_src hostname as hostname_src managed as managed_src
+| lookup illumio_workloads_lookup pce_fqdn org_id href as Traffic.dest_href OUTPUT name as name_dst hostname as hostname_dst managed as managed_dst
+| eval Workload_src=coalesce('name_src','hostname_src')
+| eval Workload_dst=coalesce('name_dst','hostname_dst')
+| stats values(Workload_src) as Workload_src values(Workload_dst) as Workload_dst values(src_label_pairs) as src_label_pairs values(dest_label_pairs) as dest_label_pairs values(managed_src) as managed_src values(managed_dst) as managed_dst by timestamp direction
+| search $src_label_pairs_tok$ $dest_label_pairs_tok$ 
+| eval Event=case(direction="inbound","Inbound Blocked",direction="outbound","Outbound Blocked")
+| eval Workload=case(
+  managed_src=1 and managed_dst=1 and direction="inbound",Workload_dst,
+  managed_src=1 and managed_dst=1 and direction="outbound",Workload_src,
+  managed_src=1 and managed_dst=0 and direction="inbound","NULL",
+  managed_src=1 and managed_dst=0 and direction="outbound",Workload_src,
+  managed_src=0 and managed_dst=1 and direction="inbound",Workload_dst,
+  managed_src=0 and managed_dst=1 and direction="outbound","NULL")
+| fields timestamp Workload Event
+| search $workload$</query>
+          <earliest>$timepicker.earliest$</earliest>
+          <latest>$timepicker.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="timeline_app.timeline.axisTimeFormat">DAYS</option>
+        <option name="timeline_app.timeline.colorMode">categorical</option>
+        <option name="timeline_app.timeline.maxColor">#1182f3</option>
+        <option name="timeline_app.timeline.minColor">#cba700</option>
+        <option name="timeline_app.timeline.numOfBins">4</option>
+        <option name="timeline_app.timeline.tooltipTimeFormat">SECONDS</option>
+        <option name="timeline_app.timeline.useColors">1</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+      </viz>
+    </panel>
+  </row>
+</form>

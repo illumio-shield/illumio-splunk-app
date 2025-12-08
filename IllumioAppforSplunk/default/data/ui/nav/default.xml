@@ -1,5 +1,6 @@
 <nav search_view="search" color="#000000" >
   <view name="security_operations" default='true'/>
+  <view name="workload_activity_timeline" />
   <collection label="PCE">
     <view name="pce_operations" />
     <view name="pce_user_authentication" />
@@ -8,7 +9,7 @@
     <view name="workload_operations" />
     <view name="workload_investigation" />
   </collection>
-  <view name="traffic_explorer_ds" />
+  <view name="traffic_explorer" />
   <view name="change_monitoring" />
   <view name="search" />
 </nav>

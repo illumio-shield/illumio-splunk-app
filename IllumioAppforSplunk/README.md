@@ -25,7 +25,7 @@ The Illumio App for Splunk integrates with the Illumio Policy Compute Engine (PC
 
 With improved visibility of east-west traffic, Security Operations Center (SOC) staff can detect unauthorized activity and potential attacks from traffic blocked by Illumio segmentation policy on workloads in "Enforcement" mode. Additionally, the Illumio App for Splunk provides visibility into potentially blocked traffic for workloads in "Test" mode. SOC staff can quickly pinpoint potential attacks and identify workloads with a significant number of blocked flows.  
 
-### Version - 4.0.1  
+### Version - 4.1.1  
 
 **Supported Splunk versions**  
 * 10.1.x
