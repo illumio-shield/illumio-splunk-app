@@ -11,5 +11,6 @@
   </collection>
   <view name="traffic_explorer" />
   <view name="change_monitoring" />
+  <view name="containment_capabilities"/>
   <view name="search" />
 </nav>
