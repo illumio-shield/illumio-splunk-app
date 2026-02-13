@@ -1,0 +1,134 @@
+<form version="1.1" stylesheet="quarantine_button.css">
+  <label>Quarantine Candidates</label>
+  <description>Investigate and Quarantine workloads directly from this dashboard based on detected port scanning and agent tampering</description>
+  <fieldset submitButton="false">
+    <input type="time" token="timepicker-q">
+      <label></label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="dropdown" token="pce_tok">
+      <label>PCE</label>
+      <search>
+        <query>| tstats `summariesonly` count FROM datamodel=Illumio.Audit BY Audit.pce_fqdn</query>
+        <earliest>$timepicker-q.earliest$</earliest>
+        <latest>$timepicker-q.latest$</latest>
+      </search>
+      <selectFirstChoice>true</selectFirstChoice>
+      <fieldForLabel>Audit.pce_fqdn</fieldForLabel>
+      <fieldForValue>Audit.pce_fqdn</fieldForValue>
+    </input>
+    <input type="dropdown" token="org_id_tok">
+      <label>Org ID</label>
+      <search>
+        <query>| tstats `summariesonly` count FROM datamodel=Illumio.Audit WHERE Audit.pce_fqdn=$pce_tok|s$ BY Audit.org_id</query>
+        <earliest>$timepicker-q.earliest$</earliest>
+        <latest>$timepicker-q.latest$</latest>
+      </search>
+      <fieldForLabel>Audit.org_id</fieldForLabel>
+      <fieldForValue>Audit.org_id</fieldForValue>
+      <choice value="*">All</choice>
+      <default>*</default>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <title>Port Scan Detection</title>
+      <table id="quarantineHost1">
+        <title>"Quarantine Workload" action in blue will quarantine the source workload (Workload could be a VEN or unmanaged)</title>
+        <search>
+          <query>| savedsearch Illumio_PortScan pce_fqdn=$pce_tok$ org_id=$org_id_tok$
+                ```Look up labels and map them to key:value pairs using illumio_labels_lookup```
+            | foreach *_href [lookup illumio_workloads_lookup href AS &lt;&lt;FIELD&gt;&gt; OUTPUTNEW labels AS &lt;&lt;MATCHSTR&gt;&gt;_labels
+                | lookup illumio_labels_lookup href AS &lt;&lt;MATCHSTR&gt;&gt;_labels, pce_fqdn, org_id OUTPUT key AS label_key, value AS label_value
+                | eval &lt;&lt;MATCHSTR&gt;&gt;_labels = mvzip(label_key, label_value, ":")
+                | fields - label_key label_value]
+            | fillnull value="-" src_host src_href dest_host dest_href src_labels dest_labels
+                ```Check that the user has the illumio_quarantine_workload role```
+            | appendcols
+                [| rest splunk_server=local /services/authentication/current-context
+                    | eval show_quarantine=if(roles="illumio_quarantine_workload", 1, 0)
+                    | table show_quarantine]
+            | filldown show_quarantine
+                ```For quarantine, we only care about internal workloads performing scanning```
+            | eval show_quarantine = if(show_quarantine=1 AND src_href!="-", 1, 0)
+            | eval workload_href = if(src_href="-", dest_href, src_href)
+            | eval Quarantine = if(show_quarantine=1, "Quarantine Workload", "")
+        | sort _time
+            | table _time, pce_fqdn, org_id, src_ip, src_host, src_labels, dest_ip, dest_host, dest_labels, Quarantine, workload_href
+            | rename pce_fqdn AS PCE, org_id AS "Org ID", src_host AS Source, src_ip AS "Source IP", src_labels AS "Source Labels", dest_host AS Destination, dest_ip AS "Destination IP", dest_labels AS "Destination Labels"
+            | eval Timestamp = strftime(_time, "%Y-%m-%dT%H:%M:%S%Z")</query>
+          <earliest>$timepicker-q.earliest$</earliest>
+          <latest>$timepicker-q.latest$</latest>
+        </search>
+        <option name="count">10</option>
+        <option name="drilldown">row</option>
+        <format type="color" field="Quarantine">
+          <colorPalette type="map">{"Quarantine Workload": #007abd}</colorPalette>
+        </format>
+        <fields>["Timestamp","PCE","Org ID","Source IP","Source","Source Labels","Destination IP","Destination","Destination Labels","Quarantine"]</fields>
+        <drilldown>
+          <condition match="'click.name2'=&quot;Quarantine&quot; AND 'click.value2'!=&quot;&quot;">
+            <link target="_blank">search?q=%7C%20makeresults%201%20%7C%20sendalert%20illumio_quarantine%20param.workload_href%3D%22$row.workload_href$%22%20param.pce_fqdn%3D%22$row.PCE$%22%20param.org_id%3D$row.Org ID$&amp;earliest=$earliest$&amp;latest=$latest$</link>
+          </condition>
+          <condition match="'click.name2'=&quot;Quarantine&quot;">
+            <!-- for consistent behaviour, if the user clicks the Quarantine cell and quarantine is disabled, ignore the click -->
+          </condition>
+          <condition match="row.Source!='-'">
+            <link target="_blank">workload_investigation?form.pce_tok=$row.PCE$&amp;form.org_id_tok=$row.Org ID$&amp;form.host_ip=$row.Source$&amp;form.time_range.earliest=$earliest$&amp;form.time_range.latest=$latest$</link>
+          </condition>
+          <condition>
+            <link target="_blank">workload_investigation?form.pce_tok=$row.PCE$&amp;form.org_id_tok=$row.Org ID$&amp;form.host_ip=$row.Destination$&amp;form.time_range.earliest=$earliest$&amp;form.time_range.latest=$latest$</link>
+          </condition>
+        </drilldown>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Tampering Detection</title>
+      <table id="quarantineHost2">
+        <title>"Quarantine Workload" action in blue will quarantine a VEN that generated agent.tampering events</title>
+        <search>
+          <query>| savedsearch Illumio_Firewall_Tampering
+            | lookup illumio_workloads_lookup ven.href AS ven_href OUTPUTNEW href AS workload_href, labels AS Labels
+                ```Map workload label HREFs to key:value pairs for display```
+            | lookup illumio_labels_lookup href AS Labels, pce_fqdn, org_id OUTPUT key AS label_key, value AS label_value
+            | eval Labels = mvzip(label_key, label_value, ":")
+            | fields - label_key label_value
+                ```Check that the user has the illumio_quarantine_workload role```
+            | appendcols
+                [| rest splunk_server=local /services/authentication/current-context
+                    | eval show_quarantine=if(roles="illumio_quarantine_workload", 1, 0)
+                    | table show_quarantine]
+            | filldown show_quarantine
+            | eval Quarantine = if(show_quarantine=1, "Quarantine Workload", "")
+            | table Timestamp, pce_fqdn, org_id, Labels, workload_hostname, Quarantine, workload_href
+            | search pce_fqdn=$pce_tok$ org_id=$org_id_tok$
+            | rename workload_hostname AS Hostname, pce_fqdn AS PCE, org_id AS "Org ID"</query>
+          <earliest>$timepicker-q.earliest$</earliest>
+          <latest>$timepicker-q.latest$</latest>
+        </search>
+        <option name="count">10</option>
+        <option name="drilldown">row</option>
+        <format type="color" field="Quarantine">
+          <colorPalette type="map">{"Quarantine Workload": #007abd}</colorPalette>
+        </format>
+        <fields>["Timestamp","PCE","Org ID","Labels","Hostname","Quarantine"]</fields>
+        <drilldown>
+          <condition match="'click.name2'=&quot;Quarantine&quot; AND 'click.value2'!=&quot;&quot;">
+            <link target="_blank">search?q=%7C%20makeresults%201%20%7C%20sendalert%20illumio_quarantine%20param.workload_href%3D%22$row.workload_href$%22%20param.pce_fqdn%3D%22$row.PCE$%22%20param.org_id%3D$row.Org ID$&amp;earliest=$earliest$&amp;latest=$latest$</link>
+          </condition>
+          <condition match="'click.name2'=&quot;Quarantine&quot;">
+            <!-- for consistent behaviour, if the user clicks the Quarantine cell and quarantine is disabled, ignore the click -->
+          </condition>
+          <condition>
+            <link target="_blank">workload_investigation?form.pce_tok=$row.PCE$&amp;form.org_id_tok=$row.Org ID$&amp;form.host_ip=$row.Hostname$&amp;form.time_range.earliest=$earliest$&amp;form.time_range.latest=$latest$</link>
+          </condition>
+        </drilldown>
+      </table>
+    </panel>
+  </row>
+</form>

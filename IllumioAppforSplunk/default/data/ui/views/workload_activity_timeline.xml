@@ -1,10 +1,14 @@
 <form version="1.1" theme="dark">
-  <label>Workloads Activity Timeline (New)</label>
-  <html>
-      <p>
-        This dashboard depends on <a href="https://classic.splunkbase.splunk.com/app/3120/">Splunk Timeline - Custom Visualization</a>. Please install if not already done.
-      </p>
-  </html>
+  <label>Workloads Activity Timeline</label>
+  <row>
+    <panel>
+      <html>
+        <p>
+          This dashboard depends on <a href="https://splunkbase.splunk.com/app/3120">Splunk Timeline - Custom Visualization</a>. Please install if not already done.
+        </p>
+      </html>
+    </panel>
+  </row>
   <search id="definetoken">
     <query>
 | makeresults
